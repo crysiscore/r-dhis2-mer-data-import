@@ -58,26 +58,32 @@ getDhis2DatavalueSetTemplate <- function(url.api.dhis.datasets,dataset.id){
 
 
 checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option.combo.id, datavalueset.template.name, indicator.name) {
-  df_temp <- get(datavalueset.template.name, envir = .GlobalEnv)
-  df <- filter(df_temp, dataElement==data.element.id & categoryoptioncombo==category.option.combo.id )
-  total_rows <- count(df)
+  df_error_tmp_empty  <- get('error_log_dhis_import_empty',envir = .GlobalEnv)
+  df_error_tmp <- get('error_log_dhis_import',envir = .GlobalEnv)
+  
+  
+  tmp <- get(datavalueset.template.name, envir = .GlobalEnv)
+  df <- filter(tmp, dataElement==data.element.id & categoryoptioncombo==category.option.combo.id )
+  
+  total_rows <- nrow(df)
   if(total_rows==0){
-    error_log_dhis_import_empty$dhisdataelementuid[1] <- data.element.id
-    error_log_dhis_import_empty$dhiscategoryoptioncombouid[1] <- data.element.id
-    error_log_dhis_import_empty$indicator[1] <- indicator.name
-    error_log_dhis_import_empty$error[1] <- 'NOT FOUND'
-    error_log_dhis_import<- rbind.fill(error_log_dhis_import, error_log_dhis_import_empty)
-    error_log_dhis_import_empty <- error_log_dhis_import[1,]
+    df_error_tmp_empty$dhisdataelementuid[1] <- data.element.id
+    df_error_tmp_empty$dhiscategoryoptioncombouid[1] <- category.option.combo.id
+    df_error_tmp_empty$indicator[1] <- indicator.name
+    df_error_tmp_empty$error[1] <- 'NOT FOUND'
+    df_error_tmp<- rbind.fill(df_error_tmp, df_error_tmp_empty)
+    assign(x = "error_log_dhis_import",value =df_error_tmp, envir = .GlobalEnv )
+
     return(FALSE)
   } else if(total_rows==1){
     return(TRUE)
   } else if(total_rows>1){
-    error_log_dhis_import_empty$dhisdataelementuid[1] <- data.element.id
-    error_log_dhis_import_empty$dhiscategoryoptioncombouid[1] <- data.element.id
-    error_log_dhis_import_empty$indicator[1] <- indicator.name
-    error_log_dhis_import_empty$error[1] <- 'DUPLICATED'
-    error_log_dhis_import<- rbind.fill(error_log_dhis_import, error_log_dhis_import_empty)
-    error_log_dhis_import_empty <- error_log_dhis_import[1,]
+    df_error_tmp_empty$dhisdataelementuid[1] <- data.element.id
+    df_error_tmp_empty$dhiscategoryoptioncombouid[1] <- category.option.combo.id
+    df_error_tmp_empty$indicator[1] <- indicator.name
+    df_error_tmp_empty$error[1] <- 'DUPLICATED'
+    df_error_tmp<- rbind.fill(df_error_tmp, df_error_tmp_empty)
+    assign(x = "error_log_dhis_import",value =df_error_tmp, envir = .GlobalEnv )
     return('Duplicado')
   }
   
@@ -96,8 +102,8 @@ getDEValueOnExcell <- function(cell.ref, excell.mapping.template, sheet.name){
   
   data_value <- tryCatch({
     
-    df_temp <-   read_xlsx(path = excell.mapping.template,sheet = sheet.name,range = paste0(cell.ref,':',cell.ref),col_names = FALSE)
-    if(nrow(df_temp)==0){
+    tmp <-   read_xlsx(path = excell.mapping.template,sheet = sheet.name,range = paste0(cell.ref,':',cell.ref),col_names = FALSE)
+    if(nrow(tmp)==0){
       warning_msg <- paste0( "Empty excell cell ", cell.ref, ' on file ', excell.mapping.template , ' sheetname ' ,sheet.name)
       tmp  <- get('error_log_dhis_import_empty',envir = .GlobalEnv)
       df_error_tmp <- get('error_log_dhis_import',envir = .GlobalEnv)
@@ -113,8 +119,8 @@ getDEValueOnExcell <- function(cell.ref, excell.mapping.template, sheet.name){
       empty_value <- ""
       return(empty_value)
       
-    } else if (nrow(df_temp)==1) {
-      df_temp[[1]]
+    } else if (nrow(tmp)==1) {
+      tmp[[1]]
     }
     
   },
