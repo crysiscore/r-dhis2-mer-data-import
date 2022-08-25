@@ -154,259 +154,15 @@ getDEValueOnExcell <- function(cell.ref, excell.mapping.template, sheet.name){
 
 
 
-getDataElements <- function(base.url) {
-  url <-
-    paste0(base.url,
-           "api/dataElements?fields=id,name,shortName&paging=false")
-  r <- content(GET(url, authenticate(dhis2.username, dhis2.password)), as = "parsed")
-  do.call(rbind.data.frame, r$dataElements)
-}
-
-getOrganizationUnits <- function(base.url, location_id) {
-  ## location pode ser distrito , provincia
-  url <-
-    paste0(
-      base.url,
-      paste0(
-        "api/organisationUnits/",
-        location_id,
-        "?includeDescendants=true&level=3&fields=id,name,shortName&paging=false"
-      )
-    )
-  r <- content(GET(url, authenticate(dhis2.username, dhis2.password)), as = "parsed")
-  do.call(rbind.data.frame, r$organisationUnits)
-}
-
-getProgramStages <- function(base.url, program.id) {
-  ## location pode ser distrito , provincia
-  url <-
-    paste0(
-      base.url,
-      paste0(
-        "api/programs/",
-        program.id,
-        "/programStages?fields=id,name"
-      )
-    )
-  r <- content(GET(url, authenticate(dhis2.username, dhis2.password)), as = "parsed")
-  do.call(rbind.data.frame, r$programStages)
-}
-
-getTrackedInstances <- function(base.url, program.id,org.unit) {
-  ## location pode ser distrito , provincia
-  url <-
-    paste0(
-      base.url,
-      paste0(
-        "api/tracker/trackedEntities?orgUnit=",
-        org.unit,
-        "&program=",
-        program.id,
-        "&ouMode=DESCENDANTS"
-      )
-    )
-  r <- content(GET(url, authenticate(dhis2.username, dhis2.password),timeout(10)), as = "parsed")
+getUsNameFromSheetNames <-function(vector){
   
-  # criar um df vazio para armazenar os TE
-  df_te <- data.frame(matrix(ncol = 7, nrow =  length(r$instances) ))
-  x <- c("Nome", "Apelido", "idade" , "Telefone", "Nid", "trackedEntity", "orgUnit")
-  colnames(df_te) <- x
-  
-  
-  if(typeof(r)=="list" && length(r$instances)>0) {
+  vec <- c()
+  for (item in vector) {
     
-    
-    
-    # Iterar a lista para extrair os attributes
-    for (i in 1:length(r$instances)) {
-      
-      
-      tracked_entity <- r$instances[[i]]
-      tracked_entity_id <- tracked_entity$trackedEntity
-      org_unit <- tracked_entity$orgUnit
-      tracked_entity_name <- ""
-      tracked_entity_telefone <- ""
-      tracked_entity_surname <- ""
-      tracked_entity_nid <- ""
-      tracked_entity_age <- ""
-      
-      list_atributos <- tracked_entity$attributes
-      
-      for (v in 1:length(list_atributos)) {
-        
-        atributo <- list_atributos[[v]]
-        displayName <- atributo$displayName
-        value <- atributo$value
-        
-        if(displayName=="Nome"){
-          tracked_entity_name <- value
-          
-        } else  if(displayName=="Apelido"){
-          tracked_entity_surname <- value
-          
-        } else if(displayName=="NID"){
-          tracked_entity_nid <- value
-          
-        } else if(displayName=="Telefone"){
-          tracked_entity_telefone<- value
-          
-        } else if (displayName=="Idade"){
-          tracked_entity_age<- value
-          
-        }
-      }
-      
-      # prencher o df df_te
-      df_te$Nome[i] <-  tracked_entity_name 
-      df_te$Apelido[i] <- tracked_entity_surname
-      df_te$Telefone[i] <- tracked_entity_telefone
-      df_te$Nid[i] <-  tracked_entity_nid
-      df_te$trackedEntity[i] <- tracked_entity_id
-      df_te$orgUnit[i] <- org_unit
-      df_te$idade[i] <- tracked_entity_age
-      
-      
-    }
-    
+    vec <- c(vec, strsplit(item, "_")[[1]][3])
   }
-  
-  
-  df_te
-  
+  vec
 }
-
-getTrackerEvents <- function(base.url,org.unit,program.id, program.stage.id){
-  url <-
-    paste0(base.url,
-           paste0(
-             "api/tracker/events.json?orgUnit=",
-             org.unit,
-             '&program=',
-             program.id,
-             '&programStage=',
-             program.stage.id,
-             "&ouMode=DESCENDANTS&skipPaging=true"
-           )
-    )
-  
-  # Get the data
-  r2 <- content(GET(url, authenticate(dhis2.username, dhis2.password),timeout(5)),as = "parsed")
-  
-  if(typeof(r2)=="list" && length(r2$instances)>0) {
-    
-    vec_size_datavalues <- c()
-    for(event in r2$instances){
-      
-      size <- length( event$dataValues)
-      vec_size_datavalues <-  c(vec_size_datavalues,size)
-    }
-    
-    # primeiro evento da lista com maior  nr de colunas
-    index = which.max(vec_size_datavalues)
-    #event_metadata_col_names <- names(r2$instances[[index]])
-    #event_values_col_names   <- names(r2$instances[[index]]$dataValues[[1]])
-    # Quantidade de variaveis de cada evento
-    #length(r2$instances[[index]]$dataValues)
-    #df_events_col_names <- c(event_metadata_names, event_values_col_names)
-    
-    # inicializar o df 
-    df_event_values <- do.call(rbind.data.frame,r2$instances[[1]]$dataValues)
-    df_event_values <- df_event_values[1,]
-    df_event_values$storedBy <- ""
-    df_event_values$programStage <- ""
-    df_event_values$status <- ""
-    df_event_values$created <- ""
-    #df_event_values$notes <- ""
-    df_event_values$dueDate <- ""
-    df_event_values$orgUnit <- ""
-    df_event_values$orgUnitName <- ""
-    df_event_values$program <- ""
-    df_event_values$trackedEntityIntance <- ""
-    df_event_values$eventDate <- ""
-    df_event_values$deleted <- ""
-    df_event_values$href <- ""
-    df_event_values$enrollment <- ""
-    df_event_values$attributeCategoryOptions <- ""
-    df_event_values$attributeOptionCombo <- ""
-    df_event_values$event <- ""
-    df_event_values$enrollmentStatus <- ""
-    df_event_values <- df_event_values[0,]
-    
-    #  Junta todos  dataValues  de todos  eventos
-    
-    for (index in 1:length(r2$instances)) {
-      
-      if(length(r2$instances[[index]]$dataValues)>0) {
-        
-        temp <-  do.call(rbind.data.frame,r2$instances[[index]]$dataValues)
-        
-        
-        temp$storedBy <-r2$instances[[index]]$storedBy
-        temp$programStage <-r2$instances[[index]]$programStage
-        temp$status <- r2$instances[[index]]$status
-        temp$created <- r2$instances[[index]]$created
-        
-        # Existem eventos sem notas
-        #if(length(r2$instances[[index]]$notes)>0){
-        #
-        #  temp$notes <- r2$instances[[index]]$notes
-        #}
-        
-        temp$dueDate <- r2$instances[[index]]$dueDate
-        temp$orgUnit <- r2$instances[[index]]$orgUnit
-        temp$orrgUnitName <- r2$instances[[index]]$orgUnitName
-        temp$program <- r2$instances[[index]]$program
-        temp$trackedEntityIntance <- r2$instances[[index]]$trackedEntityInstance
-        temp$eventDate <- r2$instances[[index]]$eventDate
-        temp$deleted <- r2$instances[[index]]$deleted
-        temp$href <- r2$instances[[index]]$href
-        temp$enrollment <- r2$instances[[index]]$enrollment
-        temp$attributeCategoryOptions <- r2$instances[[index]]$attributeCategoryOptions
-        temp$attributeOptionCombo <- r2$instances[[index]]$attributeOptionCombo
-        temp$event <- r2$instances[[index]]$event
-        temp$enrollmentStatus <- r2$instances[[index]]$enrollmentStatus
-        
-        
-        df_event_values <- rbind.fill(df_event_values, temp)
-      }
-    }
-    
-  }
-  
-  df_event_values
-  
-  
-}
-
-findDataElementByID <- function(id){
-  
-  dataElement <- dataElements[which(dataElements$id==id),]
-  as.character(dataElement$name)
-}
-
-findTrackedInstanceByID <- function(id){
-  
-  trackedInstance <- trackedInstance[which(trackedInstances$Instance==id),]
-  as.character(trackedInstance$name)
-}
-
-findProgramStageByID <- function(id){
-  
-  stage <- programStages[which(programStages$id==id),]
-  as.character(stage$name)
-}
-
-calc_age <- function(birthDate, refDate = Sys.Date()) {
-  
-  require(lubridate)
-  
-  period <- as.period(interval(birthDate, refDate),
-                      unit = "year")
-  
-  period$year
-  
-} 
-
 getDataSetDataElements <- function(base.url, dataset.id) {
   
   url <-
@@ -430,5 +186,36 @@ getDataSetDataElements <- function(base.url, dataset.id) {
   
 }
 
+
+# MER CT
+#excell.mapping.template <- 'MER CARE & TREATMENT.xlsx'
+#file_to_import <- 'Linked_DHIS_MER_Templates_v1.0.xlsx'
+#sheet_name <- 'MER_CT'
+
+
+checkDataConsistency <- function(excell.mapping.template, file.to.import, sheet.name, vec.indicatior ){
+  
+  for (indicator in vec_mer_ct_indicators) {
+    # GET excell values
+    setwd(wd)
+    # Carregar os indicadores do ficheiro do template de Mapeamento  & excluir os dataElements que nao reportamos (observation==99)
+    tmp_df <- read_xlsx(path =paste0('mapping/',excell.mapping.template), sheet = indicator , skip = 1 )
+    tmp_df <- filter(tmp_df, is.na(observation) )
+    tmp_df$check <- ""
+    tmp_df$value <- ""
+    
+    
+    #Verificar se todos os dataElements do Ficheiro de Mapeamento existem no DHIS2: check=TRUE -> OK  (check=FALSE, check=Duplicado) -> Nao existem
+    tmp_df$check  <- mapply(checkIFDataElementExistsOnTemplate,tmp_df$dhisdataelementuid,tmp_df$dhiscategoryoptioncombouid ,"datavalueset_template_dhis2_mer_ct",indicator)
+    
+    #Get excell values
+    setwd('data/')
+    tmp_df$value <-  mapply(getDEValueOnExcell,tmp_df$excell_cell_ref, file_to_import, sheet.name=sheet_name)
+    
+    assign(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), tmp_df , envir = .GlobalEnv)
+    
+    
+  }
+}
 
 
