@@ -1,10 +1,18 @@
 ## app.R ##
 library(shinydashboard)
-#library(shinyjs)
+library(shiny)
+library(jsonlite)
+library(dplyr)
+library(readxl)
+library(dipsaus)
+library(shinyWidgets)
+
+source(file = 'paramConfig.R') # Carrega os paramentros 
+setwd(wd)
+
 
 ui <- dashboardPage(
-  
-# useShinyjs(),
+
   dashboardHeader(title = "CCS DHIS2 Data upload", dropdownMenu(type = "notifications",
                                                                 notificationItem(
                                                                   text = "5 new users today",
@@ -44,14 +52,76 @@ ui <- dashboardPage(
       
       # Second tab content
       tabItem(tabName = "widgets",
-              h2("Widgets tab content")
+              # Sidebar layout with input and output definitions ----
+              sidebarLayout(
+                
+                # Sidebar panel for inputs ----
+                sidebarPanel(
+                  
+                  # Input: Select a file to import do DHIS2 ----
+                  fileInput("file1", "Selecione o Ficheiro",
+                            multiple = FALSE,
+                            accept = c( "application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")),
+                  
+                  # Horizontal line ----
+                  # Output: Formatted text for caption ----
+                  h5(id="instruction", textOutput("instruction", container = span),style="color:red"),
+                  
+                  tags$hr(),
+                  
+                  # Input: Select separator ----
+                  awesomeRadio("dhis_datasets", "DHIS2 Datasets",
+                               choices = mer_datasets_names,
+                               selected = "",
+                               status = "success"),
+                  
+                  # Horizontal line ----
+                  tags$hr(),
+                      
+                  # Input: Create a group of checkboxes that can be used to toggle multiple choices independently. The server will receive the input as a character vector of the selected values.
+                  checkboxGroupInput("chkbxUsGroup", "Unidades Sanitarias: "
+                  ) ,
+                  
+                  # Horizontal line ----
+                  tags$hr(),
+                  # Submit button
+                  # UI function
+                  actionButtonStyled(inputId="btn_reset", label="Reset fields   ",
+                                     btn_type = "button", type = "default", class = "btn-sm"),
+                  actionButtonStyled(inputId="btn_checks_before_upload", label="Run Checks",
+                                     btn_type = "button", type = "warning", class = "btn-sm"),
+                  
+                  actionButtonStyled(inputId="btn_checks_upload", label="Upload  file ",
+                                     btn_type = "button", type = "primary", class = "btn-sm")
+                  
+                ),
+                
+                # Main panel for displaying outputs ----
+                mainPanel(
+                  
+                  
+                  # Output: Formatted text for caption ----
+                  h3(textOutput("caption", container = span)),
+                  
+                  # Output: Data file ----
+                  tableOutput("contents")
+                  
+                )
+                
+              )
       )
     )
   )
 )
 
-server <- function(input, output,session) {
+server <- function(input, output) {
   
+  # Disable the button on start
+  updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
+  updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_upload",  disabled = TRUE  )
+  updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
+  
+  #Observe SideBarMenu 
   observeEvent(input$switchtab, {
     newtab <- switch(input$tabs,
                      "dashboard" = "widgets",
@@ -59,7 +129,67 @@ server <- function(input, output,session) {
     )
     updateTabItems(session, "tabs", newtab)
   })
-  #isolate({updateTabItems(session, "leftSidebar", "mapView")})
+  
+  
+  # observe  radioButtons("dhis_datasets")
+  observeEvent(input$dhis_datasets, {
+    
+    req(input$file1)
+    
+    vec_sheets <-  c()
+    
+    tryCatch(
+      {
+        vec_sheets <- excel_sheets(path = input$file1$datapath)
+        if(length(vec_sheets)> 0 ){
+          
+          
+          # verifica se o checkbox dataset foi selecionado
+          dataset = input$dhis_datasets
+          if(length(dataset)==0){
+            #output$instruction <- renderText({  "Selecione o dataset & US" })
+            
+          } else if(dataset %in% mer_datasets_names  ){
+            
+            output$instruction <- renderText({ "" })
+            # Prencher checkboxgroup das US atraves do ficheiro a ser importado, cada item representa uma folha (sheet) no ficheiro.
+            updateCheckboxGroupInput(getDefaultReactiveDomain(), "chkbxUsGroup",
+                                     label = paste("Unidades Sanitarias: ", length(vec_sheets)),
+                                     choiceNames = as.list(getUsNameFromSheetNames(vec_sheets)),
+                                     choiceValues = as.list(vec_sheets),
+                                     selected = "")
+            updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
+            updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset", disabled = FALSE)
+          } 
+          
+          
+          
+          
+        }
+      },
+      error = function(e) {
+        # return a safeError if a parsing error occurs
+        message(e)
+        stop(safeError(e))
+      }
+    )
+    
+    
+  })
+  
+  # Observe reset btn
+  observeEvent(input$btn_reset, {
+    
+    updateAwesomeRadio(getDefaultReactiveDomain(), inputId = "dhis_datasets",label =  "DHIS2 Datasets",
+                       choices = mer_datasets_names,
+                       selected = ""       )
+    updateCheckboxGroupInput(getDefaultReactiveDomain(), "chkbxUsGroup",
+                       label = paste("Unidades Sanitarias: ", "0"),
+                       choices = "",
+                       selected = "NULL" )
+    
+  })
+  
   
   
   set.seed(122)

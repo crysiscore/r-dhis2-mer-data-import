@@ -1,134 +1,136 @@
+## app.R ##
+library(shinydashboard)
 library(shiny)
 library(jsonlite)
 library(dplyr)
 library(readxl)
 library(dipsaus)
 library(shinyWidgets)
-library(shinydashboard)
 
 source(file = 'paramConfig.R') # Carrega os paramentros 
 setwd(wd)
 
-# Define UI for data upload app ----
-ui <- fluidPage(
 
-  tags$style(
-    ".h4 {
-      color: red;
-    }
-    #instruction {
-      color: red;
-    }
-    "
-  ),
-  # App title ----
-  titlePanel("CCS DHIS2 data upload"),
-
-  # Sidebar layout with input and output definitions ----
-  sidebarLayout(
-
-    # Sidebar panel for inputs ----
-    sidebarPanel(
-
-      # Input: Select a file to import do DHIS2 ----
-      fileInput("file1", "Selecione o Ficheiro",
-                multiple = FALSE,
-                accept = c( "application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")),
-
-      # Horizontal line ----
-      # Output: Formatted text for caption ----
-      h5(id="instruction", textOutput("instruction", container = span)),
-      
-      tags$hr(),
-
-      # Input: Select separator ----
-      awesomeRadio("dhis_datasets", "DHIS2 Datasets",
-                   choices = mer_datasets_names,
-                   selected = "",
-                   status = "success"),
-
-      # Horizontal line ----
-      tags$hr(),
-
-      # Input: Create a group of checkboxes that can be used to toggle multiple choices independently. The server will receive the input as a character vector of the selected values.
-      checkboxGroupInput("chkbxUsGroup", "Unidades Sanitarias: "
-                        ) ,
-      
-      # Horizontal line ----
-      tags$hr(),
-      # Submit button
-      # UI function
-      actionButtonStyled(inputId="btn_reset", label="Reset fields   ",
-                         btn_type = "button", type = "default", class = "btn-sm"),
-      actionButtonStyled(inputId="btn_checks_before_upload", label="Run Checks",
-                         btn_type = "button", type = "warning", class = "btn-sm"),
-      
-      actionButtonStyled(inputId="btn_checks_upload", label="Upload  file ",
-                         btn_type = "button", type = "primary", class = "btn-sm")
-      
-    ),
-    
-    # Main panel for displaying outputs ----
-    mainPanel(
-
-      
-      # Output: Formatted text for caption ----
-      h3(textOutput("caption", container = span)),
-      
-      # Output: Data file ----
-      tableOutput("contents")
-
+ui <- dashboardPage(
+  
+  dashboardHeader(title = "CCS DHIS2 Data upload", dropdownMenu(type = "notifications",
+                                                                notificationItem(
+                                                                  text = "5 new users today",
+                                                                  icon("users")
+                                                                ),
+                                                                notificationItem(
+                                                                  text = "12 items delivered",
+                                                                  icon("truck"),
+                                                                  status = "success"
+                                                                ),
+                                                                notificationItem(
+                                                                  text = "Server load at 86%",
+                                                                  icon = icon("exclamation-triangle"),
+                                                                  status = "warning"
+                                                                )
+  )),
+  dashboardSidebar(
+    sidebarMenu(
+      id = "menu",
+      menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
+      menuItem("Upload", tabName = "widgets", icon = icon("th"))
     )
-
+  ),
+  dashboardBody(
+    tabItems( 
+      # First tab content
+      tabItem(tabName = "dashboard",
+              fluidRow(
+                box(plotOutput("plot1", height = 250)),
+                
+                box(
+                  title = "Controls",
+                  sliderInput("slider", "Number of observations:", 1, 100, 50)
+                )
+              )
+      ),
+      
+      # Second tab content
+      tabItem(tabName = "widgets",
+              # Sidebar layout with input and output definitions ----
+              sidebarLayout(
+                
+                # Sidebar panel for inputs ----
+                sidebarPanel(
+                  
+                  # Input: Select a file to import do DHIS2 ----
+                  fileInput("file1", "Selecione o Ficheiro",
+                            multiple = FALSE,
+                            accept = c( "application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")),
+                  
+                  # Horizontal line ----
+                  # Output: Formatted text for caption ----
+                  h5(id="instruction", textOutput("instruction", container = span),style="color:red"),
+                  
+                  tags$hr(),
+                  
+                  # Input: Select separator ----
+                  awesomeRadio("dhis_datasets", "DHIS2 Datasets",
+                               choices = mer_datasets_names,
+                               selected = "",
+                               status = "success"),
+                  
+                  # Horizontal line ----
+                  tags$hr(),
+                  
+                  # Input: Create a group of checkboxes that can be used to toggle multiple choices independently. The server will receive the input as a character vector of the selected values.
+                  checkboxGroupInput("chkbxUsGroup", "Unidades Sanitarias: "
+                  ) ,
+                  
+                  # Horizontal line ----
+                  tags$hr(),
+                  # Submit button
+                  # UI function
+                  actionButtonStyled(inputId="btn_reset", label="Reset fields   ",
+                                     btn_type = "button", type = "default", class = "btn-sm"),
+                  actionButtonStyled(inputId="btn_checks_before_upload", label="Run Checks",
+                                     btn_type = "button", type = "warning", class = "btn-sm"),
+                  
+                  actionButtonStyled(inputId="btn_checks_upload", label="Upload  file ",
+                                     btn_type = "button", type = "primary", class = "btn-sm")
+                  
+                ),
+                
+                # Main panel for displaying outputs ----
+                mainPanel(
+                  
+                  
+                  # Output: Formatted text for caption ----
+                  h3(textOutput("caption", container = span)),
+                  
+                  # Output: Data file ----
+                  tableOutput("contents")
+                  
+                )
+                
+              )
+      )
+    )
   )
 )
 
-# Define server logic to read selected file ----
 server <- function(input, output) {
   
-  # DIsable the button on start
+  # Disable the button on start
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_upload",  disabled = TRUE  )
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
-  is_file_ok <- FALSE
   
-  observe( {
-   
-    req(input$file1)
-    vec_sheets <-  c()
-   
-     tryCatch(
-      {
-        vec_sheets <- excel_sheets(path = input$file1$datapath)
-        if(length(vec_sheets)> 0 ){
-          
-       
-          # verifica se o checkbox dataset foi selecionado
-          dataset = input$dhis_datasets
-          if(length(dataset)==0){
-            output$instruction <- renderText({  "Selecione o dataset & US" })
-            
-          } else if(dataset %in% mer_datasets_names  ){
-            
-            output$instruction <- renderText({ "" })
-               } 
-          
-          
-          
-          
-        }
-      },
-      error = function(e) {
-        # return a safeError if a parsing error occurs
-        message(e)
-        stop(safeError(e))
-      }
+  #Observe SideBarMenu 
+  observeEvent(input$switchtab, {
+    newtab <- switch(input$tabs,
+                     "dashboard" = "widgets",
+                     "widgets" = "dashboard"
     )
- 
-    
-
+    updateTabItems(session, "tabs", newtab)
   })
-
+  
+  
   # observe  radioButtons("dhis_datasets")
   observeEvent(input$dhis_datasets, {
     
@@ -157,7 +159,7 @@ server <- function(input, output) {
                                      choiceValues = as.list(vec_sheets),
                                      selected = "")
             updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
-            
+            updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset", disabled = FALSE)
           } 
           
           
@@ -171,43 +173,32 @@ server <- function(input, output) {
         stop(safeError(e))
       }
     )
-  
- 
-  })
     
-
-  
-  
- 
-  
-
-  output$contents <- renderTable({
-
-    # input$file1 will be NULL initially. After the user selects
-    # and uploads a file, head of that data file by default,
-    # or all rows if selected, will be shown.
-
-    req(input$file1)
-
-    # when reading semicolon separated files,
-    # having a comma separator causes `read.csv` to error
-    tryCatch(
-      {
-        df <- read_xlsx(path = input$file1$datapath,sheet = 1,skip = 1)
-      },
-      error = function(e) {
-        # return a safeError if a parsing error occurs
-        stop(safeError(e))
-      }
-    )
-
-
-      return(head(df))
-   
-
+    
   })
- 
+  
+  # Observe reset btn
+  observeEvent(input$btn_reset, {
+    
+    updateAwesomeRadio(getDefaultReactiveDomain(), inputId = "dhis_datasets",label =  "DHIS2 Datasets",
+                       choices = mer_datasets_names,
+                       selected = ""       )
+    updateCheckboxGroupInput(getDefaultReactiveDomain(), "chkbxUsGroup",
+                             label = paste("Unidades Sanitarias: ", "0"),
+                             choices = "",
+                             selected = "NULL" )
+    
+  })
+  
+  
+  
+  set.seed(122)
+  histdata <- rnorm(500)
+  
+  output$plot1 <- renderPlot({
+    data <- histdata[seq_len(input$slider)]
+    hist(data)
+  })
 }
 
-# Create Shiny app ----
 shinyApp(ui, server)
