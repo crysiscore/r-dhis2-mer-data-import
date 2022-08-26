@@ -56,10 +56,12 @@ ui <- fluidPage(
       tags$hr(),
       # Submit button
       # UI function
+      actionButtonStyled(inputId="btn_reset", label="Reset fields   ",
+                         btn_type = "button", type = "default", class = "btn-sm"),
       actionButtonStyled(inputId="btn_checks_before_upload", label="Run Checks",
                          btn_type = "button", type = "warning", class = "btn-sm"),
       
-      actionButtonStyled(inputId="btn_checks_upload", label="Upload",
+      actionButtonStyled(inputId="btn_checks_upload", label="Upload  file ",
                          btn_type = "button", type = "primary", class = "btn-sm")
       
     ),
@@ -85,6 +87,7 @@ server <- function(input, output) {
   # DIsable the button on start
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_upload",  disabled = TRUE  )
+  updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
   is_file_ok <- FALSE
   
   observe( {
@@ -106,12 +109,7 @@ server <- function(input, output) {
           } else if(dataset %in% mer_datasets_names  ){
             
             output$instruction <- renderText({ "" })
-            is_file_ok <- TRUE
-            print(paste0("You have chosen: ", input$dhis_datasets))
-            
-            #updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
-            
-          } 
+               } 
           
           
           
@@ -129,15 +127,54 @@ server <- function(input, output) {
 
   })
 
-  if(is_file_ok){
+  # observe  radioButtons("dhis_datasets")
+  observeEvent(input$dhis_datasets, {
     
-    # Prencher checkboxgroup das US atraves do ficheiro a ser importado, cada item representa uma folha (sheet) no ficheiro.
-    updateCheckboxGroupInput(getDefaultReactiveDomain(), "chkbxUsGroup",
-                             label = paste("Unidades Sanitarias: ", length(vec_sheets)),
-                             choiceNames = as.list(getUsNameFromSheetNames(vec_sheets)),
-                             choiceValues = as.list(vec_sheets),
-                             selected = "")
-  }
+    req(input$file1)
+    
+    vec_sheets <-  c()
+    
+    tryCatch(
+      {
+        vec_sheets <- excel_sheets(path = input$file1$datapath)
+        if(length(vec_sheets)> 0 ){
+          
+          
+          # verifica se o checkbox dataset foi selecionado
+          dataset = input$dhis_datasets
+          if(length(dataset)==0){
+            #output$instruction <- renderText({  "Selecione o dataset & US" })
+            
+          } else if(dataset %in% mer_datasets_names  ){
+            
+            output$instruction <- renderText({ "" })
+            # Prencher checkboxgroup das US atraves do ficheiro a ser importado, cada item representa uma folha (sheet) no ficheiro.
+            updateCheckboxGroupInput(getDefaultReactiveDomain(), "chkbxUsGroup",
+                                     label = paste("Unidades Sanitarias: ", length(vec_sheets)),
+                                     choiceNames = as.list(getUsNameFromSheetNames(vec_sheets)),
+                                     choiceValues = as.list(vec_sheets),
+                                     selected = "")
+            updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
+            
+          } 
+          
+          
+          
+          
+        }
+      },
+      error = function(e) {
+        # return a safeError if a parsing error occurs
+        message(e)
+        stop(safeError(e))
+      }
+    )
+  
+ 
+  })
+    
+
+  
   
  
   
