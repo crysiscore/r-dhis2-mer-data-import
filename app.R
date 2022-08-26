@@ -3,7 +3,8 @@ library(jsonlite)
 library(dplyr)
 library(readxl)
 library(dipsaus)
-
+library(shinyWidgets)
+library(shinydashboard)
 
 source(file = 'paramConfig.R') # Carrega os paramentros 
 setwd(wd)
@@ -41,9 +42,10 @@ ui <- fluidPage(
       tags$hr(),
 
       # Input: Select separator ----
-      radioButtons("dhis_datasets", "DHIS2 Datasets",
+      awesomeRadio("dhis_datasets", "DHIS2 Datasets",
                    choices = mer_datasets_names,
-                   selected = ""),
+                   selected = "",
+                   status = "success"),
 
       # Horizontal line ----
       tags$hr(),
