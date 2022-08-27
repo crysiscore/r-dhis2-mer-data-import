@@ -116,12 +116,12 @@ ui <- dashboardPage(
 
 server <- function(input, output) {
   
-  # Disable the button on start
+  # Disable the buttons on start
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_upload",  disabled = TRUE  )
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
   
-  #Observe SideBarMenu 
+  #Observe SideBarMenu : switch tabs on menu clicks
   observeEvent(input$switchtab, {
     newtab <- switch(input$tabs,
                      "dashboard" = "widgets",
@@ -131,7 +131,7 @@ server <- function(input, output) {
   })
   
   
-  # observe  radioButtons("dhis_datasets")
+  # Observe  radioButtons("dhis_datasets")
   observeEvent(input$dhis_datasets, {
     
     req(input$file1)
@@ -158,8 +158,9 @@ server <- function(input, output) {
                                      choiceNames = as.list(getUsNameFromSheetNames(vec_sheets)),
                                      choiceValues = as.list(vec_sheets),
                                      selected = "")
-            updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
+            #updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
             updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset", disabled = FALSE)
+            output$instruction <- renderText({  "Selecione o dataset & US" })
           } 
           
           
@@ -187,9 +188,32 @@ server <- function(input, output) {
                              label = paste("Unidades Sanitarias: ", "0"),
                              choices = "",
                              selected = "NULL" )
+    updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
+    output$instruction <- renderText({  "" })
+    updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
+  
     
   })
   
+  # Observe US checkboxes 
+  observeEvent( input$chkbxUsGroup, {
+    
+    req(input$file1)
+    req(input$dhis_datasets)
+    
+    # verifica se alguma us foi selecionada
+    us_selected = input$chkbxUsGroup
+    if(length(us_selected)==0){
+      
+    } else {
+      output$instruction <- renderText({ "" })
+      cat(us_selected, sep = " | ")
+      #updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
+      updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset", disabled = FALSE)
+      updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE  )
+    } 
+    
+  })
   
   
   set.seed(122)
