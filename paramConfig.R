@@ -20,11 +20,12 @@ dataset_id_mer_smi        <- 'OQDQqOI7brV'
 dataset_id_mer_hs         <- 'AAw69FykQil'
 
 # MER TEMPLATES -  Planilhas de mapeamento
-excell.mapping.template.mer.prevention <- 'MER PREVENTION.xlsx'
-excell.mapping.template.mer.ct         <- 'MER CARE & TREATMENT.xlsx'
-excell.mapping.template.mer.ats        <- 'MER ATS.xlsx'
-excell.mapping.template.mer.smi        <- 'MER SMI.xlsx'
-excell.mapping.template.mer.hs         <- 'MER HEALTH SYSTEMS.xlsx' 
+excell_mapping_template_mer_prevention <- 'MER PREVENTION.xlsx'
+excell_mapping_template_mer_ct         <- 'MER CARE & TREATMENT.xlsx'
+excell_mapping_template_mer_ats        <- 'MER ATS.xlsx'
+excell_mapping_template_mer_smi        <- 'MER SMI.xlsx'
+excell_mapping_template_mer_hs         <- 'MER HEALTH SYSTEMS.xlsx' 
+
 
 
 # INDICATORS VS  DHIS DATASET MAPPING
@@ -34,9 +35,16 @@ vec_mer_ats_indicators         <- c('DSD HTS TST','DSD HTS INDEX','DSD HTS SELF'
 vec_mer_smi_indicators         <- c('DSD PMTCT STAT','DSD PMTCT EID','DSD PMTCT HEI POS','DSD CXCA SCRN','DSD CXCA TX')
 vec_mer_prevention_indicators  <- c('DSD PREP','DSD TB PREV','DSD GEND GBV', 'DSD FPINT SITE')
 
+#Nomes das US que aparecem nos sheets gerados automaticamente nos temlates de importacao: J. Mandlate
+
+us_names_sheet <- c("1Junho","Albazine","Hulene","MavalaneCS"  , "MavalaneHG" ,  "Pescadores" ,  "Romao", "1Maio", "PCanico", "AltMae","CCivil", 
+                   "HCMPed","Malhangalene", "Maxaquene","PCimento22","Porto", "Bagamoio","HPI","Inhagoia","MagoanineA","MTendas", "Zimpeto",
+                   "Inhaca","Catembe", "Incassane","ChamanculoCS" ,"ChamanculoHG" ,"JMCS",  "JMHG",  "Xipamanine")
 
 
 source(file = 'misc_functions.R') # ficheiro com diversas funcoes
 source(file = 'credentials.R')    # Variaveis de conexao do DHIS2
 load(file = 'rdata.RData')        # ficheiro com DF que armazenam temporariamente os logs e algumas variaveis usadas no codigo
+
+
 

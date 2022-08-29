@@ -193,9 +193,9 @@ getDataSetDataElements <- function(base.url, dataset.id) {
 #sheet_name <- 'MER_CT'
 
 
-checkDataConsistency <- function(excell.mapping.template, file.to.import, sheet.name, vec.indicatior ){
-  
-  for (indicator in vec_mer_ct_indicators) {
+checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators ){
+
+  for (indicator in vec.indicators) {
     # GET excell values
     setwd(wd)
     # Carregar os indicadores do ficheiro do template de Mapeamento  & excluir os dataElements que nao reportamos (observation==99)
@@ -216,6 +216,52 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import, sheet.
     
     
   }
+
 }
 
+
+#' checkImportTamplateIntegrity ->  Verifica se o template/sheet que contem dados a ser importado esta devidamente formatado
+#' @param cell.ref referencia da cell
+#' @param  excell.mapping.template location do ficheiro
+#' @param sheet.name nome do sheet
+#' @examples 
+#' erros  <- checkImportTamplateIntegrity(file.to.import, dataset.name, sheet.name)
+
+checkImportTamplateIntegrity  <- function(file.to.import,dataset.name,sheet.name){
+  
+  df_checks <- read_xlsx(path ='mapping/dhis_mer_checks.xlsx', sheet = 1 ,col_names = TRUE  )
+  
+  df_cells_to_ckeck  <- filter(df_checks, Dataset ==dataset.name)
+  df_cells_to_ckeck$value_on_template <-""
+  df_cells_to_ckeck$error_message <-""
+  total_errors <-0
+  
+  for (index  in 1:nrow(df_cells_to_ckeck)) {
+    
+      cell_ref <- df_cells_to_ckeck$Cell[index]
+      cell_value <- df_cells_to_ckeck$Value[index]
+      
+      value_on_template <- getDEValueOnExcell( cell_ref ,excell.mapping.template =file.to.import,sheet.name = sheet.name )
+      if(value_on_template != cell_value){
+        #TODO escrever os erros num ficheiro de texto para posterior apresentacao
+        error_msg <- paste0(Sys.Date()," TEMPLATE ERROR ('",dataset.name,"|",sheet.name,"'): O ficheiro de importacao nao esta consistente, a cellula: ",cell_ref, " Devia ter o valor: '", cell_value,"'")
+        message(error_msg )
+        total_errors <- total_errors +1
+        df_cells_to_ckeck$value_on_template[index] <-  value_on_template
+        df_cells_to_ckeck$error_message[index]     <-  error_msg
+        
+      } else {
+        df_cells_to_ckeck$value_on_template[index] <-  'ok'
+        df_cells_to_ckeck$error_message[index]     <-  'ok'
+        message(Sys.Date()," Cell: ",cell_ref ,"  value: '", value_on_template ,"' is ok. Reading next value ... " )
+      }
+    
+  }
+  #Write error 
+  if(total_errors> 0){
+    writexl::write_xlsx(x = df_cells_to_ckeck,path = 'errors/template_errors.xlsx')
+  }
+  return(total_errors)
+  
+}
 
