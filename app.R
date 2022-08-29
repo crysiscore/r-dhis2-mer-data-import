@@ -6,6 +6,7 @@ library(dplyr)
 library(readxl)
 library(dipsaus)
 library(shinyWidgets)
+library(DT)
 
 source(file = 'paramConfig.R') # Carrega os paramentros 
 setwd(wd)
@@ -78,7 +79,19 @@ ui <- dashboardPage(
                   # Horizontal line ----
                   tags$hr(),
                   
-                  # Input: Create a group of checkboxes that can be used to toggle multiple choices independently. The server will receive the input as a character vector of the selected values.
+                  #  Create a group of checkboxes : Indicadores
+                  checkboxGroupButtons(
+                    inputId = "chkbxIndicatorsGroup" ,
+                    label = "Indicadores:",
+                     choices = c('')
+                    
+                  ), 
+                  #checkboxGroupInput("chkbxIndicatorsGroup", "Indicadores:"
+                  # ) ,
+                  # Horizontal line ----
+                  tags$hr(),
+                  
+                  # Input: Create a group of checkboxes Unidades Sanitarias
                   checkboxGroupInput("chkbxUsGroup", "Unidades Sanitarias: "
                   ) ,
                   
@@ -91,7 +104,7 @@ ui <- dashboardPage(
                   actionButtonStyled(inputId="btn_checks_before_upload", label="Run Checks",
                                      btn_type = "button", type = "warning", class = "btn-sm"),
                   
-                  actionButtonStyled(inputId="btn_checks_upload", label="Upload  file ",
+                  actionButtonStyled(inputId="btn_upload", label="Upload  file ",
                                      btn_type = "button", type = "primary", class = "btn-sm")
                   
                 ),
@@ -102,10 +115,21 @@ ui <- dashboardPage(
                   
                   # Output: Formatted text for caption ----
                   h3(textOutput("caption", container = span)),
+                  fluidRow(
+                    box( title = "Status de execucao", status = "primary", height = 
+                           "365",width = "12",solidHeader = T, 
+                         column(width = 12,  DT::dataTableOutput("tbl_exec_log"),style = "height:300px; overflow-y: scroll;overflow-x: scroll;"
+                         )  )  ) ,
+                  fluidRow(
+                    box( title = "Warnings", status = "primary", height = 
+                           "465",width = "12",solidHeader = T, 
+                         column(width = 12,  DT::dataTableOutput("tbl_exec_log"),style = "height:400px; overflow-y: scroll;overflow-x: scroll;"
+                         )  )  ) ,
                   
                   # Output: Data file ----
-                  tableOutput("contents")
-                  
+                  tableOutput("contents"),
+                  tableOutput("contents_error"),
+                  tableOutput("contents_emptu")
                 )
                 
               )
@@ -118,7 +142,7 @@ server <- function(input, output) {
   
   # Disable the buttons on start
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
-  updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_upload",  disabled = TRUE  )
+  updateActionButtonStyled( getDefaultReactiveDomain(), "btn_upload",  disabled = TRUE  )
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
   
   #Observe SideBarMenu : switch tabs on menu clicks
@@ -153,14 +177,60 @@ server <- function(input, output) {
             
             output$instruction <- renderText({ "" })
             # Prencher checkboxgroup das US atraves do ficheiro a ser importado, cada item representa uma folha (sheet) no ficheiro.
-            updateCheckboxGroupInput(getDefaultReactiveDomain(), "chkbxUsGroup",
-                                     label = paste("Unidades Sanitarias: ", length(vec_sheets)),
-                                     choiceNames = as.list(getUsNameFromSheetNames(vec_sheets)),
-                                     choiceValues = as.list(vec_sheets),
-                                     selected = "")
+            
+            # Mostras os indicadores associados ao dataset 
+            
+            if(dataset=='ct'){
+              updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",
+                                         label = "Indicadores: ",
+                                         choices = vec_mer_ct_indicators,
+                                         checkIcon = list(
+                                           yes = tags$i(class = "fa fa-check-square", 
+                                                        style = "color: steelblue"),
+                                           no = tags$i(class = "fa fa-square-o", 
+                                                       style = "color: steelblue"))     )
+            } else if(dataset=='ats'){
+              updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",
+                                         label = "Indicadores: ",
+                                         choices = vec_mer_ats_indicators,
+                                         checkIcon = list(
+                                           yes = tags$i(class = "fa fa-check-square", 
+                                                        style = "color: steelblue"),
+                                           no = tags$i(class = "fa fa-square-o", 
+                                                       style = "color: steelblue"))     )
+            } else if(dataset=='smi'){
+              updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",
+                                         label = "Indicadores: ",
+                                         choices = vec_mer_smi_indicators,
+                                         checkIcon = list(
+                                           yes = tags$i(class = "fa fa-check-square", 
+                                                        style = "color: steelblue"),
+                                           no = tags$i(class = "fa fa-square-o", 
+                                                       style = "color: steelblue"))     )
+            } else if(dataset=='prevention'){
+              updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",
+                                         label = "Indicadores: ",
+                                         choices = vec_mer_prevention_indicators,
+                                         checkIcon = list(
+                                           yes = tags$i(class = "fa fa-check-square", 
+                                                        style = "color: steelblue"),
+                                           no = tags$i(class = "fa fa-square-o", 
+                                                       style = "color: steelblue"))     )
+            }else if(dataset=='hs'){
+              updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",
+                                         label = "Indicadores: ",
+                                         choices = vec_mer_hs_indicators,
+                                         checkIcon = list(
+                                           yes = tags$i(class = "fa fa-check-square", 
+                                                        style = "color: steelblue"),
+                                           no = tags$i(class = "fa fa-square-o", 
+                                                       style = "color: steelblue"))     )
+            } else {}
+            
+           
             #updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
             updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset", disabled = FALSE)
-            output$instruction <- renderText({  "Selecione o dataset & US" })
+            output$instruction <- renderText({  "Selecione o dataset & Indicadores" })
           } 
           
           
@@ -188,6 +258,8 @@ server <- function(input, output) {
                              label = paste("Unidades Sanitarias: ", "0"),
                              choices = "",
                              selected = "NULL" )
+    updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",label = "",choices = c("")
+                                )
     updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
     output$instruction <- renderText({  "" })
     updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
@@ -207,7 +279,7 @@ server <- function(input, output) {
       
     } else {
       output$instruction <- renderText({ "" })
-      cat(us_selected, sep = " | ")
+      #cat(us_selected, sep = " | ")
       #updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
       updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset", disabled = FALSE)
       updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE  )
@@ -215,6 +287,53 @@ server <- function(input, output) {
     
   })
   
+  # Observe Indicators checkboxes 
+  observeEvent( input$chkbxIndicatorsGroup, {
+    
+    req(input$file1)
+    req(input$dhis_datasets)
+    vec_sheets <-  c()
+    
+
+    vec_sheets <- excel_sheets(path = input$file1$datapath)
+
+    # verifica se alguma us foi selecionada
+    indicator_selected = input$chkbxIndicatorsGroup
+    if(length(indicator_selected)==0){
+      
+    } else {
+      output$instruction <- renderText({ "" })
+      #cat(indicator_selected, sep = " | ")
+      updateCheckboxGroupInput(getDefaultReactiveDomain(), "chkbxUsGroup",
+                               label = paste("Unidades Sanitarias: ", length(vec_sheets)),
+                               choiceNames = as.list(getUsNameFromSheetNames(vec_sheets)),
+                               choiceValues = as.list(vec_sheets),
+                               selected = "")
+      
+    } 
+    
+  })
+  
+  # Observe reset btn check consistancy
+  observeEvent(input$btn_checks_before_upload, {
+  
+    vec_temp_dsnames <- get('mer_datasets_names', envir = .GlobalEnv)
+    file_to_import          <- input$file1
+    dataset_name            <- input$dhis_datasets
+    ds_name <- names(which(vec_temp_dsnames==dataset_name))
+    excell_mapping_template <- getTemplateDatasetName(ds_name)
+    vec_indicators          <-input$chkbxIndicatorsGroup
+    sheet_name              <-  input$chkbxUsGroup
+    
+    message("File :", file_to_import)
+    message("Dataset name: ", ds_name)
+    message("Template name: ", excell_mapping_template)
+    message("Indicators: ",vec_indicators)
+    message("US: ",sheet_name)
+    
+    #checkDataConsistency(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators )
+    
+  })
   
   set.seed(122)
   histdata <- rnorm(500)

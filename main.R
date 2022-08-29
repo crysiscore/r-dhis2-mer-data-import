@@ -3,6 +3,11 @@ library(dplyr)
 
 
 source(file = 'paramConfig.R') # Carrega os paramentros 
+source(file = 'misc_functions.R') # ficheiro com diversas funcoes
+source(file = 'credentials.R')    # Variaveis de conexao do DHIS2
+load(file = 'rdata.RData')        # ficheiro com DF que armazenam temporariamente os logs e algumas variaveis usadas no codigo
+
+
 setwd(wd)
 
 # Login to DHIS2
