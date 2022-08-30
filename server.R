@@ -1,151 +1,63 @@
-## app.R ##
-library(shinydashboard)
-library(shiny)
-library(jsonlite)
-library(dplyr)
-library(readxl)
-library(dipsaus)
-library(shinyWidgets)
-library(DT)
-library(jsonlite)
-library(dplyr)
-library(fs)
-
-
-ui <- dashboardPage(
-  
-  dashboardHeader(title = "CCS DHIS2 Data upload", dropdownMenu(type = "notifications",
-                                                                notificationItem(
-                                                                  text = "5 new users today",
-                                                                  icon("users")
-                                                                ),
-                                                                notificationItem(
-                                                                  text = "12 items delivered",
-                                                                  icon("truck"),
-                                                                  status = "success"
-                                                                ),
-                                                                notificationItem(
-                                                                  text = "Server load at 86%",
-                                                                  icon = icon("exclamation-triangle"),
-                                                                  status = "warning"
-                                                                )
-  )),
-  dashboardSidebar(
-    sidebarMenu(
-      id = "menu",
-      menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-      menuItem("Upload", tabName = "widgets", icon = icon("th"))
-    )
-  ),
-  dashboardBody(
-    tabItems( 
-      # First tab content
-      tabItem(tabName = "dashboard",
-              fluidRow(
-                box(plotOutput("plot1", height = 250)),
-                
-                box(
-                  title = "Controls",
-                  sliderInput("slider", "Number of observations:", 1, 100, 50)
-                )
-              )
-      ),
-      
-      # Second tab content
-      tabItem(tabName = "widgets",
-              # Sidebar layout with input and output definitions ----
-              sidebarLayout(
-                
-                # Sidebar panel for inputs ----
-                sidebarPanel(
-                  
-                  # Input: Select a file to import do DHIS2 ----
-                  fileInput("file1", "Selecione o Ficheiro",
-                            multiple = FALSE,
-                            accept = c( "application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")),
-                  
-                  # Horizontal line ----
-                  # Output: Formatted text for caption ----
-                  h5(id="instruction", textOutput("instruction", container = span),style="color:red"),
-                  
-                  tags$hr(),
-                  
-                  # Input: Select separator ----
-                  awesomeRadio("dhis_datasets", "DHIS2 Datasets",
-                               choices = mer_datasets_names,
-                               selected = "",
-                               status = "success"),
-                  
-                  # Horizontal line ----
-                  tags$hr(),
-                  
-                  #  Create a group of checkboxes : Indicadores
-                  checkboxGroupButtons(
-                    inputId = "chkbxIndicatorsGroup" ,
-                    label = "Indicadores:",
-                    choices = c('')
-                    
-                  ), 
-                  #checkboxGroupInput("chkbxIndicatorsGroup", "Indicadores:"
-                  # ) ,
-                  # Horizontal line ----
-                  tags$hr(),
-                  
-                  # Input: Create a group of checkboxes Unidades Sanitarias
-                  checkboxGroupInput("chkbxUsGroup", "Unidades Sanitarias: "
-                  ) ,
-                  
-                  # Horizontal line ----
-                  tags$hr(),
-                  # Submit button
-                  # UI function
-                  actionButtonStyled(inputId="btn_reset", label="Reset fields   ",
-                                     btn_type = "button", type = "default", class = "btn-sm"),
-                  actionButtonStyled(inputId="btn_checks_before_upload", label="Run Checks",
-                                     btn_type = "button", type = "warning", class = "btn-sm"),
-                  
-                  actionButtonStyled(inputId="btn_upload", label="Upload  file ",
-                                     btn_type = "button", type = "primary", class = "btn-sm")
-                  
-                ),
-                
-                # Main panel for displaying outputs ----
-                mainPanel(
-                  
-                  
-                  # Output: Formatted text for caption ----
-                  h3(textOutput("caption", container = span)),
-                  fluidRow(
-                    box( title = "Status de execucao", status = "primary", height = 
-                           "365",width = "12",solidHeader = T, 
-                         column(width = 12,  DT::dataTableOutput("tbl_exec_log"),style = "height:300px; overflow-y: scroll;overflow-x: scroll;"
-                         )  )  ) ,
-                  fluidRow(
-                    box( title = "Warnings", status = "primary", height = 
-                           "465",width = "12",solidHeader = T, 
-                         column(width = 12,  DT::dataTableOutput("tbl_warning_log"),style = "height:400px; overflow-y: scroll;overflow-x: scroll;"
-                         )  )  ) ,
-                  
-                  # Output: Data file ----
-                  tableOutput("contents"),
-                  tableOutput("contents_error"),
-                  tableOutput("contents_emptu")
-                )
-                
-              )
-      )
-    )
-  )
-)
 
 server <- function(input, output) {
   
-  temporizador <-reactiveValues(inc=0, timer=reactiveTimer(3000), started=FALSE, df_execution_log=NULL, df_warning_log=NULL)
+  temporizador <-reactiveValues( started=FALSE, df_execution_log=NULL, df_warning_log=NULL)
   
   # Disable the buttons on start
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_upload",  disabled = TRUE  )
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
+  #file.copy(from = paste0(get("wd", envir = .GlobalEnv),'logs/empty_log_execution.xlsx'),to = paste0(get("wd", envir = .GlobalEnv),'logs/log_execution.xlsx'),overwrite = TRUE)
+  #file.copy(from = paste0(get("wd", envir = .GlobalEnv),'logs/empty_log_execution_warning.xlsx.xlsx'),to = paste0(get("wd", envir = .GlobalEnv),'logs/log_execution_warning.xlsx'),overwrite = TRUE)
+  
+  # Temporizador activado pelo botao runChecks
+  observe({
+    invalidateLater(millis = 5000, session = getDefaultReactiveDomain())
+    tmp_log_exec <-  get("log_execution", envir = .GlobalEnv)
+    tmp <- get("error_log_dhis_import", envir = .GlobalEnv)
+    path <- get("wd",envir = .GlobalEnv)
+    
+    if(isolate(temporizador$started)){
+      isolate ({
+        if(nrow(tmp_log_exec)>1){
+          temporizador$df_execution_log <- tmp_log_exec[2:nrow(log_execution),]
+        } else {  temporizador$df_execution_log <- tmp_log_exec  }
+
+        if(nrow(tmp)>1){
+          temporizador$df_warning_log <-  tmp[2:nrow(log_execution),c(1,2,3,8,9)]
+        } else {temporizador$df_warning_log <-  tmp[,c(1,2,3,8,9)]  }
+               })
+    } else  
+      { 
+      temporizador$df_execution_log <- tmp_log_exec
+      temporizador$df_warning_log <-  tmp[2:nrow(log_execution),c(1,2,3,8,9)]
+    }
+  } , priority = 2)
+  
+  
+  output$tbl_exec_log <- renderDT({
+    invalidateLater(millis = 10000, session = getDefaultReactiveDomain())
+    datatable( temporizador$df_execution_log,
+               extensions = c('Buttons'), 
+               options = list(paging = TRUE, 
+                              dom = 'Blfrtip',
+                              buttons = list(
+                                             list(extend = 'excel', title = NULL),
+                                             'pdf',
+                                             'print'  ) ) )
+  })
+  
+  output$tbl_warning_log <- renderDT({
+    invalidateLater(millis = 10000, session = getDefaultReactiveDomain())
+    datatable( temporizador$df_warning_log,
+               extensions = c('Buttons'),
+               options = list(paging = TRUE, 
+                              dom = 'Blfrtip',
+                              buttons = list(
+                                             list(extend = 'excel', title = NULL),
+                                             'pdf',
+                                             'print'  ) )   )
+  })
   
   #Observe SideBarMenu : switch tabs on menu clicks
   observeEvent(input$switchtab, {
@@ -265,7 +177,12 @@ server <- function(input, output) {
     updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
     output$instruction <- renderText({  "" })
     updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
+    output$tbl_integrity_errors <- renderDataTable({
+      df <- read_xlsx(path = paste0(wd,'errors/template_errors.xlsx'))
+      datatable( df[0 ,], options = list(paging = TRUE))
+    })
     
+    load(file = paste0(get("wd", envir = .GlobalEnv),'rdata.RData' ), envir = .GlobalEnv)
     
   })
   
@@ -318,12 +235,10 @@ server <- function(input, output) {
   
   # Observe reset btn check consistancy
   observeEvent(input$btn_checks_before_upload, {
-    
-    temporizador$started <- TRUE
-    
+
     vec_temp_dsnames <- get('mer_datasets_names', envir = .GlobalEnv)
     file <- input$file1
-    
+    isolate(temporizador$started <- TRUE)
     file_to_import          <- file$datapath
     dataset_name            <- input$dhis_datasets
     ds_name <- names(which(vec_temp_dsnames==dataset_name))
@@ -336,34 +251,57 @@ server <- function(input, output) {
     message("Template name: ", excell_mapping_template)
     message("Indicators: ",vec_indicators)
     message("US: ",vec_selected_us)
-    Sys.sleep(3)
-    checkDataConsistency(excell.mapping.template =excell_mapping_template , file.to.import=file_to_import ,dataset.name =ds_name , sheet.name=vec_selected_us, vec.indicators=vec_indicators )
     
-  })
-  
-  # Temporizador activado pelo botao runChecks
-  observe({
-    temporizador$timer()
-    if(isolate(temporizador$started)){
+    status <- checkDataConsistency(excell.mapping.template =excell_mapping_template , file.to.import=file_to_import ,dataset.name =ds_name , sheet.name=vec_selected_us, vec.indicators=vec_indicators )
+    
+    if(status=='Integrity error'){
+      shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")
       
-      Sys.sleep(2)
-      temporizador$df_execution_log <- get("log_execution", envir = .GlobalEnv)
-      tmp <- get("error_log_dhis_import", envir = .GlobalEnv)  
-      temporizador$df_warning_log <-  tmp[,c(1,2,3,8,9)] 
+      output$tbl_integrity_errors <- renderDT({
+        df <- read_xlsx(path = paste0(wd,'errors/template_errors.xlsx'))
+        datatable( df,  extensions = c('Buttons'),
+                   options = list(paging = TRUE, 
+                                  dom = 'Blfrtip',
+                                  buttons = list(
+                                                 list(extend = 'excel', title = NULL),
+                                                 'pdf',
+                                                 'print'  ) ))
+      })
+      
+    } else {
+      shinyalert("Execucao Terminada", "Alguns campos estao Vazios, verifique a tablea warnings ", type = "warning")
+      
+    for (indicator in vec_indicators) {
+      appendTab("tab_indicadores",
+        tabPanel(indicator ,box( title = indicator, status = "primary", height =  "720px",width = "12",solidHeader = T, 
+                                           column(width = 12,  DT::dataTableOutput(paste0('data_table_',indicator )),style = "height:620px; overflow-y: scroll;overflow-x: scroll;"
+                                           )  ) ),
+
+        session = getDefaultReactiveDomain()
+      )
+      # reder indicator data
+      id <- paste0('data_table_',indicator )
+      message("Data table: ",id)
+      df <- get(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = .GlobalEnv)
+      
+      output[[id]] <- DT::renderDataTable(df, extensions = c('Buttons'),
+                                          options = list(paging = TRUE, 
+                                                         dom = 'Blfrtip',
+                                                         buttons = list(
+                                                                        list(extend = 'excel', title = NULL),
+                                                                        'pdf',
+                                                                        'print'  ) ))
+     
+    }
       
     }
     
   })
   
-  output$tbl_exec_log <- renderDataTable({
-    datatable( temporizador$df_execution_log, options = list(paging = TRUE))
-  })
-  output$tbl_warning_log <- renderDataTable({
-    datatable( temporizador$df_warning_log, options = list(paging = TRUE))
-  })
+
+  
+
   
   
   
 }
-
-shinyApp(ui, server)
