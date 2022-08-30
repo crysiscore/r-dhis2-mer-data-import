@@ -183,13 +183,13 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
   message( "Stage 1: ", get('task_check_consistency_1',envir = .GlobalEnv))
   
   assign(x = "log_execution",value =tmp_log_exec, envir = .GlobalEnv )
-  incProgress(1/(length(vec.indicators)+ 1), detail = paste("Processando: stage 1 - ", get('task_check_consistency_1',envir = .GlobalEnv) ))
+  incProgress(1/(length(vec.indicators)+ 1), detail = paste("STAGE 1 - ", get('task_check_consistency_1',envir = .GlobalEnv) ))
   # Stage 1: Verficar o a integridade do ficheiro a ser importado
    total_error <- checkImportTamplateIntegrity(file.to.import = file.to.import,dataset.name =dataset.name ,sheet.name =sheet.name )
    if(total_error > 0) {
      
      for (i  in 1: length(vec.indicators) ) {
-       incProgress(1/(length(vec.indicators)+ 1), detail = paste("Processando: stage 2 - ", get('task_check_consistency_2',envir = .GlobalEnv) ))
+       incProgress(1/(length(vec.indicators)+ 1), detail = paste("STAGE II - ", get('task_check_consistency_2',envir = .GlobalEnv) ))
        
      }
      
@@ -247,7 +247,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        tmp_log_exec_empty$status[1] <- 'ok'
        tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
        writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
-       incProgress(1/(length(vec.indicators)+ 1), detail = paste("Processando  o indicador: ", indicator , " " ))
+       incProgress(1/(length(vec.indicators)+ 1), detail = paste("STAGE III - Processando  o indicador: ", indicator , " " ))
        }
     
 

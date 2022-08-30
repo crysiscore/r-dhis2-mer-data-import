@@ -2,7 +2,7 @@
 server <- function(input, output) {
   
   temporizador <-reactiveValues( started=FALSE, df_execution_log=NULL, df_warning_log=NULL)
-  
+  load(file = paste0(get("wd", envir = .GlobalEnv),'rdata.RData' ), envir = .GlobalEnv)
   # Disable the buttons on start
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_upload",  disabled = TRUE  )
@@ -20,11 +20,11 @@ server <- function(input, output) {
     if(isolate(temporizador$started)){
       isolate ({
         if(nrow(tmp_log_exec)>1){
-          temporizador$df_execution_log <- tmp_log_exec[2:nrow(log_execution),]
+          temporizador$df_execution_log <- tmp_log_exec[2:nrow(tmp_log_exec),]
         } else {  temporizador$df_execution_log <- tmp_log_exec  }
 
         if(nrow(tmp)>1){
-          temporizador$df_warning_log <-  tmp[2:nrow(log_execution),c(1,2,3,8,9)]
+          temporizador$df_warning_log <-  tmp[2:nrow(tmp),c(1,2,3,8,9)]
         } else {temporizador$df_warning_log <-  tmp[,c(1,2,3,8,9)]  }
                })
     } else  
@@ -39,8 +39,9 @@ server <- function(input, output) {
     invalidateLater(millis = 10000, session = getDefaultReactiveDomain())
     datatable( temporizador$df_execution_log,
                extensions = c('Buttons'), 
-               options = list(paging = TRUE, 
-                              dom = 'Blfrtip',
+               options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+                               pageLength = 15,
+                              dom = 'Blfrti',
                               buttons = list(
                                              list(extend = 'excel', title = NULL),
                                              'pdf',
@@ -51,8 +52,9 @@ server <- function(input, output) {
     invalidateLater(millis = 10000, session = getDefaultReactiveDomain())
     datatable( temporizador$df_warning_log,
                extensions = c('Buttons'),
-               options = list(paging = TRUE, 
-                              dom = 'Blfrtip',
+               options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+                               pageLength = 15, 
+                              dom = 'Blfrti',
                               buttons = list(
                                              list(extend = 'excel', title = NULL),
                                              'pdf',
@@ -164,7 +166,7 @@ server <- function(input, output) {
   
   # Observe reset btn
   observeEvent(input$btn_reset, {
-    
+    vec_indicators          <-input$chkbxIndicatorsGroup
     updateAwesomeRadio(getDefaultReactiveDomain(), inputId = "dhis_datasets",label =  "DHIS2 Datasets",
                        choices = mer_datasets_names,
                        selected = ""       )
@@ -183,7 +185,9 @@ server <- function(input, output) {
     })
     
     load(file = paste0(get("wd", envir = .GlobalEnv),'rdata.RData' ), envir = .GlobalEnv)
-    
+    for (indicator in vec_indicators) {
+      removeTab(inputId = "tab_indicadores", target =indicator)
+    }
   })
   
   # Observe US checkboxes 
@@ -253,47 +257,50 @@ server <- function(input, output) {
     message("US: ",vec_selected_us)
     
     status <- checkDataConsistency(excell.mapping.template =excell_mapping_template , file.to.import=file_to_import ,dataset.name =ds_name , sheet.name=vec_selected_us, vec.indicators=vec_indicators )
-    
+
     if(status=='Integrity error'){
       shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")
-      
+
       output$tbl_integrity_errors <- renderDT({
         df <- read_xlsx(path = paste0(wd,'errors/template_errors.xlsx'))
         datatable( df,  extensions = c('Buttons'),
-                   options = list(paging = TRUE, 
-                                  dom = 'Blfrtip',
+                   options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+                                   pageLength = 15,
+                                  dom = 'Blfrti',
                                   buttons = list(
                                                  list(extend = 'excel', title = NULL),
                                                  'pdf',
                                                  'print'  ) ))
       })
-      
-    } else {
-      shinyalert("Execucao Terminada", "Alguns campos estao Vazios, verifique a tablea warnings ", type = "warning")
-      
+
+    }
+    else {
+      shinyalert("Execucao Terminada", "Alguns campos estao Vazios, verifique a tabela de avisos ", type = "warning")
+
     for (indicator in vec_indicators) {
       appendTab("tab_indicadores",
-        tabPanel(indicator ,box( title = indicator, status = "primary", height =  "720px",width = "12",solidHeader = T, 
+        tabPanel(indicator ,box( title = indicator, status = "primary", height =  "720px",width = "12",solidHeader = T,
                                            column(width = 12,  DT::dataTableOutput(paste0('data_table_',indicator )),style = "height:620px; overflow-y: scroll;overflow-x: scroll;"
                                            )  ) ),
 
         session = getDefaultReactiveDomain()
       )
-      # reder indicator data
+      # render indicator data
       id <- paste0('data_table_',indicator )
       message("Data table: ",id)
       df <- get(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = .GlobalEnv)
-      
+
       output[[id]] <- DT::renderDataTable(df, extensions = c('Buttons'),
-                                          options = list(paging = TRUE, 
+                                          options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+                                                          pageLength = 15,
                                                          dom = 'Blfrtip',
                                                          buttons = list(
                                                                         list(extend = 'excel', title = NULL),
                                                                         'pdf',
                                                                         'print'  ) ))
-     
+
     }
-      
+
     }
     
   })

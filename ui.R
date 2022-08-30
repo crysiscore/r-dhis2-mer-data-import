@@ -2,7 +2,7 @@ library(shiny)
 
 
 ui <- dashboardPage(
-  
+
   dashboardHeader(title = "DHIS2 Data upload", dropdownMenu(type = "notifications",
                                                                 notificationItem(
                                                                   text = "5 new users today",
@@ -27,6 +27,9 @@ ui <- dashboardPage(
     )
   ),
   dashboardBody(
+    tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "dark_mode.css")
+    ),
     tabItems( 
       # First tab content
       tabItem(tabName = "dashboard",
