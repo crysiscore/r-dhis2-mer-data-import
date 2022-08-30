@@ -35,13 +35,28 @@ server <- function(input, output) {
   } , priority = 2)
   
   
-  output$tbl_exec_log <- renderDataTable({
+  output$tbl_exec_log <- renderDT({
     invalidateLater(millis = 10000, session = getDefaultReactiveDomain())
-    datatable( temporizador$df_execution_log, options = list(paging = TRUE))
+    datatable( temporizador$df_execution_log,
+               extensions = c('Buttons'), 
+               options = list(paging = TRUE, 
+                              dom = 'Blfrtip',
+                              buttons = list(
+                                             list(extend = 'excel', title = NULL),
+                                             'pdf',
+                                             'print'  ) ) )
   })
-  output$tbl_warning_log <- renderDataTable({
+  
+  output$tbl_warning_log <- renderDT({
     invalidateLater(millis = 10000, session = getDefaultReactiveDomain())
-    datatable( temporizador$df_warning_log, options = list(paging = TRUE))
+    datatable( temporizador$df_warning_log,
+               extensions = c('Buttons'),
+               options = list(paging = TRUE, 
+                              dom = 'Blfrtip',
+                              buttons = list(
+                                             list(extend = 'excel', title = NULL),
+                                             'pdf',
+                                             'print'  ) )   )
   })
   
   #Observe SideBarMenu : switch tabs on menu clicks
@@ -236,20 +251,49 @@ server <- function(input, output) {
     message("Template name: ", excell_mapping_template)
     message("Indicators: ",vec_indicators)
     message("US: ",vec_selected_us)
-    updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
     
     status <- checkDataConsistency(excell.mapping.template =excell_mapping_template , file.to.import=file_to_import ,dataset.name =ds_name , sheet.name=vec_selected_us, vec.indicators=vec_indicators )
     
     if(status=='Integrity error'){
       shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")
       
-      output$tbl_integrity_errors <- renderDataTable({
+      output$tbl_integrity_errors <- renderDT({
         df <- read_xlsx(path = paste0(wd,'errors/template_errors.xlsx'))
-        datatable( df, options = list(paging = TRUE))
+        datatable( df,  extensions = c('Buttons'),
+                   options = list(paging = TRUE, 
+                                  dom = 'Blfrtip',
+                                  buttons = list(
+                                                 list(extend = 'excel', title = NULL),
+                                                 'pdf',
+                                                 'print'  ) ))
       })
       
     } else {
       shinyalert("Execucao Terminada", "Alguns campos estao Vazios, verifique a tablea warnings ", type = "warning")
+      
+    for (indicator in vec_indicators) {
+      appendTab("tab_indicadores",
+        tabPanel(indicator ,box( title = indicator, status = "primary", height =  "720px",width = "12",solidHeader = T, 
+                                           column(width = 12,  DT::dataTableOutput(paste0('data_table_',indicator )),style = "height:620px; overflow-y: scroll;overflow-x: scroll;"
+                                           )  ) ),
+
+        session = getDefaultReactiveDomain()
+      )
+      # reder indicator data
+      id <- paste0('data_table_',indicator )
+      message("Data table: ",id)
+      df <- get(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = .GlobalEnv)
+      
+      output[[id]] <- DT::renderDataTable(df, extensions = c('Buttons'),
+                                          options = list(paging = TRUE, 
+                                                         dom = 'Blfrtip',
+                                                         buttons = list(
+                                                                        list(extend = 'excel', title = NULL),
+                                                                        'pdf',
+                                                                        'print'  ) ))
+     
+    }
+      
     }
     
   })

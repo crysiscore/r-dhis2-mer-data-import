@@ -176,7 +176,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
   tmp_log_exec_empty <- tmp_log_exec[1,]
   
   #Indicar a tarefa em execucao: task_check_consistency_1
-  tmp_log_exec_empty$Datetime[1] <- Sys.time()
+  tmp_log_exec_empty$Datetime[1] <- substr(x = Sys.time(),start = 1, stop = 22)
   tmp_log_exec_empty$US[1] <- sheet.name
   tmp_log_exec_empty$Dataset[1] <- dataset.name
   tmp_log_exec_empty$task[1] <- get('task_check_consistency_1',envir = .GlobalEnv)
@@ -206,7 +206,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
     
      
      #Indicar a tarefa em execucao: task_check_consistency_2
-     tmp_log_exec_empty$Datetime[1] <- Sys.time()
+     tmp_log_exec_empty$Datetime[1] <- substr(x = Sys.time(),start = 1, stop = 22)
      tmp_log_exec_empty$US[1] <- sheet.name
      tmp_log_exec_empty$Dataset[1] <- dataset.name
      tmp_log_exec_empty$task[1] <- get('task_check_consistency_2',envir = .GlobalEnv)
@@ -230,7 +230,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        tmp_df$check  <- mapply(checkIFDataElementExistsOnTemplate,tmp_df$dhisdataelementuid,tmp_df$dhiscategoryoptioncombouid ,datavalueset_template,indicator)
        
        #Indicar a tarefa em execucao : task_check_consistency_3
-       tmp_log_exec_empty$Datetime[1] <- Sys.time()
+       tmp_log_exec_empty$Datetime[1] <- substr(x = Sys.time(),start = 1, stop = 22)
        tmp_log_exec_empty$US[1] <- sheet.name
        tmp_log_exec_empty$Dataset[1] <- dataset.name
        tmp_log_exec_empty$task[1] <- paste0(get('task_check_consistency_3',envir = .GlobalEnv), indicator)

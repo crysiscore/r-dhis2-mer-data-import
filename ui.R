@@ -3,7 +3,7 @@ library(shiny)
 
 ui <- dashboardPage(
   
-  dashboardHeader(title = "CCS DHIS2 Data upload", dropdownMenu(type = "notifications",
+  dashboardHeader(title = "DHIS2 Data upload", dropdownMenu(type = "notifications",
                                                                 notificationItem(
                                                                   text = "5 new users today",
                                                                   icon("users")
@@ -100,29 +100,53 @@ ui <- dashboardPage(
                 
                 # Main panel for displaying outputs ----
                 mainPanel(
+                  fluidRow(
+                  tabBox(
+                    title = "Resultados",
+                    # The id lets us use input$tabset1 on the server to find the current tab
+                    id = "tabset1", height = "750px", width = "680px",
+                    tabPanel("Status de execucao",box( title = "Status de execucao", status = "primary", height = 
+                                                         "650px",width = "12",solidHeader = T, 
+                                                       column(width = 12,  DT::dataTableOutput("tbl_exec_log"),style = "height:580px; overflow-y: scroll;overflow-x: scroll;"
+                                                       )  ) ),
+                    tabPanel("Avisos",box( title = "Warnings", status = "primary", height = 
+                                             "650px",width = "12",solidHeader = T, 
+                                           column(width = 12,  DT::dataTableOutput("tbl_warning_log"),style = "height:580px; overflow-y: scroll;overflow-x: scroll;"
+                                           )  )),
+                    tabPanel("Erros de Integridade",  box( title = "Erros de integridade", status = "primary", height = 
+                                                             "650px",width = "12",solidHeader = T, 
+                                                           column(width = 12,  DT::dataTableOutput("tbl_integrity_errors"),style = "height:580px; overflow-y: scroll;overflow-x: scroll;"
+                                                           )  ))
+                  ) ),
                   
+                  fluidRow(
+                    tabBox(
+                      title = "Indicadores",
+                      # The id lets us use input$tabset1 on the server to find the current tab
+                      id = "tab_indicadores", height = "850px", width = "680px"
+                    ))
                   
                   # Output: Formatted text for caption ----
-                  h3(textOutput("caption", container = span)),
-                  fluidRow(
-                    box( title = "Status de execucao", status = "primary", height = 
-                           "365",width = "12",solidHeader = T, 
-                         column(width = 12,  DT::dataTableOutput("tbl_exec_log"),style = "height:300px; overflow-y: scroll;overflow-x: scroll;"
-                         )  )  ) ,
-                  fluidRow(
-                    box( title = "Warnings", status = "primary", height = 
-                           "465",width = "12",solidHeader = T, 
-                         column(width = 12,  DT::dataTableOutput("tbl_warning_log"),style = "height:400px; overflow-y: scroll;overflow-x: scroll;"
-                         )  )  ) ,
-                  fluidRow(
-                    box( title = "Erros de integridade", status = "primary", height = 
-                           "465",width = "12",solidHeader = T, 
-                         column(width = 12,  DT::dataTableOutput("tbl_integrity_errors"),style = "height:400px; overflow-y: scroll;overflow-x: scroll;"
-                         )  )  ) ,
+                  #h3(textOutput("caption", container = span)),
+                  # fluidRow(
+                  #   box( title = "Status de execucao", status = "primary", height = 
+                  #          "365",width = "12",solidHeader = T, 
+                  #        column(width = 12,  DT::dataTableOutput("tbl_exec_log"),style = "height:300px; overflow-y: scroll;overflow-x: scroll;"
+                  #        )  )  ) ,
+                  # fluidRow(
+                  #   box( title = "Warnings", status = "primary", height = 
+                  #          "465",width = "12",solidHeader = T, 
+                  #        column(width = 12,  DT::dataTableOutput("tbl_warning_log"),style = "height:400px; overflow-y: scroll;overflow-x: scroll;"
+                  #        )  )  ) ,
+                  # fluidRow(
+                  #   box( title = "Erros de integridade", status = "primary", height = 
+                  #          "465",width = "12",solidHeader = T, 
+                  #        column(width = 12,  DT::dataTableOutput("tbl_integrity_errors"),style = "height:400px; overflow-y: scroll;overflow-x: scroll;"
+                  #        )  )  ) ,
                   # Output: Data file ----
-                  tableOutput("contents"),
-                  tableOutput("contents_error"),
-                  tableOutput("contents_emptu")
+                  #tableOutput("contents"),
+                  #tableOutput("contents_error"),
+                  #tableOutput("contents_emptu")
                 )
                 
               )
