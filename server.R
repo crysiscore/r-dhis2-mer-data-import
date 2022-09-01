@@ -70,14 +70,13 @@ server <- function(input, output) {
     updateTabItems(session, "tabs", newtab)
   })
   
-  
   # Observe  radioButtons("dhis_datasets")
   observeEvent(input$dhis_datasets, {
     
     req(input$file1)
     
     vec_sheets <-  c()
-    
+    updateActionButtonStyled( getDefaultReactiveDomain(), "btn_upload", disabled = TRUE  )
     tryCatch(
       {
         vec_sheets <- excel_sheets(path = input$file1$datapath)
@@ -170,13 +169,16 @@ server <- function(input, output) {
     updateAwesomeRadio(getDefaultReactiveDomain(), inputId = "dhis_datasets",label =  "DHIS2 Datasets",
                        choices = mer_datasets_names,
                        selected = ""       )
-    updateCheckboxGroupInput(getDefaultReactiveDomain(), "chkbxUsGroup",
-                             label = paste("Unidades Sanitarias: ", "0"),
-                             choices = "",
-                             selected = "NULL" )
+    updatePickerInput(getDefaultReactiveDomain(), "chkbxUsGroup",
+                      label = "Unidades Sanitarias: 0",
+                      choices =  list(),
+                      options = list(
+                        `live-search` = TRUE)
+    )
     updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",label = "",choices = c("")
     )
     updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
+    updateActionButtonStyled( getDefaultReactiveDomain(), "btn_upload", disabled = TRUE  )
     output$instruction <- renderText({  "" })
     updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
     output$tbl_integrity_errors <- renderDataTable({
@@ -188,6 +190,7 @@ server <- function(input, output) {
     for (indicator in vec_indicators) {
       removeTab(inputId = "tab_indicadores", target =indicator)
     }
+
   })
   
   # Observe US checkboxes 
@@ -206,6 +209,7 @@ server <- function(input, output) {
       #updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
       updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset", disabled = FALSE)
       updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE  )
+      updateActionButtonStyled( getDefaultReactiveDomain(), "btn_upload", disabled = TRUE  )
     } 
     
   })
@@ -227,11 +231,14 @@ server <- function(input, output) {
     } else {
       output$instruction <- renderText({ "" })
       #cat(indicator_selected, sep = " | ")
-      updateCheckboxGroupInput(getDefaultReactiveDomain(), "chkbxUsGroup",
-                               label = paste("Unidades Sanitarias: ", length(vec_sheets)),
-                               choiceNames = as.list(getUsNameFromSheetNames(vec_sheets)),
-                               choiceValues = as.list(vec_sheets),
-                               selected = "")
+      updatePickerInput(getDefaultReactiveDomain(), "chkbxUsGroup",
+                        label = paste("Unidades Sanitarias: ", length(vec_sheets)),
+                        choices =  setNames(as.list(vec_sheets), getUsNameFromSheetNames(vec_sheets)),
+                        options = list(
+                          `live-search` = TRUE)
+                               )
+      updateActionButtonStyled( getDefaultReactiveDomain(), "btn_upload", disabled = TRUE  )
+      
       
     } 
     
@@ -260,7 +267,7 @@ server <- function(input, output) {
 
     if(status=='Integrity error'){
       shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")
-
+      updateActionButtonStyled( getDefaultReactiveDomain(), "btn_upload", disabled = TRUE  )
       output$tbl_integrity_errors <- renderDT({
         df <- read_xlsx(path = paste0(wd,'errors/template_errors.xlsx'))
         datatable( df,  extensions = c('Buttons'),
@@ -277,7 +284,7 @@ server <- function(input, output) {
     else {
       shinyalert("Execucao Terminada", "Alguns campos estao Vazios, verifique a tabela de avisos ", type = "warning")
 
-    for (indicator in vec_indicators) {
+    for(indicator in vec_indicators) {
       appendTab("tab_indicadores",
         tabPanel(indicator ,box( title = indicator, status = "primary", height =  "720px",width = "12",solidHeader = T,
                                            column(width = 12,  DT::dataTableOutput(paste0('data_table_',indicator )),style = "height:620px; overflow-y: scroll;overflow-x: scroll;"
@@ -300,12 +307,30 @@ server <- function(input, output) {
                                                                         'print'  ) ))
 
     }
-
+    updateActionButtonStyled( getDefaultReactiveDomain(), "btn_upload", disabled = FALSE  )
     }
     
   })
   
-
+  # Observe UPLOAD btn check consistancy
+  observeEvent(input$btn_upload, {
+    
+    
+    vec_temp_dsnames <- get('mer_datasets_names', envir = .GlobalEnv)
+    dataset_name     <- input$dhis_datasets
+    ds_name          <- names(which(vec_temp_dsnames==dataset_name))
+    dataset_id       <- which(mer_datasets_ids==dataset_name)
+    vec_indicators   <- input$chkbxIndicatorsGroup
+    vec_selected_us  <- input$chkbxUsGroup
+    submission_date <- as.character(Sys.Date())
+    
+    #dataset.id, complete.date, period , org.unit, vec.indicators
+   
+    
+    
+  })
+  
+  
   
 
   

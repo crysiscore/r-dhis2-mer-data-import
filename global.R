@@ -19,7 +19,7 @@ load(file = 'rdata.RData')        # ficheiro com DF que armazenam temporariament
 
 
 # Login to DHIS2
-dhisLogin(dhis2.username = dhis2.username,dhis2.password = dhis2.password,base.url = api_dhis_base_url )
+# dhisLogin(dhis2.username = dhis2.username,dhis2.password = dhis2.password,base.url = api_dhis_base_url )
 
 
 # Gerar o template de importacao de dados para cada dataset: MER CT, MER SMI, MER ATS, MEER PREVENTION, MER HEALTH SYSTEMS do DHIS2

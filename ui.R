@@ -84,9 +84,15 @@ ui <- dashboardPage(
                   tags$hr(),
                   
                   # Input: Create a group of checkboxes Unidades Sanitarias
-                  checkboxGroupInput("chkbxUsGroup", "Unidades Sanitarias: "
-                  ) ,
-                  
+                  #checkboxGroupInput("chkbxUsGroup", "Unidades Sanitarias: "
+                  #) ,
+                  pickerInput(
+                    inputId = "chkbxUsGroup",
+                    label = "Unidades Sanitarias: ", 
+                    choices = NULL,
+                    options = list(
+                      `live-search` = TRUE)
+                  ),
                   # Horizontal line ----
                   tags$hr(),
                   # Submit button
@@ -98,6 +104,7 @@ ui <- dashboardPage(
                   
                   actionButtonStyled(inputId="btn_upload", label="Upload  file ",
                                      btn_type = "button", type = "primary", class = "btn-sm")
+                  
                   
                 ),
                 

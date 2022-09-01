@@ -309,6 +309,7 @@ checkImportTamplateIntegrity  <- function(file.to.import,dataset.name,sheet.name
   
 }
 
+
 #' getTemplateDatasetName ->  Retorna o nome do template de mapeamento correspondente ao nome do dataset
 #' @param dataset.name nome do dataset c("MER C&T"  = "ct", "MER ATS" = "ats" , "MER SMI" = "smi" , "MER PREVENTION"="prevention", "MER HEALTH SYSTEM"="hs")
 #' @examples 
@@ -334,6 +335,85 @@ getTemplateDatasetName <- function(dataset.name) {
 }
 
 
+#' merIndicatorsToJson ->  Transforma para o formato json os datagframes gerados apos o correr os checks do ficheiro de importacao
+#'                        o json sera usado para enviar os dados para o DHIS2
+#' @param dataset.id id do dataset no DHIS2
+#' @param  complete.date data de submissao
+#' @param  period periodo de submissao
+#' @param  org.unit id da US
+#' @param  vec.indicators indicadores a importar
+#' @example 
+#' string_json  <- merIndicatorsToJson(dataset.id, complete.date, period , org.unit, vec.indicators)
+merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, vec.indicators){
+  
+  dataSetID    <- dataset.id
+  completeDate <- complete.date
+  period       <- period
+  orgUnit      <- org.unit
+  df_all_indicators <- NULL
+  vec.indicators <- vec_mer_ats_indicators
+  
+  json_header <- paste0( "\"dataSet\":\"",dataSetID, "\" ," ,
+                         "\"completeDate\":\"",completeDate , "\" ," ,
+                         "\"period\":\"", period , "\" ," ,
+                         "\"orgUnit\":\"",orgUnit,"\" , " ,  
+                         "\"dataValues\":" ) 
+  
+  # junta os df de todos indicadores processados
+  for (indicator in vec.indicators) {
+    df                <- get(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = .GlobalEnv)
+    if(nrow(df) > 0){
+      
+      df_all_indicators <- plyr::rbind.fill(df_all_indicators, df)
+    }
+    
+    
+  }
+  
+  df_all_indicators <- df_all_indicators[, c(10,9,13)]
+  df_all_indicators <- subset(df_all_indicators, !(is.na(value) | value =="")) # remover dataelements sem dados
+  names(df_all_indicators)[1] <-  "dataElement"
+  names(df_all_indicators)[2] <- "categoryOptionCombo"
+  names(df_all_indicators)[3] <- "value"
+  
+  # converte os valores para json
+  json_data_values <- as.character(toJSON(x = df_all_indicators , dataframe = 'rows'))
+  
+  #Unir com o header para formar o payload
+  json <- paste0( "{ ", json_header, json_data_values, "  }")
+  
+  
+  
+}
+
+
+#' apiDhisSendDataValues ->  Envia o json para o endpoint '/api/33/dataValueSets' (https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html)
+#'                        
+#' @param json  string json    
+#' @example
+#' status <- apiDhisSendDataValues
+apiDhisSendDataValues <- function(json){
+  
+  # url da API
+  base.url <- paste0(get('api_dhis_base_url',envir = .GlobalEnv),get("api_dhis_datasetvalues_endpoint",envir = .GlobalEnv))
+  
+  
+  # Post data to DHIS2
+  status <- POST(url = base.url,
+                 body = json, config=authenticate(get("dhis2.username",envir = .GlobalEnv), get("dhis2.password",envir = .GlobalEnv)),
+                 add_headers("Content-Type"="application/json") )
+  
+  # The reponse from server will be an object with the following structure
+  # Response [http://192.168.1.10:5400/api/33/dataValueSets]
+  # Date: 2022-09-01 10:17
+  # Status: 200
+  # Content-Type: application/json;charset=UTF-8
+  # Size: 861 B
+  return(status)
+  
+}
+
+
 
 
 getDataValuesetName <- function(dataset.name) {
@@ -355,9 +435,6 @@ getDataValuesetName <- function(dataset.name) {
   
   return(datavalueset_template)
 }
-
-
-
 getUsNameFromSheetNames <-function(vector){
   
   vec <- c()
@@ -367,8 +444,6 @@ getUsNameFromSheetNames <-function(vector){
   }
   vec
 }
-
-
 getDataSetDataElements <- function(base.url, dataset.id) {
   
   url <-
