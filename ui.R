@@ -1,8 +1,7 @@
-library(shiny)
 
 
 ui <- dashboardPage(
-  
+ # useShinyjs(),  # Set up shiny to use shinyjs 
   dashboardHeader(title = "DHIS2 Data upload", dropdownMenu(type = "notifications",
                                                                 notificationItem(
                                                                   text = "5 new users today",
@@ -27,6 +26,9 @@ ui <- dashboardPage(
     )
   ),
   dashboardBody(
+    tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "dark_mode.css")
+    ),
     tabItems( 
       # First tab content
       tabItem(tabName = "dashboard",
@@ -69,32 +71,58 @@ ui <- dashboardPage(
                   tags$hr(),
                   
                   #  Create a group of checkboxes : Indicadores
-                  checkboxGroupButtons(
+                  hidden(checkboxGroupButtons(
                     inputId = "chkbxIndicatorsGroup" ,
                     label = "Indicadores:",
                     choices = c('')
                     
-                  ), 
+                  )), 
                   #checkboxGroupInput("chkbxIndicatorsGroup", "Indicadores:"
                   # ) ,
                   # Horizontal line ----
                   tags$hr(),
                   
                   # Input: Create a group of checkboxes Unidades Sanitarias
-                  checkboxGroupInput("chkbxUsGroup", "Unidades Sanitarias: "
-                  ) ,
-                  
+                  #checkboxGroupInput("chkbxUsGroup", "Unidades Sanitarias: "
+                  #) ,
+                  hidden(pickerInput(
+                    inputId = "chkbxUsGroup",
+                    label = "U. Sanitarias:", 
+                    choices = NULL,
+                    selected = NULL,
+                    multiple = TRUE,
+                    options = pickerOptions(maxOptions = 1,`live-search` = TRUE),
+                    width = '60%'
+                  )),
                   # Horizontal line ----
                   tags$hr(),
-                  # Submit button
+                  
+                  hidden( pickerInput(
+                    inputId = "chkbxPeriodGroup",
+                    label = "Periodo          :     ", 
+                    selected = NULL,
+                    multiple = TRUE,
+                    options = pickerOptions(maxOptions = 1,`live-search` = TRUE),
+                    choices = vec_reporting_periods,
+                    # options = list(
+                    #   maxOptions = 1,
+                    #   `live-search` = TRUE
+                    #   ),
+                    width = '60%'
+                   ) ),
+                  # Horizontal line ----
+                  tags$hr(),
+                  
+                  # Submit buttons
                   # UI function
                   actionButtonStyled(inputId="btn_reset", label="Reset fields   ",
                                      btn_type = "button", type = "default", class = "btn-sm"),
                   actionButtonStyled(inputId="btn_checks_before_upload", label="Run Checks",
                                      btn_type = "button", type = "warning", class = "btn-sm"),
                   
-                  actionButtonStyled(inputId="btn_upload", label="Upload  file ",
-                                     btn_type = "button", type = "primary", class = "btn-sm")
+                  hidden(actionButtonStyled(inputId="btn_upload", label="Upload  data ",
+                                     btn_type = "button", type = "primary", class = "btn-sm"))
+                  
                   
                 ),
                 
@@ -152,5 +180,6 @@ ui <- dashboardPage(
               )
       )
     )
-  )
+  ) ,
+   useShinyjs() # Set up shiny to use shinyjs 
 )

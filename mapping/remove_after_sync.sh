@@ -8,6 +8,6 @@
  rm -f mer_ct_dataelements.xlsx 
  rm -f MER\ Data\ Import\ Reference\ Guide\ Version\ 2\ December\ 2018\ \(1\).pdf 
  rm -f Linked_DHIS_MER_Templates_v1.0.xlsx
-
+ rm -rf data/
 
  
