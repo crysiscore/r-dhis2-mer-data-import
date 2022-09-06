@@ -351,8 +351,7 @@ merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, ve
   period       <- period
   orgUnit      <- org.unit
   df_all_indicators <- NULL
-  vec.indicators <- vec_mer_ats_indicators
-  
+
   json_header <- paste0( "\"dataSet\":\"",dataSetID, "\" ," ,
                          "\"completeDate\":\"",completeDate , "\" ," ,
                          "\"period\":\"", period , "\" ," ,
@@ -360,7 +359,7 @@ merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, ve
                          "\"dataValues\":" ) 
   
   # junta os df de todos indicadores processados
-  for (indicator in vec.indicators) {
+  for (indicator in  vec.indicators) {
     df                <- get(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = .GlobalEnv)
     if(nrow(df) > 0){
       
@@ -370,7 +369,7 @@ merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, ve
     
   }
   
-  df_all_indicators <- df_all_indicators[, c(10,9,13)]
+  df_all_indicators <- df_all_indicators[, c("dhisdataelementuid","dhiscategoryoptioncombouid","value")]
   df_all_indicators <- subset(df_all_indicators, !(is.na(value) | value =="")) # remover dataelements sem dados
   names(df_all_indicators)[1] <-  "dataElement"
   names(df_all_indicators)[2] <- "categoryOptionCombo"
