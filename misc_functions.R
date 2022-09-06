@@ -37,7 +37,7 @@ dhisLogin <- function(dhis2.username, dhis2.password, base.url) {
 #' datavalueset_template_dhis2_mer_ct <- getDhis2DatavalueSetTemplate(api_dhis_datasets,dataset_id_mer_ct)
 getDhis2DatavalueSetTemplate <- function(url.api.dhis.datasets,dataset.id){
   url_datavalueset_template <- paste0(url.api.dhis.datasets,dataset.id,'/dataValueSet.json')
-  http_content <-  content(GET(url_datavalueset_template, authenticate(dhis2.username, dhis2.password),timeout(10)),as = "text",type = 'application/json')
+  http_content <-  content(GET(url_datavalueset_template, authenticate(dhis2.username.2, dhis2.password),timeout(10)),as = "text",type = 'application/json')
   df_dataset_template =    fromJSON(http_content) %>% as.data.frame
   df_dataset_template = df_dataset_template[,c(1,2,4)]
   names(df_dataset_template)[1] <- 'dataElement'
@@ -182,7 +182,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
   tmp_log_exec_empty$task[1] <- get('task_check_consistency_1',envir = .GlobalEnv)
   message( "Stage 1: ", get('task_check_consistency_1',envir = .GlobalEnv))
   
-  assign(x = "log_execution",value =tmp_log_exec, envir = .GlobalEnv )
+  #assign(x = "log_execution",value =tmp_log_exec_empty, envir = .GlobalEnv )
   incProgress(1/(length(vec.indicators)+ 1), detail = paste("STAGE 1 - ", get('task_check_consistency_1',envir = .GlobalEnv) ))
   # Stage 1: Verficar o a integridade do ficheiro a ser importado
    total_error <- checkImportTamplateIntegrity(file.to.import = file.to.import,dataset.name =dataset.name ,sheet.name =sheet.name )
@@ -201,9 +201,8 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
      #A tarefa anterior terminou com sucesso
      tmp_log_exec_empty$status[1] <- 'ok'
      tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
-     assign(x = "log_execution",value =tmp_log_exec, envir = .GlobalEnv )
-     writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
-    
+     #assign(x = "log_execution",value =tmp_log_exec, envir = .GlobalEnv )
+
      
      #Indicar a tarefa em execucao: task_check_consistency_2
      tmp_log_exec_empty$Datetime[1] <- substr(x = Sys.time(),start = 1, stop = 22)
@@ -235,7 +234,8 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        tmp_log_exec_empty$Dataset[1] <- dataset.name
        tmp_log_exec_empty$task[1] <- paste0(get('task_check_consistency_3',envir = .GlobalEnv), indicator)
        message(  "Stage 3: ", get('task_check_consistency_3',envir = .GlobalEnv))
-       writexl::write_xlsx(x = tmp_log_exec_empty,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
+       tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
+       writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
        assign(x = "log_execution",value =tmp_log_exec, envir = .GlobalEnv )
        
        #Get excell values
@@ -245,8 +245,8 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        assign(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), tmp_df , envir = .GlobalEnv)
        #A tarefa anterior terminou com sucesso
        tmp_log_exec_empty$status[1] <- 'ok'
-       tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
-       writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
+       #tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
+       #writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
        incProgress(1/(length(vec.indicators)+ 1), detail = paste("STAGE III - Processando  o indicador: ", indicator , " " ))
        }
     
@@ -393,16 +393,21 @@ merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, ve
 #' @example
 #' status <- apiDhisSendDataValues
 apiDhisSendDataValues <- function(json){
-  
+  withProgress(message = 'Enviando Dados para o DHIS',
+               detail = 'This may take a while...', value = 0, {
+                 
   # url da API
   base.url <- paste0(get('api_dhis_base_url',envir = .GlobalEnv),get("api_dhis_datasetvalues_endpoint",envir = .GlobalEnv))
   
-  
+  incProgress(1/2, detail = paste("This may take a while..." ))
   # Post data to DHIS2
   status <- POST(url = base.url,
                  body = json, config=authenticate(get("dhis2.username",envir = .GlobalEnv), get("dhis2.password",envir = .GlobalEnv)),
                  add_headers("Content-Type"="application/json") )
   
+  incProgress(1/2, detail = paste("This may take a while..." ))
+  
+               })
   # The reponse from server will be an object with the following structure
   # Response [http://192.168.1.10:5400/api/33/dataValueSets]
   # Date: 2022-09-01 10:17
@@ -414,6 +419,109 @@ apiDhisSendDataValues <- function(json){
 }
 
 
+#' saveLogUploadedIndicators ->  guarda os datasets dos indicadores enviados ao dhis
+#' @param  vec.indicators indicadores a importar
+#' @param upload.date  data do upload   
+#' @param period  periodo
+#' @param df.warnings df com campos vazios
+#' @examples
+#' saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings)
+saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,period,df.warnings){
+  
+  main_dir <- get("wd",envir = .GlobalEnv)
+  upload_dir <- paste0(main_dir,"uploads/")
+  setwd(upload_dir)
+  
+  # check if sub directory exists 
+  if (file.exists(upload.date)){
+    
+    # change to dir
+    curr_upload_dir <- paste0(upload_dir, upload.date)
+    setwd(curr_upload_dir)
+    
+    # check  if us dir  is created
+    if (file.exists(us.name)){
+      
+       tmp_wd <- paste0(curr_upload_dir,'/',us.name)
+       setwd(tmp_wd)
+      if(file.exists(period )){
+        setwd(period)
+        # set  wd
+        #TODO save files here
+        for (indicator in vec.indicators) {
+          
+          tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = .GlobalEnv )
+          writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
+          
+        }
+        writexl::write_xlsx(x =df.warnings,path ='empty_cells_warning.xlsx' ,col_names = TRUE,format_headers = TRUE)
+        
+      } else {
+         
+        # create dir
+        tmp_dir <- paste0(tmp_wd,'/',period )
+        dir.create(file.path(tmp_dir))
+        setwd(tmp_dir)
+        # set as wd
+        #TODO save files here
+        for (indicator in vec.indicators) {
+          
+          tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = .GlobalEnv )
+          writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
+          
+        }
+        writexl::write_xlsx(x =df.warnings,path ='empty_cells_warning.xlsx' ,col_names = TRUE,format_headers = TRUE)
+      }
+      
+      
+      
+    } 
+    else {
+        
+      tmp_path <- paste0(curr_upload_dir, '/', us.name) # create us dir
+      dir.create(file.path(tmp_path))
+      setwd(tmp_path)
+      tmp_dir <- paste0(tmp_path,'/',period )           # Then creates period dir inside us dir
+      dir.create(file.path(tmp_dir))
+      setwd(tmp_dir)
+      #setwd
+      #TODO Save files here
+      for (indicator in vec.indicators) {
+        
+        tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = .GlobalEnv )
+        writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
+        
+      }
+      writexl::write_xlsx(x =df.warnings,path ='empty_cells_warning.xlsx' ,col_names = TRUE,format_headers = TRUE)
+      }
+
+    
+  } 
+  else {
+    
+    # create a new sub directory inside
+    # the main path
+    dir.create(file.path(upload_dir, upload.date))
+    tmp_dir <- paste0(upload_dir, upload.date)
+    setwd(tmp_dir)
+    tmp_path_us <- paste0(tmp_dir, '/', us.name) # create us dir
+    dir.create(file.path(tmp_path_us))
+    setwd(tmp_path_us)
+    tmp_dir_period <- paste0(tmp_path_us,'/',period )           # Then creates period dir inside us dir
+    dir.create(file.path(tmp_dir_period))
+    setwd(tmp_dir_period)
+    # TODO Save files here
+    for (indicator in vec.indicators) {
+      
+      tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = .GlobalEnv )
+      writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
+      
+    }
+    writexl::write_xlsx(x =df.warnings,path ='empty_cells_warning.xlsx' ,col_names = TRUE,format_headers = TRUE)
+  }
+  
+  
+}
 
 
 getDataValuesetName <- function(dataset.name) {
@@ -435,6 +543,7 @@ getDataValuesetName <- function(dataset.name) {
   
   return(datavalueset_template)
 }
+
 getUsNameFromSheetNames <-function(vector){
   
   vec <- c()
@@ -444,6 +553,7 @@ getUsNameFromSheetNames <-function(vector){
   }
   vec
 }
+
 getDataSetDataElements <- function(base.url, dataset.id) {
   
   url <-

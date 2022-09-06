@@ -3,7 +3,7 @@
 .Rapp.history
 
 # Session Data files
-.RData
+#.RData
 
 # User-specific files
 .Ruserdata
@@ -46,3 +46,4 @@ credentials.R
 
 # Data dir
 /data/
+uploads/*.xlsx
