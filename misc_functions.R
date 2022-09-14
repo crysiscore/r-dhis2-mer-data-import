@@ -63,7 +63,7 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
   wd                  <- env_get(env = .GlobalEnv,nm =  "wd" )
   
   message("Check:  passando aaa 1.1 ")
-  tmp <- env_get(env = .GlobalEnv ,nm =  datavalueset.template.name)
+  tmp <- env_get(env = user_env ,nm =  datavalueset.template.name)
   df <- filter(tmp, dataElement==data.element.id & categoryoptioncombo==category.option.combo.id )
   
   total_rows <- nrow(df)

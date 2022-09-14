@@ -1,19 +1,24 @@
 
 server <- function(input, output) {
   
-  #envir <- child_env(.parent = .GlobalEnv)
+  #Create user environment to store user data
   user_env <- new.env()    
   source("misc_functions.R", local=user_env)
   source("credentials.R", local=user_env)
   attach(user_env, name="sourced_scripts")
   
-  datavalueset_template_dhis2_mer_ct         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_ct)
-  datavalueset_template_dhis2_mer_ats        <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_ats)
-  datavalueset_template_dhis2_mer_smi        <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_smi)
-  datavalueset_template_dhis2_mer_prevention <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_prevention)
-  datavalueset_template_dhis2_mer_hs         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_hs)
   
+  # 
+  template_dhis2_mer_ct         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_ct)
+  template_dhis2_mer_ats        <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_ats)
+  template_dhis2_mer_smi        <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_smi)
+  template_dhis2_mer_prevention <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_prevention)
+  template_dhis2_mer_hs         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_hs)
   
+  # Include datavalueset from dhis on user environment
+  env_bind(user_env, datavalueset_template_dhis2_mer_ct  = template_dhis2_mer_ct, datavalueset_template_dhis2_mer_ats= template_dhis2_mer_ats,
+                     datavalueset_template_dhis2_mer_smi = template_dhis2_mer_smi , datavalueset_template_dhis2_mer_prevention= template_dhis2_mer_prevention ,
+                     datavalueset_template_dhis2_mer_hs  =  template_dhis2_mer_hs)
   
   temporizador <-reactiveValues( started=FALSE, df_execution_log=NULL, df_warning_log=NULL)
  
@@ -182,7 +187,7 @@ server <- function(input, output) {
   
   # Observe reset btn
   observeEvent(input$btn_reset, {
-    vec_indicators          <-input$chkbxIndicatorsGroup
+    vec_indicators          <- input$chkbxIndicatorsGroup
     updateAwesomeRadio(getDefaultReactiveDomain(), inputId = "dhis_datasets",label =  "DHIS2 Datasets",
                        choices = mer_datasets_names,
                        selected = ""       )
