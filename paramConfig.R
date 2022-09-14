@@ -4,11 +4,11 @@
 # 1 - change to project location on server
 wd <- '/home/agnaldo/Git/ccs_datim_maping/'
 
+ 
+# 2 - DHIS2 API ENDPOINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
 
-# 2 - DHIS2 API ENDPOINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html
-
-api_dhis_base_url <- "http://192.168.1.10:5400/" 
-api_dhis_datasets <- 'http://192.168.1.10:5400/api/dataSets/'
+api_dhis_base_url <- "http://127.0.0.1:5400/" 
+api_dhis_datasets <- 'http://127.0.0.1:5400/api/dataSets/'
 api_dhis_datasetvalues_endpoint <- 'api/33/dataValueSets'
 
 

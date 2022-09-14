@@ -45,5 +45,10 @@ vignettes/*.pdf
 credentials.R
 
 # Data dir
+
+# Data dir
+/data/
+!uploads/DHIS2 UPLOAD HISTORY.xlsx
+uploads/*.xlsx
 /data/
 uploads/*.xlsx
