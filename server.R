@@ -1,7 +1,7 @@
 
 server <- function(input, output) {
   
-  #Create user environment to store user data
+  # Create user environment to store user data
   user_env <- new.env()    
   source("misc_functions.R", local=user_env)
   source("credentials.R", local=user_env)
@@ -21,7 +21,8 @@ server <- function(input, output) {
                      datavalueset_template_dhis2_mer_hs  =  template_dhis2_mer_hs)
   
   temporizador <-reactiveValues( started=FALSE, df_execution_log=NULL, df_warning_log=NULL)
- 
+
+  
   load(file = paste0(get("wd", envir = .GlobalEnv),'rdata.RData' ), envir = user_env)
  
   
@@ -194,7 +195,6 @@ server <- function(input, output) {
     updatePickerInput(getDefaultReactiveDomain(), "chkbxUsGroup",
                       label = "U. Sanitarias: ",
                       choices =  list(),
-                      inline=TRUE,
                       options = list(
                         `live-search` = TRUE)
     )
@@ -277,15 +277,15 @@ server <- function(input, output) {
   # Observe reset btn check consistancy
   observeEvent(input$btn_checks_before_upload, {
 
-    vec_temp_dsnames <- get('mer_datasets_names', envir = .GlobalEnv)
-    file <- input$file1
+    vec_temp_dsnames        <- get('mer_datasets_names', envir = .GlobalEnv)
+    file                    <- input$file1
     isolate(temporizador$started <- TRUE)
     file_to_import          <- file$datapath
     dataset_name            <- input$dhis_datasets
-    ds_name <- names(which(vec_temp_dsnames==dataset_name))
+    ds_name                 <- names(which(vec_temp_dsnames==dataset_name))
     excell_mapping_template <- getTemplateDatasetName(ds_name)
     vec_indicators          <-input$chkbxIndicatorsGroup
-    vec_selected_us              <-  input$chkbxUsGroup
+    vec_selected_us         <-  input$chkbxUsGroup
     
     message("File :", file_to_import)
     message("Dataset name: ", ds_name)
@@ -312,35 +312,117 @@ server <- function(input, output) {
 
     }
     else {
+
+      
+
+      
+     lapply(vec_indicators,function(x) {
+
+          local_x <- x
+          appendTab("tab_indicadores",
+                                 tabPanel( local_x , box( title = local_x, status = "primary", height =  "720px",width = "12",solidHeader = T,... =
+                                                        column(width = 12,  DT::dataTableOutput(env_get(env = user_env ,nm =  paste('DF_',gsub(" ", "", local_x, fixed = TRUE) , sep=''))   %>%
+                                                                                                   datatable ( extensions = c('Buttons'),
+                                                                                                               options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+                                                                                                                               pageLength = 15,
+                                                                                                                               dom = 'Blfrtip',
+                                                                                                                               buttons = list(
+                                                                                                                                 list(extend = 'excel', title = NULL),
+                                                                                                                                 'pdf',
+                                                                                                                                 'print'  ) )) ),style = "height:620px; overflow-y: scroll;overflow-x: scroll;"
+                                                        )  ) ),
+                                 session = getDefaultReactiveDomain()
+                       )
+
+
+
+
+
+      } )
+      
+      
+
+      
       shinyalert("Execucao Terminada", "Alguns campos estao Vazios, verifique a tabela de avisos ", type = "warning")
-
-    for(indicator in vec_indicators) {
-      appendTab("tab_indicadores",
-        tabPanel(indicator ,box( title = indicator, status = "primary", height =  "720px",width = "12",solidHeader = T,
-                                           column(width = 12,  DT::dataTableOutput(paste0('data_table_',gsub(" ", "", indicator, fixed = TRUE) )),style = "height:620px; overflow-y: scroll;overflow-x: scroll;"
-                                           )  ) ),
-
-        session = getDefaultReactiveDomain()
-      )
-      # Mostrar nas datatales os indicadores processados
-      id <- paste0('data_table_',gsub(" ", "", indicator, fixed = TRUE) )
-      message("Data table: ",id)
+   
       
-      #df <- get(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = envir)
-      df <-  env_get(env =user_env ,nm =  paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
       
-     
-
-      output[[id]] <- DT::renderDataTable(df, extensions = c('Buttons'),
-                                          options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
-                                                          pageLength = 15,
-                                                         dom = 'Blfrtip',
-                                                         buttons = list(
-                                                                        list(extend = 'excel', title = NULL),
-                                                                        'pdf',
-                                                                        'print'  ) ))
-
-    }
+      
+      
+      
+      
+      
+      
+      
+      
+       #   lapply(vec_indicators, function(x) {
+       #   
+       #     local({
+       #       local_x <- x
+       #   dt_id <- paste0('data_table_',gsub(" ", "", local_x, fixed = TRUE) )
+       #   message(dt_id)
+       #   delay(2000, appendTab("tab_indicadores",
+       #             tabPanel( local_x , box( title = local_x, status = "primary", height =  "720px",width = "12",solidHeader = T,... =
+       #                                    column(width = 12,  DT::dataTableOutput(outputId = dt_id ),style = "height:620px; overflow-y: scroll;overflow-x: scroll;"
+       #                                    )  ) ),
+       #             session = getDefaultReactiveDomain()
+       #   ) )
+       #   
+       #   delay(2000, 
+       #   output[[dt_id]]  <- DT::renderDataTable( env_get(env = user_env ,nm =  paste('DF_',gsub(" ", "", local_x, fixed = TRUE) , sep='')) %>% 
+       #                                              datatable ( extensions = c('Buttons'),
+       #                                                           options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+       #                                                           pageLength = 15,
+       #                                                           dom = 'Blfrtip',
+       #                                                           buttons = list(
+       #                                                             list(extend = 'excel', title = NULL),
+       #                                                             'pdf',
+       #                                                             'print'  ) )) )
+       # 
+       #   )
+       #   message(nrow(env_get(env = user_env ,nm =  paste('DF_',gsub(" ", "", local_x, fixed = TRUE) , sep=''))))
+       # })
+       # 
+       #   })
+      
+    # for(indicator in vec_indicators) {
+    #   
+    # 
+    #  local({
+    #    ind <- indicator
+    #    dt_id <- paste0('data_table_',gsub(" ", "", ind, fixed = TRUE) )
+    #   appendTab("tab_indicadores",
+    #             tabPanel( ind , box( title = ind, status = "primary", height =  "720px",width = "12",solidHeader = T,... =
+    #                                          column(width = 12,  DT::dataTableOutput(outputId = dt_id ),style = "height:620px; overflow-y: scroll;overflow-x: scroll;"
+    #                                          )  ) ),
+    #             session = getDefaultReactiveDomain()
+    #   )
+    #   
+    #   # Mostrar ns datatables os indicadores processados
+    #   
+    #   message("Data table: ",dt_id)
+    #   
+    #   df <-  env_get(env = user_env ,nm =  paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+    #   message(nrow(df))
+    #   delay( 2000,
+    #   output[[dt_id]] <<- DT::renderDataTable(a , extensions = c('Buttons'),
+    #                                           options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+    #                                                           pageLength = 15,
+    #                                                           dom = 'Blfrtip',
+    #                                                           buttons = list(
+    #                                                             list(extend = 'excel', title = NULL),
+    #                                                             'pdf',
+    #                                                             'print'  ) ))
+    #  )
+    #   
+    #   env_poke(env = user_env ,nm =  "temp_df",value =  df)
+    #   
+    #   
+    # })
+    #  
+    #  
+    # 
+    # }
     # Mostrar o botao Upload
       shinyjs::show(id = "btn_upload",animType = "slide")
       shinyjs::show(id = "chkbxPeriodGroup")

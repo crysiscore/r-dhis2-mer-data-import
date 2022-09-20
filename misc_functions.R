@@ -62,7 +62,7 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
   df_error_tmp        <- env_get(env = user_env,nm = "error_log_dhis_import")
   wd                  <- env_get(env = .GlobalEnv,nm =  "wd" )
   
-  message("Check:  passando aaa 1.1 ")
+  #message("Check:  passando aaa 1.1 ")
   tmp <- env_get(env = user_env ,nm =  datavalueset.template.name)
   df <- filter(tmp, dataElement==data.element.id & categoryoptioncombo==category.option.combo.id )
   
@@ -73,7 +73,7 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
     df_error_tmp_empty$indicator[1] <- indicator.name
     df_error_tmp_empty$error[1] <- 'NOT FOUND'
     df_error_tmp<- rbind.fill(df_error_tmp, df_error_tmp_empty)
-    message("Check:  aaa passando 1.2 ")
+    #message("Check:  aaa passando 1.2 ")
     writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
     #assign(x = "error_log_dhis_import",value =df_error_tmp, envir = envir )
     env_poke(env = user_env,nm ="error_log_dhis_import",value = df_error_tmp ) # https://adv-r.hadley.nz/environments.html#getting-and-setting-1 - 7.2.5 Getting and setting
@@ -86,7 +86,7 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
     df_error_tmp_empty$indicator[1] <- indicator.name
     df_error_tmp_empty$error[1] <- 'DUPLICATED'
     df_error_tmp<- rbind.fill(df_error_tmp, df_error_tmp_empty)
-    message("Check: aaa  passando 1.3 ")
+    #message("Check: aaa  passando 1.3 ")
     writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
     #assign(x = "error_log_dhis_import",value =df_error_tmp, envir = envir )
     env_poke(env = user_env,nm ="error_log_dhis_import",value = df_error_tmp ) # https://adv-r.hadley.nz/environments.html#getting-and-setting-1 - 7.2.5 Getting and setting
@@ -233,10 +233,10 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
      message( "Stage 2: ",  env_get(env = .GlobalEnv, "task_check_consistency_2"))
 
      tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
-     message("Passando I")
+     #message("Passando I")
      #assign(x = "log_execution",value =tmp_log_exec, envir = user.env )
      env_poke(env = user.env ,nm =  "log_execution",value =  tmp_log_exec)
-     message("Passando I.1")
+     #message("Passando I.1")
      writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
      datavalueset_template <- getDataValuesetName(dataset.name)
      
@@ -249,7 +249,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        tmp_df$check <- ""
        tmp_df$value <- ""
        
-       message("Passando I.2 - " , indicator)
+       #message("Passando I.2 - " , indicator)
        tmp_df$check  <- mapply(checkIFDataElementExistsOnTemplate,tmp_df$dhisdataelementuid,tmp_df$dhiscategoryoptioncombouid ,datavalueset_template,indicator )
       
        #Indicar a tarefa em execucao : task_check_consistency_3
@@ -262,7 +262,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
        env_poke(env = user.env ,nm =  "log_execution",value =  tmp_log_exec)
        #assign(x = "log_execution",value =tmp_log_exec, envir = user.env )
-       message("Passando II")
+       #message("Passando II")
        #Get excell values
        setwd('data/')
        tmp_df$value <-  mapply(getDEValueOnExcell,tmp_df$excell_cell_ref, file.to.import, sheet.name=sheet.name )
@@ -274,7 +274,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        #tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
        #writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
        incProgress(1/(length(vec.indicators)+ 1), detail = paste("STAGE III - Processando  o indicador: ", indicator , " " ))
-       message("Passando III")
+       #message("Passando III")
        }
     
 
