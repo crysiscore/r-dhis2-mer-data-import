@@ -37,7 +37,7 @@ dhisLogin <- function(dhis2.username, dhis2.password, base.url) {
 #' datavalueset_template_dhis2_mer_ct <- getDhis2DatavalueSetTemplate(api_dhis_datasets,dataset_id_mer_ct)
 getDhis2DatavalueSetTemplate <- function(url.api.dhis.datasets,dataset.id){
   url_datavalueset_template <- paste0(url.api.dhis.datasets,dataset.id,'/dataValueSet.json')
-  http_content <-  content(GET(url_datavalueset_template, authenticate(dhis2.username.2, dhis2.password),timeout(10)),as = "text",type = 'application/json')
+  http_content <-  content(GET(url_datavalueset_template, authenticate(dhis2.username, dhis2.password),timeout(10)),as = "text",type = 'application/json')
   df_dataset_template =    fromJSON(http_content) %>% as.data.frame
   df_dataset_template = df_dataset_template[,c(1,2,4)]
   names(df_dataset_template)[1] <- 'dataElement'
@@ -74,7 +74,9 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
     df_error_tmp_empty$error[1] <- 'NOT FOUND'
     df_error_tmp<- rbind.fill(df_error_tmp, df_error_tmp_empty)
     #message("Check:  aaa passando 1.2 ")
-    writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
+    
+    saveDataGDrive( df_error_tmp ,file.type='xlsx', file.name ='log_execution_warning', outputDir='logs')
+    #writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
     #assign(x = "error_log_dhis_import",value =df_error_tmp, envir = envir )
     env_poke(env = user_env,nm ="error_log_dhis_import",value = df_error_tmp ) # https://adv-r.hadley.nz/environments.html#getting-and-setting-1 - 7.2.5 Getting and setting
     return(FALSE)
@@ -86,8 +88,10 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
     df_error_tmp_empty$indicator[1] <- indicator.name
     df_error_tmp_empty$error[1] <- 'DUPLICATED'
     df_error_tmp<- rbind.fill(df_error_tmp, df_error_tmp_empty)
+    
     #message("Check: aaa  passando 1.3 ")
-    writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
+    #writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
+    saveDataGDrive( df_error_tmp ,file.type='xlsx', file.name ='log_execution_warning', outputDir='logs')
     #assign(x = "error_log_dhis_import",value =df_error_tmp, envir = envir )
     env_poke(env = user_env,nm ="error_log_dhis_import",value = df_error_tmp ) # https://adv-r.hadley.nz/environments.html#getting-and-setting-1 - 7.2.5 Getting and setting
     return('Duplicado')
@@ -124,7 +128,8 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
       tmp$error[1] <- "Warning"
       message("Warning :", warning_msg)
       df_error_tmp  <- rbind.fill(df_error_tmp, tmp)
-      writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
+     # writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
+      saveDataGDrive( df_error_tmp ,file.type='xlsx', file.name ='log_execution_warning', outputDir='logs')
       #assign(x = "error_log_dhis_import",value =df_error_tmp, envir = user.env )
       env_poke(env = user_env ,nm =  "error_log_dhis_import",value =  df_error_tmp)
       empty_value <- ""
@@ -145,7 +150,8 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
     tmp$error[1] <- error_msg
     message(error_msg)
     df_error_tmp <- rbind.fill(df_error_tmp, tmp)
-    writexl::write_xlsx(x = df_error_tmp,path = paste0(wd, 'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
+    #writexl::write_xlsx(x = df_error_tmp,path = paste0(wd, 'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
+    saveDataGDrive( df_error_tmp ,file.type='xlsx', file.name ='log_execution_warning', outputDir='logs')
     # assign(x = "error_log_dhis_import",value =df_error_tmp, envir = user.env )
     env_poke(env = user_env ,nm =  "error_log_dhis_import",value =  df_error_tmp)
     return(NA)
@@ -237,12 +243,13 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
      #assign(x = "log_execution",value =tmp_log_exec, envir = user.env )
      env_poke(env = user.env ,nm =  "log_execution",value =  tmp_log_exec)
      #message("Passando I.1")
-     writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
+     #writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
+     saveDataGDrive( tmp_log_exec ,file.type='xlsx', file.name ='log_execution', outputDir='logs')
      datavalueset_template <- getDataValuesetName(dataset.name)
      
      for (indicator in vec.indicators) {
        # GET excell values
-       setwd(wd)
+       #setwd(wd)
        # Carregar os indicadores do ficheiro do template de Mapeamento  & excluir os dataElements que nao reportamos (observation==99)
        tmp_df <- read_xlsx(path =paste0('mapping/',excell.mapping.template), sheet = indicator , skip = 1 )
        tmp_df <- filter(tmp_df, is.na(observation) )
@@ -259,12 +266,13 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        tmp_log_exec_empty$task[1] <- paste0( env_get(env = .GlobalEnv, "task_check_consistency_3"), indicator)
        message(  "Stage 3: ",  env_get(env = .GlobalEnv, "task_check_consistency_3"))
        tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
-       writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
+       #writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
+       saveDataGDrive( tmp_log_exec ,file.type='xlsx', file.name ='log_execution', outputDir='logs')
        env_poke(env = user.env ,nm =  "log_execution",value =  tmp_log_exec)
        #assign(x = "log_execution",value =tmp_log_exec, envir = user.env )
        #message("Passando II")
        #Get excell values
-       setwd('data/')
+       #setwd('data/')
        tmp_df$value <-  mapply(getDEValueOnExcell,tmp_df$excell_cell_ref, file.to.import, sheet.name=sheet.name )
        
        #assign(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), tmp_df , envir = user.env)
@@ -300,8 +308,8 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
 #' erros  <- checkImportTamplateIntegrity(file.to.import, dataset.name, sheet.name)
 checkImportTamplateIntegrity  <- function(file.to.import,dataset.name,sheet.name , user.env ){
   
-  wd <- env_get(env = .GlobalEnv, "wd")
-  setwd(wd)
+  #wd <- env_get(env = .GlobalEnv, "wd")
+  #setwd(wd)
   df_checks <- read_xlsx(path ='mapping/dhis_mer_checks.xlsx', sheet = 1 ,col_names = TRUE  )
   
   df_cells_to_ckeck  <- filter(df_checks, Dataset ==dataset.name)
@@ -332,7 +340,8 @@ checkImportTamplateIntegrity  <- function(file.to.import,dataset.name,sheet.name
   }
   #Write error 
   if(total_errors> 0){
-    writexl::write_xlsx(x = df_cells_to_ckeck,path = 'errors/template_errors.xlsx')
+   # writexl::write_xlsx(x = df_cells_to_ckeck,path = 'errors/template_errors.xlsx')
+    saveDataGDrive( df_cells_to_ckeck ,file.type='xlsx', file.name ='template_errors', outputDir='errors')
   }
   return(total_errors)
   
@@ -460,24 +469,28 @@ apiDhisSendDataValues <- function(json){
 saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,period,df.warnings){
   
 
-  main_dir <- env_get(env = .GlobalEnv, "wd")
-  upload_dir <- paste0(main_dir,"uploads/")
-  setwd(upload_dir)
+
+  upload_dir <- "uploads"
+  
+  #setwd(upload_dir)
   
   # check if sub directory exists 
-  if (file.exists(upload.date)){
-    
+ # if (drop_exists(path = paste0(upload_dir,'/',upload.date), dtoken = env_get(env = .GlobalEnv,nm = 'token'))){
+  if (  upload.date %in%  as.vector(drive_ls(upload_dir) %>%  select('name') )[[1]]){
+  
+ 
     # change to dir
-    curr_upload_dir <- paste0(upload_dir, upload.date)
-    setwd(curr_upload_dir)
+    curr_upload_dir <- paste0(upload_dir,'/' , upload.date)
+    #setwd(curr_upload_dir)
     
     # check  if us dir  is created
-    if (file.exists(us.name)){
-      
+    #if (drop_exists(path = paste0(curr_upload_dir,'/',us.name), dtoken = env_get(env = .GlobalEnv,nm = 'token'))){
+    if (  us.name %in%  as.vector(drive_ls(curr_upload_dir) %>%  select('name') )[[1]]){
        tmp_wd <- paste0(curr_upload_dir,'/',us.name)
-       setwd(tmp_wd)
-      if(file.exists(period )){
-        setwd(period)
+
+     # if(drop_exists(path = paste0(tmp_wd,'/',period), dtoken = env_get(env = .GlobalEnv,nm = 'token'))){
+       if (  period %in%  as.vector(drive_ls(tmp_wd) %>%  select('name') )[[1]]){
+        path_period <-  paste0(tmp_wd,'/',period)
         # set  wd
         #TODO save files here
         for (indicator in vec.indicators) {
@@ -485,27 +498,28 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
           #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
           tmp_df <- env_get(env = user_env , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
           
-          writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
-          
+          #writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
+          saveDataGDrive( tmp_df ,file.type='xlsx', file.name =paste0('DF_',gsub(" ", "", indicator, fixed = TRUE)), outputDir=path_period)
         }
-        writexl::write_xlsx(x =df.warnings,path ='empty_cells_warning.xlsx' ,col_names = TRUE,format_headers = TRUE)
-        
+        #writexl::write_xlsx(x =df.warnings,path ='empty_cells_warning.xlsx' ,col_names = TRUE,format_headers = TRUE)
+        saveDataGDrive( df.warnings ,file.type='xlsx', file.name ='empty_cells_warning', outputDir=path_period)
       } else {
          
         # create dir
         tmp_dir <- paste0(tmp_wd,'/',period )
-        dir.create(file.path(tmp_dir))
-        setwd(tmp_dir)
+        drive_mkdir(tmp_dir )
+        
         # set as wd
         #TODO save files here
         for (indicator in vec.indicators) {
           
           #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
           tmp_df <- env_get(env = user_env , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
-          writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
-          
+          #writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
+          saveDataGDrive( tmp_df ,file.type='xlsx', file.name =paste0('DF_',gsub(" ", "", indicator, fixed = TRUE)), outputDir=tmp_dir)
         }
-        writexl::write_xlsx(x =df.warnings,path ='empty_cells_warning.xlsx' ,col_names = TRUE,format_headers = TRUE)
+        #writexl::write_xlsx(x =df.warnings,path ='empty_cells_warning.xlsx' ,col_names = TRUE,format_headers = TRUE)
+        saveDataGDrive( df.warnings ,file.type='xlsx', file.name ='empty_cells_warning', outputDir=tmp_dir)
       }
       
       
@@ -514,21 +528,22 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
     else {
         
       tmp_path <- paste0(curr_upload_dir, '/', us.name) # create us dir
-      dir.create(file.path(tmp_path))
-      setwd(tmp_path)
+      drive_mkdir(tmp_path)
+
       tmp_dir <- paste0(tmp_path,'/',period )           # Then creates period dir inside us dir
-      dir.create(file.path(tmp_dir))
-      setwd(tmp_dir)
-      #setwd
+      drive_mkdir(tmp_dir  )
+     
       #TODO Save files here
       for (indicator in vec.indicators) {
         
         #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
         tmp_df <- env_get(env = user_env , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
-        writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
         
+        #writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
+        saveDataGDrive( tmp_df ,file.type='xlsx', file.name =paste0('DF_',gsub(" ", "", indicator, fixed = TRUE)), outputDir=tmp_dir)
       }
-      writexl::write_xlsx(x =df.warnings,path ='empty_cells_warning.xlsx' ,col_names = TRUE,format_headers = TRUE)
+      #writexl::write_xlsx(x =df.warnings,path ='empty_cells_warning.xlsx' ,col_names = TRUE,format_headers = TRUE)
+      saveDataGDrive( df.warnings ,file.type='xlsx', file.name ='empty_cells_warning', outputDir=tmp_dir)
       }
 
     
@@ -537,24 +552,25 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
     
     # create a new sub directory inside
     # the main path
-    dir.create(file.path(upload_dir, upload.date))
-    tmp_dir <- paste0(upload_dir, upload.date)
-    setwd(tmp_dir)
-    tmp_path_us <- paste0(tmp_dir, '/', us.name) # create us dir
-    dir.create(file.path(tmp_path_us))
-    setwd(tmp_path_us)
-    tmp_dir_period <- paste0(tmp_path_us,'/',period )           # Then creates period dir inside us dir
-    dir.create(file.path(tmp_dir_period))
-    setwd(tmp_dir_period)
+    drive_mkdir(file.path(upload_dir, upload.date) )
+    tmp_dir <- file.path(upload_dir, upload.date) 
+
+    tmp_path_us <-  file.path(tmp_dir,  us.name) # create us dir
+    drive_mkdir(file.path(tmp_path_us))
+ 
+    tmp_dir_period <- file.path(tmp_path_us, period )           # Then creates period dir inside us dir
+    drive_mkdir(tmp_dir_period )
+
     # TODO Save files here
     for (indicator in vec.indicators) {
       
       #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), )
       tmp_df <- env_get(env = user_env , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
-      writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
+      saveDataGDrive( tmp_df ,file.type='xlsx', file.name =paste0('DF_',gsub(" ", "", indicator, fixed = TRUE)), outputDir=tmp_dir_period)
       
     }
-    writexl::write_xlsx(x =df.warnings,path ='empty_cells_warning.xlsx' ,col_names = TRUE,format_headers = TRUE)
+    #writexl::write_xlsx(x =df.warnings,path ='empty_cells_warning.xlsx' ,col_names = TRUE,format_headers = TRUE)
+    saveDataGDrive( df.warnings ,file.type='xlsx', file.name ='empty_cells_warning', outputDir=tmp_dir_period)
   }
   
   
@@ -616,3 +632,49 @@ getDataSetDataElements <- function(base.url, dataset.id) {
 
 
 #checkDataConsistency(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators )
+
+
+saveDataGDrive <- function(data ,file.type, file.name , outputDir) {
+
+  # Create a unique file name
+  
+  temp_file_name <- ""
+  # Write the data to a temporary file locally
+  filePath <- ""
+  if(file.type=="xlsx"){
+    temp_file_name <- file.name
+    filePath <- file.path(tempdir(), paste0( temp_file_name,".xlsx"))
+    writexl::write_xlsx(x=data,path =  filePath, col_names =  TRUE, format_headers  = TRUE)
+    
+  } else if (file.type=="csv"){
+    
+    
+  } 
+
+  # Upload the file to Dropbox
+  # drop_upload(dtoken = env_get(env = .GlobalEnv, nm = "token"),file = filePath, path = outputDir , mode = "overwrite")
+  drive_upload( media =filePath  ,path = outputDir , name = file.name ,type = "xlsx" , overwrite = TRUE)
+}
+
+
+
+#' gdrive_read_xls
+#'
+#' A lightweight wrapper around \code{read.xls} to read csv files from Dropbox into memory
+#' @param file Name of file with full path relative to Dropbox root
+#' @param  dest A temporary directory where a xls file is downloaded before being read into memory
+#' @param  ... Additional arguments into \code{read.xls}
+#' @template token
+#' @export
+#' @examples \dontrun{
+#' write_xlslx(iris, file = "iris.xlsx")
+#' drop_upload("iris.csv")
+#' # Now let's read this back into an R session
+#' new_iris <- gdrive_read_xls("iris.xlsx")
+#'}
+gdrive_read_xls <- function(file, dest = tempdir() ) {
+  localfile = paste0(dest, "/", basename(file))
+  drive_download(file=file, path = localfile, overwrite = TRUE)
+  readxl::read_xlsx(path = localfile, col_names = TRUE)
+}
+

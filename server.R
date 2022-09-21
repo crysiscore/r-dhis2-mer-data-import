@@ -23,7 +23,7 @@ server <- function(input, output) {
   temporizador <-reactiveValues( started=FALSE, df_execution_log=NULL, df_warning_log=NULL)
 
   
-  load(file = paste0(get("wd", envir = .GlobalEnv),'rdata.RData' ), envir = user_env)
+  load(file = 'rdata.RData' , envir = user_env)
  
   
   # Disable the buttons on start
@@ -205,11 +205,13 @@ server <- function(input, output) {
     output$instruction <- renderText({  "" })
     updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
     output$tbl_integrity_errors <- renderDataTable({
-    df <- read_xlsx(path = paste0(wd,'errors/template_errors.xlsx'))
+    df <- read_xlsx(path = 'errors/template_errors.xlsx')
+    
     datatable( df[0 ,], options = list(paging = TRUE))
     })
     
-    load(file = paste0(get("wd", envir = .GlobalEnv),'rdata.RData' ), envir = user_env)
+    load(file = 'rdata.RData' , envir = user_env)
+    
     for (indicator in vec_indicators) {
       removeTab(inputId = "tab_indicadores", target =indicator)
     }
@@ -299,7 +301,7 @@ server <- function(input, output) {
       shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")
       shinyjs::hide(id = "btn_upload")
       output$tbl_integrity_errors <- renderDT({
-        df <- read_xlsx(path = paste0(wd,'errors/template_errors.xlsx'))
+        df <- read_xlsx(path = 'errors/template_errors.xlsx')
         datatable( df,  extensions = c('Buttons'),
                    options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
                                    pageLength = 15,
@@ -465,7 +467,8 @@ server <- function(input, output) {
         
         shinyalert("Sucess", "Dados enviados com sucesso", type = "success")
         #TODO Registar info do upload
-         upload_history = readxl::read_xlsx(path = paste0( get("wd"),'uploads/DHIS2 UPLOAD HISTORY.xlsx'))
+         #upload_history = readxl::read_xlsx(path = paste0( get("wd"),'uploads/DHIS2 UPLOAD HISTORY.xlsx'))
+         upload_history = gdrive_read_xls(file = 'uploads/DHIS2 UPLOAD HISTORY.xlsx')
          upload_history_empty <- upload_history[1,]
          upload_history_empty$`#`[1]         <- nrow(upload_history)+1
          upload_history_empty$upload_date[1] <- submission_date
@@ -477,8 +480,9 @@ server <- function(input, output) {
          upload_history_empty$status_code[1] <- 200
          upload_history_empty$url[1]<- status$url
          upload_history <- plyr::rbind.fill(upload_history,upload_history_empty)
-         writexl::write_xlsx(x =upload_history,path = paste0( get("wd"),'uploads/DHIS2 UPLOAD HISTORY.xlsx') ,col_names = TRUE,format_headers = TRUE)
-       
+
+         saveDataGDrive( upload_history ,file.type='xlsx', file.name ='DHIS2 UPLOAD HISTORY', outputDir='uploads')
+         
          # carregar variaves e dfs para armazenar logs
          #tmp_log_exec <- get('log_execution',envir = .GlobalEnv)
          tmp_log_exec <-  env_get(env = user_env, "log_execution") 
@@ -502,11 +506,12 @@ server <- function(input, output) {
          shinyjs::hide(id = "chkbxPeriodGroup")
          shinyjs::hide(id = "btn_upload")
          output$tbl_integrity_errors <- renderDataTable({
-           df <- read_xlsx(path = paste0(wd,'errors/template_errors.xlsx'))
+           df <- read_xlsx(path = 'errors/template_errors.xlsx')
            datatable( df[0 ,], options = list(paging = TRUE))
          })
          
-         load(file = paste0(get("wd", envir = .GlobalEnv),'rdata.RData' ), envir = user_env)
+         load(file = 'rdata.RData' , envir = user_env)
+         
          for (indicator in vec_indicators) {
            removeTab(inputId = "tab_indicadores", target = indicator)
          }
@@ -515,7 +520,8 @@ server <- function(input, output) {
         
         shinyalert("Erro", "Erro durante o envio de dados", type = "error")
        #TODO  gravar erro  mostrar
-        upload_history = readxl::read_xlsx(path = paste0( get("wd"),'uploads/DHIS2 UPLOAD HISTORY.xlsx'))
+        upload_history = gdrive_read_xls(file = 'uploads/DHIS2 UPLOAD HISTORY.xlsx')
+        #upload_history = readxl::read_xlsx(path = paste0( get("wd"),'uploads/DHIS2 UPLOAD HISTORY.xlsx'))
         upload_history_empty <- upload_history[1,]
         upload_history_empty$`#`[1]         <- nrow(upload_history)+1
         upload_history_empty$upload_date[1] <- submission_date
@@ -527,7 +533,8 @@ server <- function(input, output) {
         upload_history_empty$status_code[1] <- as.integer(status$status_code)
         upload_history_empty$url[1] <- status$url
         upload_history <- plyr::rbind.fill(upload_history,upload_history_empty)
-        writexl::write_xlsx(x =upload_history,path = paste0( get("wd"),'uploads/DHIS2 UPLOAD HISTORY.xlsx') ,col_names = TRUE,format_headers = TRUE)
+        saveDataGDrive( upload_history ,file.type='xlsx', file.name ='DHIS2 UPLOAD HISTORY', outputDir='uploads')
+
         # carregar variaves e dfs para armazenar logs
         tmp_log_exec <- env_get(env =  user_env , 'log_execution')
         tmp_log_exec_empty <- tmp_log_exec[1,]

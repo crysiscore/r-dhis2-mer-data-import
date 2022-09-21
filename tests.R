@@ -1,6 +1,4 @@
-library(shinydashboard)
-library(shiny)
-library(jsonlite)
+
 library(dplyr)
 library(readxl)
 library(dipsaus)
@@ -14,6 +12,5 @@ library(shinyjs)
 library(rlang)
 library(googledrive)
 
-source(file = 'paramConfig.R')     #  Carrega os paramentros globais
-
+rsconnect::deployApp(appDir = getwd())
 token <- drive_auth(path = ".secrets/dhis2-216408-da1e56ebc18b.json" )
