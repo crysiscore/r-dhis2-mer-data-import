@@ -14,3 +14,5 @@ library(googledrive)
 
 rsconnect::deployApp(appDir = getwd())
 token <- drive_auth(path = ".secrets/dhis2-216408-da1e56ebc18b.json" )
+drive_ls('uploads/2022-09-21/1Junho')
+

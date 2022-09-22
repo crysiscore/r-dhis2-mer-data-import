@@ -653,7 +653,7 @@ saveDataGDrive <- function(data ,file.type, file.name , outputDir) {
 
   # Upload the file to Dropbox
   # drop_upload(dtoken = env_get(env = .GlobalEnv, nm = "token"),file = filePath, path = outputDir , mode = "overwrite")
-  drive_upload( media =filePath  ,path = outputDir , name = file.name ,type = "xlsx" , overwrite = TRUE)
+  drive_upload( media =filePath  ,path = outputDir , name = paste0( file.name,".xlsx")  , overwrite = TRUE)
 }
 
 
