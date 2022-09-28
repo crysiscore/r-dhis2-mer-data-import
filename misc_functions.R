@@ -37,7 +37,7 @@ dhisLogin <- function(dhis2.username, dhis2.password, base.url) {
 #' datavalueset_template_dhis2_mer_ct <- getDhis2DatavalueSetTemplate(api_dhis_datasets,dataset_id_mer_ct)
 getDhis2DatavalueSetTemplate <- function(url.api.dhis.datasets,dataset.id){
   url_datavalueset_template <- paste0(url.api.dhis.datasets,dataset.id,'/dataValueSet.json')
-  http_content <-  content(GET(url_datavalueset_template, authenticate(dhis2.username.2, dhis2.password),timeout(10)),as = "text",type = 'application/json')
+  http_content <-  content(GET(url_datavalueset_template, authenticate(dhis2.username, dhis2.password),timeout(10)),as = "text",type = 'application/json')
   df_dataset_template =    fromJSON(http_content) %>% as.data.frame
   df_dataset_template = df_dataset_template[,c(1,2,4)]
   names(df_dataset_template)[1] <- 'dataElement'
@@ -74,7 +74,7 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
     df_error_tmp_empty$error[1] <- 'NOT FOUND'
     df_error_tmp<- rbind.fill(df_error_tmp, df_error_tmp_empty)
     #message("Check:  aaa passando 1.2 ")
-    writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
+    writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'/logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
     #assign(x = "error_log_dhis_import",value =df_error_tmp, envir = envir )
     env_poke(env = user_env,nm ="error_log_dhis_import",value = df_error_tmp ) # https://adv-r.hadley.nz/environments.html#getting-and-setting-1 - 7.2.5 Getting and setting
     return(FALSE)
@@ -87,7 +87,7 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
     df_error_tmp_empty$error[1] <- 'DUPLICATED'
     df_error_tmp<- rbind.fill(df_error_tmp, df_error_tmp_empty)
     #message("Check: aaa  passando 1.3 ")
-    writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
+    writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'/logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
     #assign(x = "error_log_dhis_import",value =df_error_tmp, envir = envir )
     env_poke(env = user_env,nm ="error_log_dhis_import",value = df_error_tmp ) # https://adv-r.hadley.nz/environments.html#getting-and-setting-1 - 7.2.5 Getting and setting
     return('Duplicado')
@@ -124,7 +124,7 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
       tmp$error[1] <- "Warning"
       message("Warning :", warning_msg)
       df_error_tmp  <- rbind.fill(df_error_tmp, tmp)
-      writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
+      writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'/logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
       #assign(x = "error_log_dhis_import",value =df_error_tmp, envir = user.env )
       env_poke(env = user_env ,nm =  "error_log_dhis_import",value =  df_error_tmp)
       empty_value <- ""
@@ -145,7 +145,7 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
     tmp$error[1] <- error_msg
     message(error_msg)
     df_error_tmp <- rbind.fill(df_error_tmp, tmp)
-    writexl::write_xlsx(x = df_error_tmp,path = paste0(wd, 'logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
+    writexl::write_xlsx(x = df_error_tmp,path = paste0(wd, '/logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
     # assign(x = "error_log_dhis_import",value =df_error_tmp, envir = user.env )
     env_poke(env = user_env ,nm =  "error_log_dhis_import",value =  df_error_tmp)
     return(NA)
@@ -237,7 +237,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
      #assign(x = "log_execution",value =tmp_log_exec, envir = user.env )
      env_poke(env = user.env ,nm =  "log_execution",value =  tmp_log_exec)
      #message("Passando I.1")
-     writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
+     writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, '/logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
      datavalueset_template <- getDataValuesetName(dataset.name)
      
      for (indicator in vec.indicators) {
@@ -259,7 +259,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        tmp_log_exec_empty$task[1] <- paste0( env_get(env = .GlobalEnv, "task_check_consistency_3"), indicator)
        message(  "Stage 3: ",  env_get(env = .GlobalEnv, "task_check_consistency_3"))
        tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
-       writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
+       writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, '/logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
        env_poke(env = user.env ,nm =  "log_execution",value =  tmp_log_exec)
        #assign(x = "log_execution",value =tmp_log_exec, envir = user.env )
        #message("Passando II")
@@ -461,7 +461,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
   
 
   main_dir <- env_get(env = .GlobalEnv, "wd")
-  upload_dir <- paste0(main_dir,"uploads/")
+  upload_dir <- paste0(main_dir,"/uploads/")
   setwd(upload_dir)
   
   # check if sub directory exists 
