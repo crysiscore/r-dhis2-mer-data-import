@@ -21,7 +21,7 @@ ui <- dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       id = "menu",
-      menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
+      #menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
       menuItem("Upload", tabName = "widgets", icon = icon("th"))
     )
   ),
@@ -31,16 +31,16 @@ ui <- dashboardPage(
     ),
     tabItems( 
       # First tab content
-      tabItem(tabName = "dashboard",
-              fluidRow(
-                box(plotOutput("plot1", height = 250)),
-                
-                box(
-                  title = "Controls",
-                  sliderInput("slider", "Number of observations:", 1, 100, 50)
-                )
-              )
-      ),
+      #tabItem(tabName = "dashboard",
+      #        fluidRow(
+      #          box(plotOutput("plot1", height = 250)),
+      ##        
+      #          box(
+      #            title = "Controls",
+      #            sliderInput("slider", "Number of observations:", 1, 100, 50)
+      #          )
+      #        )
+      #),
       
       # Second tab content
       tabItem(tabName = "widgets",

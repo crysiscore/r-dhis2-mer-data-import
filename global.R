@@ -14,7 +14,7 @@ library(shinyjs)
 library(rlang)
 
 source(file = 'paramConfig.R')     #  Carrega os paramentros globais
-setwd(wd)                          #  
+#setwd(wd)                          #  
 
 
 #NOT RUN
