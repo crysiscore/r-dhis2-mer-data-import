@@ -47,10 +47,7 @@ credentials.R
 # Data dir
 
 # Data dir
-data/data/
+ data/data/*
 data/remove_after_sync_data.sh
-data/remove_after_sync.sh
-!uploads/DHIS2 UPLOAD HISTORY.xlsx
 uploads/*.xlsx
-/data/
 uploads/*.xlsx
