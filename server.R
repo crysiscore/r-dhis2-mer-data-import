@@ -4,11 +4,11 @@ server <- function(input, output) {
   # Create user environment to store user data
   user_env <- new.env()    
   wd <- env_get(env = .GlobalEnv, nm = 'wd')
-  
+  print(wd)
   source(paste0(wd,"/misc_functions.R"),  local=user_env)
   source(paste0(wd,"/credentials.R"), local=user_env)
   attach(user_env, name="sourced_scripts")
-  
+  #setwd()
   
   # 
   template_dhis2_mer_ct         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_ct)
