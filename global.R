@@ -13,8 +13,8 @@ library(shinyalert)
 library(shinyjs)
 library(rlang)
 
-source(file = 'paramConfig.R')     #  Carrega os paramentros globais
-#setwd(wd)                          #  
+source(file = 'paramConfig.R')      #  Carrega os paramentros globais
+# setwd(wd)                         #  
 
 
 #NOT RUN

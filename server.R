@@ -16,11 +16,13 @@ server <- function(input, output) {
   template_dhis2_mer_smi        <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_smi)
   template_dhis2_mer_prevention <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_prevention)
   template_dhis2_mer_hs         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_hs)
+  template_dhis2_mer_ats_community <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_ats_community)
   
-  # Include datavalueset from dhis on user environment
+  
+  # Bind datavalueseta from dhis on user environment
   env_bind(user_env, datavalueset_template_dhis2_mer_ct  = template_dhis2_mer_ct, datavalueset_template_dhis2_mer_ats= template_dhis2_mer_ats,
                      datavalueset_template_dhis2_mer_smi = template_dhis2_mer_smi , datavalueset_template_dhis2_mer_prevention= template_dhis2_mer_prevention ,
-                     datavalueset_template_dhis2_mer_hs  =  template_dhis2_mer_hs)
+                     datavalueset_template_dhis2_mer_hs  =  template_dhis2_mer_hs, datavalueset_template_dhis2_mer_ats_community = template_dhis2_mer_ats_community)
   
   temporizador <-reactiveValues( started=FALSE, df_execution_log=NULL, df_warning_log=NULL)
 
@@ -165,7 +167,16 @@ server <- function(input, output) {
                                                         style = "color: steelblue"),
                                            no = tags$i(class = "fa fa-square-o", 
                                                        style = "color: steelblue"))     )
-            } else {}
+            } else if(dataset=='ats_community'){
+              updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",
+                                         label = "Indicadores: ",
+                                         choices = vec_mer_ats_community,
+                                         checkIcon = list(
+                                           yes = tags$i(class = "fa fa-check-square", 
+                                                        style = "color: steelblue"),
+                                           no = tags$i(class = "fa fa-square-o", 
+                                                       style = "color: steelblue"))     )
+            } 
             
             
             #updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
@@ -295,7 +306,7 @@ server <- function(input, output) {
     message("Indicators: ",vec_indicators)
     message("US: ",vec_selected_us)
     
-    status <- checkDataConsistency(excell.mapping.template =excell_mapping_template , file.to.import=file_to_import ,dataset.name =ds_name , sheet.name=vec_selected_us, vec.indicators=vec_indicators, user.env = user_env )
+    status <- checkDataConsistency(excell.mapping.template = excell_mapping_template , file.to.import = file_to_import ,dataset.name =ds_name , sheet.name=vec_selected_us, vec.indicators=vec_indicators, user.env = user_env )
 
     if(status=='Integrity error'){
       shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")

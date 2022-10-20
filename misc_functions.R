@@ -356,6 +356,8 @@ getTemplateDatasetName <- function(dataset.name) {
     datavalueset_template <- "MER PREVENTION.xlsx"
   }else if(dataset.name=='MER HEALTH SYSTEM'){
     datavalueset_template <- "MER HEALTH SYSTEMS.xlsx"
+  }else if(dataset.name=='MER ATS COMMUNITY'){
+    datavalueset_template <- "MER ATS COMMUNITY.xlsx"
   } else {
     return("unkown")
   }
@@ -574,6 +576,8 @@ getDataValuesetName <- function(dataset.name) {
     datavalueset_template <- "datavalueset_template_dhis2_mer_prevention"
   }else if(dataset.name=='MER HEALTH SYSTEM'){
     datavalueset_template <- "datavalueset_template_dhis2_mer_hs"
+  }else if(dataset.name=='MER ATS COMMUNITY'){
+    datavalueset_template <- "datavalueset_template_dhis2_mer_ats_community" 
   } else {
     return("unkown")
   }
