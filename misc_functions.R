@@ -355,9 +355,11 @@ getTemplateDatasetName <- function(dataset.name) {
   } else if(dataset.name=='MER PREVENTION'){
     datavalueset_template <- "MER PREVENTION.xlsx"
   }else if(dataset.name=='MER HEALTH SYSTEM'){
-    datavalueset_template <- "MER HEALTH SYSTEMS.xlsx"
+    datavalueset_template <- "MER HEALTH SYSTEM.xlsx"
   }else if(dataset.name=='MER ATS COMMUNITY'){
     datavalueset_template <- "MER ATS COMMUNITY.xlsx"
+  }else if(dataset.name=='MER HEALTH SYSTEM'){
+    datavalueset_template <- "MER HEALTH SYSTEM.xlsx"
   } else {
     return("unkown")
   }

@@ -8,8 +8,8 @@ wd <- getwd()
  
 # 2 - DHIS2 API ENDPOINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
 
-api_dhis_base_url <- "https://mail.ccsaude.org.mz:5459/" 
-api_dhis_datasets <- 'https://mail.ccsaude.org.mz:5459/api/dataSets/'
+api_dhis_base_url <- "https://mail.ccsaude.org.mz:5455/" 
+api_dhis_datasets <- 'https://mail.ccsaude.org.mz:5455/api/dataSets/'
 api_dhis_datasetvalues_endpoint <- 'api/33/dataValueSets'
 
 
@@ -42,7 +42,7 @@ excell_mapping_template_mer_prevention <- 'MER PREVENTION.xlsx'
 excell_mapping_template_mer_ct         <- 'MER CARE & TREATMENT.xlsx'
 excell_mapping_template_mer_ats        <- 'MER ATS.xlsx'
 excell_mapping_template_mer_smi        <- 'MER SMI.xlsx'
-excell_mapping_template_mer_hs         <- 'MER HEALTH SYSTEMS.xlsx' 
+excell_mapping_template_mer_hs         <- 'MER HEALTH SYSTEM.xlsx' 
 excell_mapping_template_mer_ats_community  <- 'MER ATS COMMUNITY.xlsx' 
 
 # 7- DF Value templates (DO NOT CHANGE)
@@ -56,7 +56,7 @@ vec_mer_ats_indicators         <- c('DSD HTS TST','DSD HTS INDEX','DSD HTS SELF'
 vec_mer_smi_indicators         <- c('DSD PMTCT STAT','DSD PMTCT EID','DSD PMTCT HEI POS','DSD CXCA SCRN','DSD CXCA TX')
 vec_mer_prevention_indicators  <- c('DSD PREP','DSD TB PREV','DSD GEND GBV', 'DSD FPINT SITE')
 vec_mer_ats_community          <- c('DSD HTS TST COMMUNITY OTHER','DSD HTS INDEX COMMUNITY')
-vec_mer_hs_indicators          <- c('','','', '') #TODO
+vec_mer_hs_indicators          <- c('LAB PTCQI','EMR SITE')
 
 
 # 9- Nomes das US (org. units) que aparecem nos sheets gerados automaticamente nos temlates de importacao: J. Mandlate e os respectivos IDs no DHIS

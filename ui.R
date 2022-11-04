@@ -22,7 +22,8 @@ ui <- dashboardPage(
     sidebarMenu(
       id = "menu",
       #menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-      menuItem("Upload", tabName = "widgets", icon = icon("th"))
+      menuItem("DHIS2 CCS", tabName = "widgets", icon = icon("th")),
+      menuItem("DATIM", tabName = "dashboard", icon = icon("dashboard"))
     )
   ),
   dashboardBody(
