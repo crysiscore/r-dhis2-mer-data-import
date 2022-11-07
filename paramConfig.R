@@ -17,13 +17,14 @@ api_dhis_datasetvalues_endpoint <- 'api/33/dataValueSets'
 mer_datasets_names <- c("MER C&T"  = "ct", "MER ATS" = "ats" , "MER SMI" = "smi" , "MER PREVENTION"="prevention", "MER HEALTH SYSTEM"="hs","MER ATS COMMUNITY"="ats_community")
 
 # 4- CCS DHIS2 Datasets IDs (DO NOT CHANGE)
-mer_datasets_ids          <- c("MER C&T"  = "WmHFZdWbzU2", "MER ATS" = "b2a0MuC3lb1" , "MER SMI" = "OQDQqOI7brV" , "MER PREVENTION"="JbLlGyAwQkd", "MER HEALTH SYSTEM"="AAw69FykQil", "MER ATS COMMUNITY"="aWAxctvA9jY")
+mer_datasets_ids          <- c("MER C&T"  = "WmHFZdWbzU2", "MER ATS" = "b2a0MuC3lb1" , "MER SMI" = "OQDQqOI7brV" , "MER PREVENTION"="JbLlGyAwQkd", "MER HEALTH SYSTEM"="AAw69FykQil", "MER ATS COMMUNITY"="aWAxctvA9jY", "MER - DATIM FORM"="RU5WjDrv2Hx")
 dataset_id_mer_ct         <- 'WmHFZdWbzU2'
 dataset_id_mer_ats        <- 'b2a0MuC3lb1'
 dataset_id_mer_prevention <- 'JbLlGyAwQkd'
 dataset_id_mer_smi        <- 'OQDQqOI7brV'
 dataset_id_mer_hs         <- 'AAw69FykQil'
 dataset_id_mer_ats_community  <- 'aWAxctvA9jY'
+dataset_id_mer_datim <- "RU5WjDrv2Hx"
 
 # 5- Reporting Periods   
 vec_reporting_periods <- list("January 2020"= "202001", "February 2020" ="202002", "March 2020"  = "202003", "April 2020" = "202004", 
@@ -36,7 +37,13 @@ vec_reporting_periods <- list("January 2020"= "202001", "February 2020" ="202002
                                    "May 2022" = "202205","June 2022" =  "202206","July 2022" =  "202207", "August 2022"  =  "202208",
                                    "September 2022" = "202209", "October 2022" ="202210",  "November 2022"="202211" ,"December 2022" = "202212")
 
-  
+vec_datim_reporting_periods <- list("January - March 2022"= "2022Q1", "April - June 2022" ="2022Q2",
+                                    "July - September 2022"="2022Q3", "October - December 2022"="2022Q4",
+                                    "January - March 2023"= "2023Q1", "April - June 2023" ="2023Q2",
+                                    "July - September 2023"="2023Q3", "October - December 2023"="2023Q4")  
+
+
+
 # 6- MER TEMPLATES -  Planilhas de mapeamento
 excell_mapping_template_mer_prevention <- 'MER PREVENTION.xlsx'
 excell_mapping_template_mer_ct         <- 'MER CARE & TREATMENT.xlsx'

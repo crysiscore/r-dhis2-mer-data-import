@@ -96,6 +96,16 @@ ui <- dashboardPage(
                     width = '60%'
                   )),
                   # Horizontal line ----
+                  
+                  tags$hr(),
+                  hidden(
+                    awesomeCheckbox(
+                      inputId = "chkbxDatim",
+                      label = "MER - DATIM FORM", 
+                      value = FALSE
+                    )
+                  ),
+                  
                   tags$hr(),
                   
                   hidden( pickerInput(
@@ -114,6 +124,7 @@ ui <- dashboardPage(
                   # Horizontal line ----
                   tags$hr(),
                   
+                 
                   # Submit buttons
                   # UI function
                   actionButtonStyled(inputId="btn_reset", label="Reset fields   ",
