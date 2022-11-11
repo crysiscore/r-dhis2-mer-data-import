@@ -233,6 +233,7 @@ server <- function(input, output) {
     shinyjs::hide(id = "chkbxIndicatorsGroup")
     shinyjs::hide(id = "chkbxPeriodGroup")
     shinyjs::hide(id = "btn_upload")
+    shinyjs::hide(id = "chkbxDatim")
   })
   
   # Observe US checkboxes 
@@ -403,6 +404,14 @@ server <- function(input, output) {
     org_unit         <- us_names_ids_dhis[which(names(us_names_ids_dhis)==us_name )][[1]]
     period           <- input$chkbxPeriodGroup
      
+    # Check IF chckbox DATIM FORM UPLOAD is clicked
+
+    is_datim_upload <- input$chkbxDatim
+
+    if(is_datim_upload=="TRUE"){
+      dataset_id <- dataset_id_mer_datim
+    }
+    
     if(length(period) >0 ){
       
       message("Dataset name:    ", ds_name)
@@ -416,6 +425,7 @@ server <- function(input, output) {
       
       json_data <- merIndicatorsToJson(dataset_id,  submission_date,  period , org_unit, vec_indicators,user.env = user_env )
       #message(json_data)
+      #writeLines(text =json_data,con = 'temp_json.txt' )
       status <- apiDhisSendDataValues(json_data)
       
       if(as.integer(status$status_code)==200){
@@ -468,6 +478,40 @@ server <- function(input, output) {
            removeTab(inputId = "tab_indicadores", target = indicator)
          }
          
+         # RESET ALL FIELDS
+         vec_indicators          <- input$chkbxIndicatorsGroup
+         updateAwesomeRadio(getDefaultReactiveDomain(), inputId = "dhis_datasets",label =  "DHIS2 Datasets",
+                            choices = mer_datasets_names,
+                            selected = ""       )
+         updatePickerInput(getDefaultReactiveDomain(), "chkbxUsGroup",
+                           label = "U. Sanitarias: ",
+                           choices =  list(),
+                           options = list(
+                             `live-search` = TRUE)
+         )
+         updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",label = "",choices = c("")
+         )
+         updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
+         
+         output$instruction <- renderText({  "" })
+         updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
+         output$tbl_integrity_errors <- renderDataTable({
+           df <- read_xlsx(path = paste0(wd,'/errors/template_errors.xlsx'))
+           datatable( df[0 ,], options = list(paging = TRUE))
+         })
+         
+         load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = user_env)
+         for (indicator in vec_indicators) {
+           removeTab(inputId = "tab_indicadores", target =indicator)
+         }
+         
+         shinyjs::hide(id = "chkbxUsGroup")
+         shinyjs::hide(id = "chkbxIndicatorsGroup")
+         shinyjs::hide(id = "chkbxPeriodGroup")
+         shinyjs::hide(id = "btn_upload")
+         shinyjs::hide(id = "chkbxDatim")
+         
+         
       } else {
         
         shinyalert("Erro", "Erro durante o envio de dados", type = "error")
@@ -499,6 +543,39 @@ server <- function(input, output) {
         #assign(x = "log_execution",value =tmp_log_exec, envir = user_env )
         shinyjs::hide(id = "chkbxPeriodGroup")
         shinyjs::hide(id = "btn_upload")
+        
+        # RESET ALL FIELDS
+        vec_indicators          <- input$chkbxIndicatorsGroup
+        updateAwesomeRadio(getDefaultReactiveDomain(), inputId = "dhis_datasets",label =  "DHIS2 Datasets",
+                           choices = mer_datasets_names,
+                           selected = ""       )
+        updatePickerInput(getDefaultReactiveDomain(), "chkbxUsGroup",
+                          label = "U. Sanitarias: ",
+                          choices =  list(),
+                          options = list(
+                            `live-search` = TRUE)
+        )
+        updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",label = "",choices = c("")
+        )
+        updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
+        
+        output$instruction <- renderText({  "" })
+        updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
+        output$tbl_integrity_errors <- renderDataTable({
+          df <- read_xlsx(path = paste0(wd,'/errors/template_errors.xlsx'))
+          datatable( df[0 ,], options = list(paging = TRUE))
+        })
+        
+        load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = user_env)
+        for (indicator in vec_indicators) {
+          removeTab(inputId = "tab_indicadores", target =indicator)
+        }
+        
+        shinyjs::hide(id = "chkbxUsGroup")
+        shinyjs::hide(id = "chkbxIndicatorsGroup")
+        shinyjs::hide(id = "chkbxPeriodGroup")
+        shinyjs::hide(id = "btn_upload")
+        shinyjs::hide(id = "chkbxDatim")
       }
       
     
@@ -506,6 +583,9 @@ server <- function(input, output) {
       
       shinyalert("Aviso", "Selecione  o periodo", type = "warning")
     }
+    #Reset fields
+    # --------------------------------------------------------------------------------------------
+      
   
     #dataset.id, complete.date, period , org.unit, vec.indicators
    
