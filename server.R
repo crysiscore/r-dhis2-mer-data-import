@@ -8,18 +8,23 @@ server <- function(input, output) {
   source(paste0(wd,"/misc_functions.R"),  local=user_env)
   source(paste0(wd,"/credentials.R"), local=user_env)
   attach(user_env, name="sourced_scripts")
+  
+  load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/dataset_templates.RDATA' ), envir = user_env)
   #setwd()
   
   #  
   # IF deploying on the same DHIS2 Server ignore ssl certificate errors
-  # httr::set_config(httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L))
-  template_dhis2_mer_ct         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_ct)
-  template_dhis2_mer_ats        <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_ats)
-  template_dhis2_mer_smi        <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_smi)
-  template_dhis2_mer_prevention <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_prevention)
-  template_dhis2_mer_hs         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_hs)
-  template_dhis2_mer_ats_community <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_ats_community)
+  httr::set_config(httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L))
   
+  #template_dhis2_mer_ct         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_ct)
+  #template_dhis2_mer_ats        <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_ats)
+  #template_dhis2_mer_smi        <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_smi)
+  #template_dhis2_mer_prevention <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_prevention)
+  #template_dhis2_mer_hs         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_hs)
+  #template_dhis2_mer_ats_community <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_ats_community)
+  
+  #save(template_dhis2_mer_ct, template_dhis2_mer_ats,template_dhis2_mer_smi,template_dhis2_mer_prevention ,template_dhis2_mer_hs ,
+  #     template_dhis2_mer_ats_community , file = '/home/agnaldo/Git/ccs_datim_maping/dataset_templates/dataset_templates.RDATA'  )
   
   # Bind datavalueseta from dhis on user environment
   env_bind(user_env, datavalueset_template_dhis2_mer_ct  = template_dhis2_mer_ct, datavalueset_template_dhis2_mer_ats= template_dhis2_mer_ats,
