@@ -8,7 +8,7 @@ server <- function(input, output) {
   source(paste0(wd,"/misc_functions.R"),  local=user_env)
   source(paste0(wd,"/credentials.R"), local=user_env)
   attach(user_env, name="sourced_scripts")
-  #setwd()
+
   
   #  
   # IF deploying on the same DHIS2 Server ignore ssl certificate errors
