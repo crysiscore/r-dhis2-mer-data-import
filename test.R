@@ -53,7 +53,6 @@ merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, ve
 
 
 
-
 apiDhisSendDataValues <- function(json){
 
   # url da API
