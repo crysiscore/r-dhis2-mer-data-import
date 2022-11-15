@@ -232,9 +232,9 @@ server <- function(input, output) {
     })
     
     load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = user_env)
-    for (indicator in vec_indicators) {
-      removeTab(inputId = "tab_indicadores", target =indicator)
-    }
+    # for (indicator in vec_indicators) {
+    #   removeTab(inputId = "tab_indicadores", target =indicator)
+    # }
     
     shinyjs::hide(id = "chkbxUsGroup")
     shinyjs::hide(id = "chkbxIndicatorsGroup")
@@ -339,29 +339,29 @@ server <- function(input, output) {
       
 
       
-     lapply(vec_indicators,function(x) {
-
-          local_x <- x
-          appendTab("tab_indicadores",
-                                 tabPanel( local_x , box( title = local_x, status = "primary", height =  "720px",width = "12",solidHeader = T,... =
-                                                        column(width = 12,  DT::dataTableOutput(env_get(env = user_env ,nm =  paste('DF_',gsub(" ", "", local_x, fixed = TRUE) , sep=''))   %>%
-                                                                                                   datatable ( extensions = c('Buttons'),
-                                                                                                               options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
-                                                                                                                               pageLength = 15,
-                                                                                                                               dom = 'Blfrtip',
-                                                                                                                               buttons = list(
-                                                                                                                                 list(extend = 'excel', title = NULL),
-                                                                                                                                 'pdf',
-                                                                                                                                 'print'  ) )) ),style = "height:620px; overflow-y: scroll;overflow-x: scroll;"
-                                                        )  ) ),
-                                 session = getDefaultReactiveDomain()
-                       )
-
-
-
-
-
-      } )
+     # lapply(vec_indicators,function(x) {
+     # 
+     #      local_x <- x
+     #      appendTab("tab_indicadores",
+     #                             tabPanel( local_x , box( title = local_x, status = "primary", height =  "720px",width = "12",solidHeader = T,... =
+     #                                                    column(width = 12,  DT::dataTableOutput(env_get(env = user_env ,nm =  paste('DF_',gsub(" ", "", local_x, fixed = TRUE) , sep=''))   %>%
+     #                                                                                               datatable ( extensions = c('Buttons'),
+     #                                                                                                           options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+     #                                                                                                                           pageLength = 15,
+     #                                                                                                                           dom = 'Blfrtip',
+     #                                                                                                                           buttons = list(
+     #                                                                                                                             list(extend = 'excel', title = NULL),
+     #                                                                                                                             'pdf',
+     #                                                                                                                             'print'  ) )) ),style = "height:620px; overflow-y: scroll;overflow-x: scroll;"
+     #                                                    )  ) ),
+     #                             session = getDefaultReactiveDomain()
+     #                   )
+     # 
+     # 
+     # 
+     # 
+     # 
+     #  } )
       
       
 
@@ -481,9 +481,9 @@ server <- function(input, output) {
          })
          
          load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = user_env)
-         for (indicator in vec_indicators) {
-           removeTab(inputId = "tab_indicadores", target = indicator)
-         }
+         # for (indicator in vec_indicators) {
+         #   removeTab(inputId = "tab_indicadores", target = indicator)
+         # }
          
          # RESET ALL FIELDS
          vec_indicators          <- input$chkbxIndicatorsGroup
@@ -508,10 +508,10 @@ server <- function(input, output) {
          })
          
          load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = user_env)
-         for (indicator in vec_indicators) {
-           removeTab(inputId = "tab_indicadores", target =indicator)
-         }
-         
+         # for (indicator in vec_indicators) {
+         #   removeTab(inputId = "tab_indicadores", target =indicator)
+         # }
+         # 
          shinyjs::hide(id = "chkbxUsGroup")
          shinyjs::hide(id = "chkbxIndicatorsGroup")
          shinyjs::hide(id = "chkbxPeriodGroup")
@@ -574,9 +574,9 @@ server <- function(input, output) {
         })
         
         load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = user_env)
-        for (indicator in vec_indicators) {
-          removeTab(inputId = "tab_indicadores", target =indicator)
-        }
+        # for (indicator in vec_indicators) {
+        #   removeTab(inputId = "tab_indicadores", target =indicator)
+        # }
         
         shinyjs::hide(id = "chkbxUsGroup")
         shinyjs::hide(id = "chkbxIndicatorsGroup")

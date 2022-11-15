@@ -157,14 +157,14 @@ ui <- dashboardPage(
                                                              "650px",width = "12",solidHeader = T, 
                                                            column(width = 12,  DT::dataTableOutput("tbl_integrity_errors"),style = "height:580px; overflow-y: scroll;overflow-x: scroll;"
                                                            )  ))
-                  ) ),
+                  ) )
                   
-                  fluidRow(
-                    tabBox(
-                      title = "Indicadores",
-                      # The id lets us use input$tabset1 on the server to find the current tab
-                      id = "tab_indicadores", height = "850px", width = "680px"
-                    ))
+                  # fluidRow(
+                  #   tabBox(
+                  #     title = "Indicadores",
+                  #     # The id lets us use input$tabset1 on the server to find the current tab
+                  #     id = "tab_indicadores", height = "850px", width = "680px"
+                  #   ))
                   
                   # Output: Formatted text for caption ----
                   #h3(textOutput("caption", container = span)),
