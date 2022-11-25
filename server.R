@@ -8,13 +8,17 @@ server <- function(input, output) {
   source(paste0(wd,"/misc_functions.R"),  local=user_env)
   source(paste0(wd,"/credentials.R"), local=user_env)
   attach(user_env, name="sourced_scripts")
-
+  # store datim dataset extraction outputa here
+  datim_logs <- ""
   
   #  
   # IF deploying on the same DHIS2 Server ignore ssl certificate errors
-   httr::set_config(httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L))
+  # httr::set_config(httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L))
    
-   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/dataset_templates.RDATA' ), envir = user_env)
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/dataset_templates.RDATA' ),    envir = user_env)
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimDataSetElementsCC.RData'), envir = user_env)
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'),    envir = user_env)
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/ccsDataExchangeOrgUnits.RData'),envir = user_env)
    
    #  
    # IF deploying on the same DHIS2 Server ignore ssl certificate errors
@@ -25,15 +29,15 @@ server <- function(input, output) {
    template_dhis2_mer_smi        <- env_get(env = user_env, nm =  "template_dhis2_mer_smi") 
    template_dhis2_mer_prevention <- env_get(env = user_env, nm =  "template_dhis2_mer_prevention") 
    template_dhis2_mer_hs         <- env_get(env = user_env, nm =  "template_dhis2_mer_hs") 
-   template_dhis2_mer_ats_community <- env_get(env = user_env, nm =  "template_dhis2_mer_ats_community") 
+   template_dhis2_mer_ats_community <- env_get(env = user_env,nm =  "template_dhis2_mer_ats_community") 
    
   
-  # Bind datavalueseta from dhis on user environment
+  # Bind datavalueset from dhis on user environment
   env_bind(user_env, datavalueset_template_dhis2_mer_ct  = template_dhis2_mer_ct, datavalueset_template_dhis2_mer_ats= template_dhis2_mer_ats,
                      datavalueset_template_dhis2_mer_smi = template_dhis2_mer_smi , datavalueset_template_dhis2_mer_prevention= template_dhis2_mer_prevention ,
                      datavalueset_template_dhis2_mer_hs  =  template_dhis2_mer_hs, datavalueset_template_dhis2_mer_ats_community = template_dhis2_mer_ats_community)
   
-  temporizador <-reactiveValues( started=FALSE, df_execution_log=NULL, df_warning_log=NULL)
+  temporizador <-reactiveValues( started=FALSE, df_execution_log=NULL, df_warning_log=NULL , datim_logs =NULL)
 
   
   load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = user_env)
@@ -43,8 +47,15 @@ server <- function(input, output) {
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
   updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset",  disabled = TRUE  )
   
-  #file.copy(from = paste0(get("wd", envir = .GlobalEnv),'logs/empty_log_execution.xlsx'),to = paste0(get("wd", envir = .GlobalEnv),'logs/log_execution.xlsx'),overwrite = TRUE)
-  #file.copy(from = paste0(get("wd", envir = .GlobalEnv),'logs/empty_log_execution_warning.xlsx.xlsx'),to = paste0(get("wd", envir = .GlobalEnv),'logs/log_execution_warning.xlsx'),overwrite = TRUE)
+
+  #Observe SideBarMenu : switch tabs on menu clicks
+  observeEvent(input$switchtab, {
+    newtab <- switch(input$tabs,
+                     "dashboard" = "widgets",
+                     "widgets" = "dashboard"
+    )
+    updateTabItems(session, "tabs", newtab)
+  })
   
   # Temporizador activado pelo botao runChecks
   observe({
@@ -63,6 +74,7 @@ server <- function(input, output) {
           temporizador$df_warning_log <-  tmp[2:nrow(tmp),c(1,2,3,8,9)]
         } else {temporizador$df_warning_log <-  tmp[,c(1,2,3,8,9)]  }
                })
+
     } else  
       { 
       temporizador$df_execution_log <- tmp_log_exec
@@ -96,6 +108,17 @@ server <- function(input, output) {
                                              'print'  ) )   )
   })
   
+  output$data_tbl_datim_dataset <- renderDT({
+    datatable(df_datim ,
+               extensions = c('Buttons'), 
+               options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+                               pageLength = 15,
+                               dom = 'Blfrti',
+                               buttons = list(
+                                 list(extend = 'excel', title = NULL),
+                                 'pdf',
+                                 'print'  ) ) )
+  })
   #Observe SideBarMenu : switch tabs on menu clicks
   observeEvent(input$switchtab, {
     newtab <- switch(input$tabs,
@@ -590,15 +613,133 @@ server <- function(input, output) {
       
       shinyalert("Aviso", "Selecione  o periodo", type = "warning")
     }
-    #Reset fields
+    # Reset fields
     # --------------------------------------------------------------------------------------------
-      
-  
-    #dataset.id, complete.date, period , org.unit, vec.indicators
+    # Dataset.id, complete.date, period , org.unit, vec.indicators
    
     
     
   })
   
-  
+  # Observe UPLOAD btn  btn_downlaod_mer_datim
+  observeEvent(  input$btn_downlaod_mer_datim, {
+    
+    
+    withProgress(message = 'Dados em processamento',
+                 detail = 'This may take a while...', value = 0, {
+    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'),    envir = user_env)
+     output$data_tbl_datim_dataset <- renderDT({
+                     datatable(df_datim ,
+                               extensions = c('Buttons'), 
+                               options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+                                               pageLength = 15,
+                                               dom = 'Blfrti',
+                                               buttons = list(
+                                                 list(extend = 'excel', title = NULL),
+                                                 'pdf',
+                                                 'print'  ) ) )
+                   })
+     output$data_tbl_ccs_warnings <- renderDT({
+       datatable(df_datim ,
+                 extensions = c('Buttons'), 
+                 options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+                                 pageLength = 15,
+                                 dom = 'Blfrti',
+                                 buttons = list(
+                                   list(extend = 'excel', title = NULL),
+                                   'pdf',
+                                   'print'  ) ) )
+     })
+    submission_date  <- as.character(Sys.Date())
+    datim_logs <- ""
+    period           <- input$chkbxDatimPeriodGroup
+    message(period)
+    hf_names     <- env_get(env = .GlobalEnv,     nm =  "us_names_ids_dhis") 
+    api_dhis_url <- env_get(env = .GlobalEnv, nm =  "api_dhis_base_url") 
+    dataset.id   <- env_get(env = .GlobalEnv, nm =  "dataset_id_mer_datim")
+    
+    if(length(period)==0){
+      shinyalert("Info", "Selecione o Periodo!", type = "info")
+      
+    } else {
+      for (us in hf_names[1:30] ) {
+        i = 0
+        incProgress(1/(30), detail = paste("Processando  o dataset do : ", getUsName(us) , " " ))
+        # print(us[1])
+        df <-  tryCatch(
+          {
+            getDatimDataValueSet(api_dhis_url,dataset.id, period, us)
+          },
+          error=function(cond) {
+            message(us, "Error - Here's the original error message:")
+            message(cond)
+            # Choose a return value in case of error
+            return(NA)
+          },
+          finally={
+            # message("Done getting Datavalues from MER DATIM FORM")
+          }
+        )
+        if(!is.null(df)){
+          df_datim   <- plyr::rbind.fill(df_datim,df)
+          #msg        <- paste0(getUsName(us), " - Dados processados com sucesso.", '\n')
+          #datim_logs =  paste(datim_logs, msg, sep = '')
+      
+        } else {
+          message(getUsName(us), "   - Dataset esta vazio!!!")
+          msg        <- paste0(getUsName(us), " - Nao contem dados neste periodo.", '\n')
+          datim_logs =     paste(datim_logs, msg, sep = '')
+        }
+        
+      }
+      if(nrow(df_datim)>0){
+        
+        output$txt_datim_logs <-  renderText({ HTML(datim_logs)})
+        
+        
+        
+        df_datim$DatimDataElement <- mapply(df_datim$CategoryOptionCombo,df_datim$Dataelement, FUN =  getDhisDataElement)
+        df_datim$DatimCategoryOptionCombo <-  mapply(df_datim$CategoryOptionCombo,df_datim$Dataelement, FUN =  getDhisCategoryOptionCombo)
+        df_datim$DatimAttributeOptionCombo <- '160451'
+        df_datim$DatimOrgUnit <- sapply(df_datim$OrgUnit, FUN =  getDhisOrgUnit)
+        df_dataset_datim <- df_datim[,c(7,2,10,8,9,6)]
+        df_dataset_ccs  <-  df_datim[,c(7,2,10,8,9,6,1,3,4,5)]
+        
+        #names(df_dat)[1] <- ""
+        output$data_tbl_datim_dataset <- renderDT({
+          datatable(df_dataset_datim ,
+                    extensions = c('Buttons'), 
+                    options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+                                    pageLength = 15,
+                                    dom = 'Blfrti',
+                                    buttons = list(
+                                      list(extend = 'excel', title = NULL),
+                                      'pdf',
+                                      'print'  ) ) )
+          
+    
+        })
+        
+        output$data_tbl_ccs_warnings <- renderDT({
+          datatable(df_dataset_ccs ,
+                    extensions = c('Buttons'), 
+                    options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+                                    pageLength = 15,
+                                    dom = 'Blfrti',
+                                    buttons = list(
+                                      list(extend = 'excel', title = NULL),
+                                      'pdf',
+                                      'print'  ) ) )
+          
+          
+        })
+      } else {
+        shinyalert("Erro", "Ocoreu algum erro ao processar o dataset. Veja os logs", type = "error")
+      }
+      
+    }
+
+    
+  })
+  })
 }

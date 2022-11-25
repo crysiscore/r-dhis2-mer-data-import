@@ -1,4 +1,4 @@
-  rclone sync -P  --verbose --retries 5 dropbox:/Datim .
+  rclone sync -P  --verbose --retries 5 dropbox:/CCS/Datim .
   
  rm -f Data\ Exchange\ Organisation\ Units.xlsx 
  rm -f DataImport_IP_Deck.pptx 

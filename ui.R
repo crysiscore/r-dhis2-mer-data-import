@@ -22,7 +22,7 @@ ui <- dashboardPage(
     sidebarMenu(
       id = "menu",
       #menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-      menuItem("DHIS2 CCS", tabName = "widgets", icon = icon("th")),
+      menuItem("CCS", tabName = "widgets", icon = icon("th")),
       menuItem("DATIM", tabName = "dashboard", icon = icon("dashboard"))
     )
   ),
@@ -32,18 +32,6 @@ ui <- dashboardPage(
     ),
     tabItems( 
       # First tab content
-      #tabItem(tabName = "dashboard",
-      #        fluidRow(
-      #          box(plotOutput("plot1", height = 250)),
-      ##        
-      #          box(
-      #            title = "Controls",
-      #            sliderInput("slider", "Number of observations:", 1, 100, 50)
-      #          )
-      #        )
-      #),
-      
-      # Second tab content
       tabItem(tabName = "widgets",
               # Sidebar layout with input and output definitions ----
               sidebarLayout(
@@ -190,7 +178,64 @@ ui <- dashboardPage(
                 )
                 
               )
+      )  ,
+      
+      tabItem(tabName = "dashboard",
+              
+              sidebarLayout(
+              # Sidebar panel for inputs ----
+              sidebarPanel(
+                
+                pickerInput(
+                  inputId = "chkbxDatimPeriodGroup",
+                  label = "Periodo de submissao    :     ", 
+                  selected = NULL,
+                  multiple = TRUE,
+                  options = pickerOptions(maxOptions = 1,`live-search` = TRUE),
+                  choices = vec_datim_reporting_periods,
+                  # options = list(
+                  #   maxOptions = 1,
+                  #   `live-search` = TRUE
+                  #   ),
+                  width = '60%'
+                ) ,
+                
+                tags$hr(),
+                
+                actionButtonStyled(inputId="btn_downlaod_mer_datim", label="Data Download  ",
+                                   btn_type = "button", type = "default", class = "btn-sm"),
+                
+                tags$hr(),
+
+                verbatimTextOutput("txt_datim_logs")
+              ) ,
+              
+              
+
+              
+              # Main panel for displaying outputs ----
+              mainPanel(
+                fluidRow(
+                  tabBox(
+                    title = "Mer Results",
+                    # The id lets us use input$tabset1 on the server to find the current tab
+                    id = "tabset1", height = "750px", width = "730px",
+                    tabPanel("Datim - Facility Based",box( title = "Dataset", status = "primary", height = 
+                                                         "650px",width = "12",solidHeader = T, 
+                                                       column(width = 12,  DT::dataTableOutput("data_tbl_datim_dataset"),style = "height:580px; overflow-y: scroll;overflow-x: scroll;"
+                                                       )  ) ),
+                    tabPanel("CCS - Facility Based",box( title = "Dataset", status = "primary", height = 
+                                             "650px",width = "12",solidHeader = T, 
+                                           column(width = 12,  DT::dataTableOutput("data_tbl_ccs_warnings"),style = "height:580px; overflow-y: scroll;overflow-x: scroll;"
+                                           )  ))
+                  ) )
+                
+         
+              )
+              
+              )
       )
+      
     )
   ) ,
    useShinyjs() # Set up shiny to use shinyjs 

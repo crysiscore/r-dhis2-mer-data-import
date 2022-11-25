@@ -564,8 +564,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
   
 }
 
-
-getDataValuesetName <- function(dataset.name) {
+getDataValuesetName     <- function(dataset.name) {
   
   datavalueset_template <- ""
   if(dataset.name=='MER C&T'){
@@ -597,7 +596,7 @@ getUsNameFromSheetNames <-function(vector){
   vec
 }
 
-getDataSetDataElements <- function(base.url, dataset.id) {
+getDataSetDataElements  <- function(base.url, dataset.id) {
   
   url <-
     paste0(
@@ -620,5 +619,88 @@ getDataSetDataElements <- function(base.url, dataset.id) {
   
 }
 
+getDatimDataValueSet    <- function(url.api.dhis.datasets,dataset.id, period, org.unit){
+  
+  url_datavalues  <-  paste0(url.api.dhis.datasets,'api/33/dataValueSets','.json?', 'dataSet=',dataset.id,'&period=',period,'&orgUnit=',org.unit)
+  http_content    <-  content(GET(url_datavalues, authenticate(dhis2.username, dhis2.password),timeout(100)),as = "text",type = 'application/json' )
+  df_datavalueset =   fromJSON(http_content) %>% as.data.frame
+ 
+   if(nrow(df_datavalueset) > 1 ){
+     
+    df_datavalueset = df_datavalueset[,c(5,3,4,8,9,10)]
+    names(df_datavalueset)[1]  <- "Dataelement"
+    names(df_datavalueset)[2]  <- "Period"
+    names(df_datavalueset)[3]  <- "OrgUnit"
+    names(df_datavalueset)[4]  <- "CategoryOptionCombo"
+    names(df_datavalueset)[5]  <- "AttributeOptionCombo"
+    names(df_datavalueset)[6]  <- "Value"
+    df_datavalueset
+    
+  } else {
+    return(NULL)
+  }
 
-#checkDataConsistency(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators )
+  
+}
+
+getUsName <- function(org.unit){
+  
+  us_name <- which(us_names_ids_dhis==org.unit)
+  names(us_name)
+}
+
+
+#' getDhisDataElement ->  Busca o ID do DataElement do datim com base no id do DataElement do DHIS CCS
+#' @param cat.opt.comb categoryoptioncombouid
+#' @param data.element dataelementuid   
+#' @examples
+#' getDhisDataElement("YiMCSzx23b",""YiMCSzx23b")
+getDhisDataElement<- function(cat.opt.comb, data.element) {
+  
+  dhis_data_elementid <- NA
+  
+  index <- which(df_datim_indicators$dhiscategoryoptioncombouid==cat.opt.comb & df_datim_indicators$dhisdataelementuid== data.element )
+  
+  dhis_data_elementid <- df_datim_indicators[index,]$dataelementuid[1]
+  
+  dhis_data_elementid
+  
+}
+
+#' getDhisCategoryOptionCombo ->  Busca o ID do CategoryOptionCombo do datim com base no id do CategoryOptionCombo do DHIS CCS
+#' @param cat.opt.comb categoryoptioncombouid
+#' @param data.element dataelementuid   
+#' @examples
+#' CategoryOptionCombo("YiMCSzx23b",""YiMCSzx23b")
+getDhisCategoryOptionCombo <- function(cat.opt.comb, data.element) {
+  
+  cat_option_comb <- NA
+  
+  
+  index <- which(df_datim_indicators$dhiscategoryoptioncombouid==cat.opt.comb & df_datim_indicators$dhisdataelementuid== data.element )
+  
+  cat_option_comb <- df_datim_indicators[index,]$categoryoptioncombouid[1]
+  
+  
+  cat_option_comb
+  
+}
+
+
+#' getDhisOrgUnit ->  Busca o ID da orgUnit do datim com base no id do orgUnit do DHIS CCS
+#' @param  ccs.orgunit orgUnit ID
+#' @examples
+#' getDhisOrgUnit("YiMCSzx23b")
+getDhisOrgUnit <-  function(ccs.orgunit) {
+  
+  index <- which(df_ccs_data_exchange_orgunits$ccs_orgunit_id==ccs.orgunit )
+  
+  df_ccs_data_exchange_orgunits[index,]$orgunit_internal_id[1]
+  
+}
+
+
+
+# df_datim_albasine <- getDatimDataValueSet(url.api.dhis.datasets,dataset.id, period, org.unit)
+# https://mail.ccsaude.org.mz:5459/api/33/dataValueSets.json?dataSet=RU5WjDrv2Hx&period=2022Q3&orgUnit=FTLV9nOnAFC
+# https://mail.ccsaude.org.mz:5459/api/33/dataValueSets.csv?dataSet=RU5WjDrv2Hx&period=2022Q3&orgUnit=FTLV9nOnAFC

@@ -12,7 +12,7 @@ library(fs)
 library(shinyalert)
 library(shinyjs)
 library(rlang)
-
+library(httr)
 source(file = 'paramConfig.R')      #  Carrega os paramentros globais
 # setwd(wd)                         #  
 

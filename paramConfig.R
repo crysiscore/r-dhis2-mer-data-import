@@ -8,8 +8,8 @@ wd <- getwd()
  
 # 2 - DHIS2 API ENDPOINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
 
-api_dhis_base_url <- "https://mail.ccsaude.org.mz:5455/" 
-api_dhis_datasets <- 'https://mail.ccsaude.org.mz:5455/api/dataSets/'
+api_dhis_base_url <- "https://mail.ccsaude.org.mz:5459/" 
+api_dhis_datasets <- 'https://mail.ccsaude.org.mz:5459/api/dataSets/'
 api_dhis_datasetvalues_endpoint <- 'api/33/dataValueSets'
 
 
