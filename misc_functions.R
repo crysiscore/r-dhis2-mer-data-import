@@ -460,8 +460,8 @@ apiDhisSendDataValues <- function(json){
 #' @param period  periodo
 #' @param df.warnings df com campos vazios
 #' @examples
-#' saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings)
-saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,period,df.warnings){
+#' saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings, envir)
+saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,period,df.warnings , envir){
   
 
   main_dir <- env_get(env = .GlobalEnv, "wd")
@@ -487,7 +487,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
         for (indicator in vec.indicators) {
           
           #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
-          tmp_df <- env_get(env = user_env , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+          tmp_df <- env_get(env = envir , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
           
           writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
           
@@ -505,7 +505,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
         for (indicator in vec.indicators) {
           
           #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
-          tmp_df <- env_get(env = user_env , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+          tmp_df <- env_get(env = envir , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
           writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
           
         }
@@ -528,7 +528,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
       for (indicator in vec.indicators) {
         
         #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
-        tmp_df <- env_get(env = user_env , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+        tmp_df <- env_get(env = envir , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
         writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
         
       }
@@ -554,7 +554,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
     for (indicator in vec.indicators) {
       
       #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), )
-      tmp_df <- env_get(env = user_env , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+      tmp_df <- env_get(env = envir , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
       writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
       
     }
@@ -699,7 +699,24 @@ getDhisOrgUnit <-  function(ccs.orgunit) {
   
 }
 
+aDjustDhisPeriods <- function(period) {
+  
+  if(substr(period,5,6)=='Q1'){
+    return(paste0(as.integer(substr(period,1,4)) +1,'Q1'))
+    return(paste0(substr(period,1,4),'Q2'))
+  } else if(substr(period,5,6)=='Q2'){
+    return(paste0(substr(period,1,4),'Q3'))
+  } else if(substr(period,5,6)=='Q3'){
+    return(paste0(substr(period,1,4),'Q4'))
+  } else if(substr(period,5,6)=='Q4'){     # Q4 no DHIS corresponde ao ano seguinte no periodo do reporte do PEPFAR
+    return(paste0(as.integer(substr(period,1,4)) +1,'Q1'))
+  }
+  
+}
 
+
+
+isMissing <- function(x) { x== "" | is.na(x) } #nolint
 
 # df_datim_albasine <- getDatimDataValueSet(url.api.dhis.datasets,dataset.id, period, org.unit)
 # https://mail.ccsaude.org.mz:5459/api/33/dataValueSets.json?dataSet=RU5WjDrv2Hx&period=2022Q3&orgUnit=FTLV9nOnAFC

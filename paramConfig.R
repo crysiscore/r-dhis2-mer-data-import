@@ -8,8 +8,8 @@ wd <- getwd()
  
 # 2 - DHIS2 API ENDPOINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
 
-api_dhis_base_url <- "https://mail.ccsaude.org.mz:5459/" 
-api_dhis_datasets <- 'https://mail.ccsaude.org.mz:5459/api/dataSets/'
+api_dhis_base_url <- "https://mail.ccsaude.org.mz:5455/" 
+api_dhis_datasets <- 'https://mail.ccsaude.org.mz:5455/api/dataSets/'
 api_dhis_datasetvalues_endpoint <- 'api/33/dataValueSets'
 
 
@@ -24,7 +24,7 @@ dataset_id_mer_prevention <- 'JbLlGyAwQkd'
 dataset_id_mer_smi        <- 'OQDQqOI7brV'
 dataset_id_mer_hs         <- 'AAw69FykQil'
 dataset_id_mer_ats_community  <- 'aWAxctvA9jY'
-dataset_id_mer_datim <- "RU5WjDrv2Hx"
+dataset_id_mer_datim      <- "RU5WjDrv2Hx"
 
 # 5- Reporting Periods   
 vec_reporting_periods <- list("January 2020"= "202001", "February 2020" ="202002", "March 2020"  = "202003", "April 2020" = "202004", 
@@ -37,12 +37,13 @@ vec_reporting_periods <- list("January 2020"= "202001", "February 2020" ="202002
                                    "May 2022" = "202205","June 2022" =  "202206","July 2022" =  "202207", "August 2022"  =  "202208",
                                    "September 2022" = "202209", "October 2022" ="202210",  "November 2022"="202211" ,"December 2022" = "202212")
 
-vec_datim_reporting_periods <- list("January - March 2022"= "2022Q1", "April - June 2022" ="2022Q2",
-                                    "July - September 2022"="2022Q3", "October - December 2022"="2022Q4",
-                                    "January - March 2023"= "2023Q1", "April - June 2023" ="2023Q2",
-                                    "July - September 2023"="2023Q3", "October - December 2023"="2023Q4")  
+vec_datim_reporting_periods <- list("January - March 2022 (Q2)"= "2022Q1", "April - June 2022 (Q3)" ="2022Q2",
+                                    "July - September 2022 (Q4)"="2022Q3", "October - December 2022 (Q1)"="2022Q4",
+                                    "January - March 2023 (Q2)"= "2023Q1", "April - June 2023 (Q3)" ="2023Q2",
+                                    "July - September 2023 (Q4)"="2023Q3", "October - December 2023 (Q1)"="2023Q4")  
 
-
+#IP Funding Mechanism ->  AttributeOptionCombo
+funding_mechanism <- 'VGk8OiHSXM7'  #Code =160451
 
 # 6- MER TEMPLATES -  Planilhas de mapeamento
 excell_mapping_template_mer_prevention <- 'MER PREVENTION.xlsx'
@@ -73,7 +74,7 @@ us_names_ids_dhis <- list("1Junho"="FTLV9nOnAFC","Albazine" ="z8g2CUKUMCF","Hule
                    ,"HPI" = "QzORjiSM4Yz","Inhagoia"="EysXJHRv7xJ","MagoanineA"="o4HThkC2OEY","MTendas"="oKA7Ub02ze5", "Zimpeto"="KxezVOQ2TVR",
                    "Inhaca"="GJaIp0bKoXH","Catembe"="RYReGTxpYTF", "Incassane" ="MaU3nWtTalb","ChamanculoCS" ="CtlQF8Vac9k" ,"ChamanculoHG"="g0bRtxKVUVQ","JMCS"="pB4dqFQTJix",
                    "JMHG" = "yrfeiAhBKeO",  "Xipamanine"="sWChmRhN9eS", "Kamavota"="iOs7EQeuLLG","Kamaxakeni"="AVjKUWRgKBG", "Kampfumu"="PtWKKinaEXb","Kamubukwana"="at6Mv4Zw321",
-                   "Kanyaka"="BFNOLjUjAoG", "Katembe"="CVwHv6utuLy","Nlhamankulu"="c1N79yeN7S2" ) 
+                   "Kanyaka"="BFNOLjUjAoG", "Katembe"="CVwHv6utuLy","Nlhamankulu"="c1N79yeN7S2" )  
 
 # 10- Task names - Nomes dos estagios a executar durante os checks
 task_check_consistency_1  <- "Verficar a integridade do ficheiro de importacao"

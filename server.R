@@ -1,20 +1,16 @@
 
 server <- function(input, output) {
   
-  # Create user environment to store user data
+  # Create user environment to store session data
   user_env <- new.env()    
   wd <- env_get(env = .GlobalEnv, nm = 'wd')
   print(wd)
   source(paste0(wd,"/misc_functions.R"),  local=user_env)
   source(paste0(wd,"/credentials.R"), local=user_env)
   attach(user_env, name="sourced_scripts")
-  # store datim dataset extraction outputa here
+  # store datim dataset extraction output here
   datim_logs <- ""
   
-  #  
-  # IF deploying on the same DHIS2 Server ignore ssl certificate errors
-  # httr::set_config(httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L))
-   
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/dataset_templates.RDATA' ),    envir = user_env)
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimDataSetElementsCC.RData'), envir = user_env)
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'),    envir = user_env)
@@ -24,21 +20,21 @@ server <- function(input, output) {
    # IF deploying on the same DHIS2 Server ignore ssl certificate errors
    httr::set_config(httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L))
    
-   template_dhis2_mer_ct         <- env_get(env = user_env, nm =  "template_dhis2_mer_ct") 
-   template_dhis2_mer_ats        <- env_get(env = user_env, nm =  "template_dhis2_mer_ats") 
-   template_dhis2_mer_smi        <- env_get(env = user_env, nm =  "template_dhis2_mer_smi") 
-   template_dhis2_mer_prevention <- env_get(env = user_env, nm =  "template_dhis2_mer_prevention") 
-   template_dhis2_mer_hs         <- env_get(env = user_env, nm =  "template_dhis2_mer_hs") 
-   template_dhis2_mer_ats_community <- env_get(env = user_env,nm =  "template_dhis2_mer_ats_community") 
+   template_dhis2_mer_ct         <- env_get(env = user_env, nm =    "template_dhis2_mer_ct" ) 
+   template_dhis2_mer_ats        <- env_get(env = user_env, nm =    "template_dhis2_mer_ats" ) 
+   template_dhis2_mer_smi        <- env_get(env = user_env, nm =    "template_dhis2_mer_smi" ) 
+   template_dhis2_mer_prevention <- env_get(env = user_env, nm =    "template_dhis2_mer_prevention" ) 
+   template_dhis2_mer_hs         <- env_get(env = user_env, nm =    "template_dhis2_mer_hs" ) 
+   template_dhis2_mer_ats_community <- env_get(env = user_env,nm =  "template_dhis2_mer_ats_community" ) 
    
   
-  # Bind datavalueset from dhis on user environment
+  # Bind  DHIS2 datavalueset to user environment
   env_bind(user_env, datavalueset_template_dhis2_mer_ct  = template_dhis2_mer_ct, datavalueset_template_dhis2_mer_ats= template_dhis2_mer_ats,
                      datavalueset_template_dhis2_mer_smi = template_dhis2_mer_smi , datavalueset_template_dhis2_mer_prevention= template_dhis2_mer_prevention ,
                      datavalueset_template_dhis2_mer_hs  =  template_dhis2_mer_hs, datavalueset_template_dhis2_mer_ats_community = template_dhis2_mer_ats_community)
   
+  #
   temporizador <-reactiveValues( started=FALSE, df_execution_log=NULL, df_warning_log=NULL , datim_logs =NULL)
-
   
   load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = user_env)
  
@@ -109,7 +105,7 @@ server <- function(input, output) {
   })
   
   output$data_tbl_datim_dataset <- renderDT({
-    datatable(df_datim ,
+    datatable(env_get(env = user_env,nm = "df_datim" ) ,
                extensions = c('Buttons'), 
                options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
                                pageLength = 15,
@@ -305,16 +301,25 @@ server <- function(input, output) {
       
     } else {
       output$instruction <- renderText({ "" })
-      #cat(indicator_selected, sep = " | ")
-      shinyjs::show(id = "chkbxUsGroup", animType = "slide" )
-      updatePickerInput(getDefaultReactiveDomain(), "chkbxUsGroup",
-                        label = paste("U. Sanitarias:(", length(vec_sheets),")" ),
-                        choices =  setNames(as.list(vec_sheets), getUsNameFromSheetNames(vec_sheets)),
-                        selected = NULL
-                               )
 
-      shinyjs::hide(id = "btn_upload")
-      shinyjs::hide(id = "chkbxPeriodGroup")
+      
+       us.names <- getUsNameFromSheetNames(vec_sheets)
+       if(length(which(is.na(us.names)))>0 ){
+         shinyalert("Aviso", "Ums das sheets tem o nome vazio. Deve corrigir antes de avancar.", type = "warning")
+       } else {
+         updatePickerInput(getDefaultReactiveDomain(), "chkbxUsGroup",
+                           label = paste("U. Sanitarias:(", length(vec_sheets),")" ),
+                           choices =  setNames(as.list(vec_sheets), getUsNameFromSheetNames(vec_sheets)),
+                           selected = NULL
+         )
+         
+         shinyjs::hide(id = "btn_upload")
+         shinyjs::hide(id = "chkbxPeriodGroup")
+         #cat(indicator_selected, sep = " | ")
+         shinyjs::show(id = "chkbxUsGroup", animType = "slide" )
+
+       }
+
       
     } 
     
@@ -493,7 +498,7 @@ server <- function(input, output) {
          #df_warnings <-  get("error_log_dhis_import", user_env = envir)
          df_warnings <-  env_get(env = user_env, "error_log_dhis_import") 
          df_warnings<- df_warnings[2:nrow(df_warnings),]
-         saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings)
+         saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings ,envir = user_env)
          
          # Reset Panes after upload
          shinyjs::hide(id = "chkbxPeriodGroup")
@@ -629,7 +634,7 @@ server <- function(input, output) {
                  detail = 'This may take a while...', value = 0, {
     load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'),    envir = user_env)
      output$data_tbl_datim_dataset <- renderDT({
-                     datatable(df_datim ,
+                     datatable(env_get(env = user_env,nm = "df_datim" ) ,
                                extensions = c('Buttons'), 
                                options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
                                                pageLength = 15,
@@ -640,7 +645,7 @@ server <- function(input, output) {
                                                  'print'  ) ) )
                    })
      output$data_tbl_ccs_warnings <- renderDT({
-       datatable(df_datim ,
+       datatable(env_get(env = user_env,nm = "df_datim" ) ,
                  extensions = c('Buttons'), 
                  options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
                                  pageLength = 15,
@@ -650,13 +655,15 @@ server <- function(input, output) {
                                    'pdf',
                                    'print'  ) ) )
      })
+     
     submission_date  <- as.character(Sys.Date())
-    datim_logs <- ""
+    datim_logs       <- ""
     period           <- input$chkbxDatimPeriodGroup
     message(period)
-    hf_names     <- env_get(env = .GlobalEnv,     nm =  "us_names_ids_dhis") 
-    api_dhis_url <- env_get(env = .GlobalEnv, nm =  "api_dhis_base_url") 
-    dataset.id   <- env_get(env = .GlobalEnv, nm =  "dataset_id_mer_datim")
+    hf_names         <- env_get(env = .GlobalEnv, nm =  "us_names_ids_dhis") 
+    api_dhis_url     <- env_get(env = .GlobalEnv, nm =  "api_dhis_base_url") 
+    dataset.id       <- env_get(env = .GlobalEnv, nm =  "dataset_id_mer_datim")
+    df_datim         <- env_get(env = user_env,   nm = "df_datim" )
     
     if(length(period)==0){
       shinyalert("Info", "Selecione o Periodo!", type = "info")
@@ -681,7 +688,12 @@ server <- function(input, output) {
           }
         )
         if(!is.null(df)){
-          df_datim   <- plyr::rbind.fill(df_datim,df)
+          
+       
+         
+          df_datim   <- plyr::rbind.fill(df_datim ,df)
+          #Tests
+          #writexl::write_xlsx(x = df ,path = paste0(paste0(get("wd", envir = .GlobalEnv),'/downloads/','datim_',getUsName(us),'.xlsx')),col_names = TRUE,format_headers = TRUE)
           #msg        <- paste0(getUsName(us), " - Dados processados com sucesso.", '\n')
           #datim_logs =  paste(datim_logs, msg, sep = '')
       
@@ -696,13 +708,22 @@ server <- function(input, output) {
         
         output$txt_datim_logs <-  renderText({ HTML(datim_logs)})
         
+        funding_mechanism <-  env_get(env = .GlobalEnv,     nm =  "funding_mechanism") 
         
-        
+        #df_datim <- env_get(env = user_env,nm = "df_datim" )
         df_datim$DatimDataElement <- mapply(df_datim$CategoryOptionCombo,df_datim$Dataelement, FUN =  getDhisDataElement)
         df_datim$DatimCategoryOptionCombo <-  mapply(df_datim$CategoryOptionCombo,df_datim$Dataelement, FUN =  getDhisCategoryOptionCombo)
-        df_datim$DatimAttributeOptionCombo <- '160451'
+        df_datim$DatimAttributeOptionCombo <- funding_mechanism 
+        #df_datim$Period <- sapply( df_datim$Period ,aDjustDhisPeriods)
         df_datim$DatimOrgUnit <- sapply(df_datim$OrgUnit, FUN =  getDhisOrgUnit)
         df_dataset_datim <- df_datim[,c(7,2,10,8,9,6)]
+        names(df_dataset_datim)[1] <- "Dataelement"
+        names(df_dataset_datim)[2] <- "Period"
+        names(df_dataset_datim)[3] <- "OrgUnit" 
+        names(df_dataset_datim)[4] <- "CategoryOptionCombo"
+        names(df_dataset_datim)[5] <- "AttributeOptionCombo"
+        names(df_dataset_datim)[6] <- "Value"
+
         df_dataset_ccs  <-  df_datim[,c(7,2,10,8,9,6,1,3,4,5)]
         
         #names(df_dat)[1] <- ""
@@ -734,7 +755,15 @@ server <- function(input, output) {
           
         })
       } else {
+        
+        
+        output$txt_datim_logs <-  renderText({ HTML(datim_logs)})
+        
+        
         shinyalert("Erro", "Ocoreu algum erro ao processar o dataset. Veja os logs", type = "error")
+        
+        
+        
       }
       
     }

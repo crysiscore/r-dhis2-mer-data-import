@@ -22,8 +22,9 @@ ui <- dashboardPage(
     sidebarMenu(
       id = "menu",
       #menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-      menuItem("CCS", tabName = "widgets", icon = icon("th")),
-      menuItem("DATIM", tabName = "dashboard", icon = icon("dashboard"))
+      menuItem("e-Analysis Upload", tabName = "widgets", icon = icon("th")),
+      menuItem("DATIM", tabName = "dashboard", icon = icon("dashboard")),
+      menuItem("ATS Data Export", tabName = "dashboard", icon = icon("dashboard"))
     )
   ),
   dashboardBody(
