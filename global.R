@@ -14,8 +14,4 @@ library(shinyjs)
 library(rlang)
 library(httr)
 source(file = 'paramConfig.R')      #  Carrega os paramentros globais
-# setwd(wd)                         #  
 
-
-#NOT RUN
-#save(upload_history_empty, error_log_dhis_import,error_log_dhis_import_empty, log_execution , vec_us_names, file = '')

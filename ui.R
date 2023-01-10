@@ -2,7 +2,7 @@
 
 ui <- dashboardPage(
  # useShinyjs(),  # Set up shiny to use shinyjs 
-  dashboardHeader(title = "DHIS2 Data upload", dropdownMenu(type = "notifications",
+  dashboardHeader(title = "M&E Data tools", dropdownMenu(type = "notifications",
                                                                 notificationItem(
                                                                   text = "5 new users today",
                                                                   icon("users")
@@ -23,8 +23,9 @@ ui <- dashboardPage(
       id = "menu",
       #menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
       menuItem("e-Analysis Upload", tabName = "widgets", icon = icon("th")),
-      menuItem("DATIM", tabName = "dashboard", icon = icon("dashboard")),
-      menuItem("ATS Data Export", tabName = "dashboard", icon = icon("dashboard"))
+      menuItem("DATIM Export", tabName = "dashboard", icon = icon("cloud-upload")),
+      menuItem("ATS Data Export", tabName = "ats", icon = icon("th-list")),
+      menuItem("Configuracao", tabName = "configuration", icon = icon("book"))
     )
   ),
   dashboardBody(
@@ -34,13 +35,13 @@ ui <- dashboardPage(
     tabItems( 
       # First tab content
       tabItem(tabName = "widgets",
-              # Sidebar layout with input and output definitions ----
+              # Sidebar layout with input and output definitions
               sidebarLayout(
                 
-                # Sidebar panel for inputs ----
+             # Sidebar panel for inputs
                 sidebarPanel(
                   
-                  # Input: Select a file to import do DHIS2 ----
+                  # Input: Select a file to import do DHIS2
                   fileInput("file1", "Selecione o Ficheiro",
                             multiple = FALSE,
                             accept = c( "application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")),
@@ -234,6 +235,61 @@ ui <- dashboardPage(
          
               )
               
+              )
+      ) ,
+      
+      tabItem(tabName = "ats",
+              
+              sidebarLayout(
+                # Sidebar panel for inputs ----
+                sidebarPanel(
+                  
+                  pickerInput(
+                    inputId = "chkbxAtsStages",
+                    label = "Estagio do Programa   :     ", 
+                    selected = NULL,
+                    multiple = FALSE,
+                    options = pickerOptions(maxOptions = 1,`live-search` = TRUE),
+                    choices = c(),
+                    # options = list(
+                    #   maxOptions = 1,
+                    #   `live-search` = TRUE
+                    #   ),
+                    width = '60%'
+                  ) ,
+                  
+                  tags$hr(),
+                  
+                  # UI function
+                  actionButtonStyled(inputId="btn_load_ats_stages", label="Carregar Estagios ",
+                                     btn_type = "button", type = "default", class = "btn-sm"),
+                  actionButtonStyled(inputId="btn_download_stage_data", label="Baixar eventos",
+                                     btn_type = "button", type = "warning", class = "btn-sm"),
+                  
+                  tags$hr(),
+                  
+                  verbatimTextOutput("txt_logs_ats")
+                ) ,
+                
+                
+                
+                
+                # Main panel for displaying outputs ----
+                mainPanel(
+                  fluidRow(
+                    tabBox(
+                      title = "Events Export",
+                      # The id lets us use input$tabset1 on the server to find the current tab
+                      id = "tabset_ats", height = "750px", width = "730px",
+                      tabPanel("Data Values",box( title = "Events", status = "primary", height = 
+                                                               "650px",width = "12",solidHeader = T, 
+                                                             column(width = 12,  DT::dataTableOutput("df_ats_program_stages"),style = "height:580px; overflow-y: scroll;overflow-x: scroll;"
+                                                             )  ) )
+                    ) )
+                  
+                  
+                )
+                
               )
       )
       

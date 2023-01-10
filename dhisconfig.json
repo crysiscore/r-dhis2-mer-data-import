@@ -1,0 +1,13 @@
+ {
+     "e-analisys" : [
+       "https://192.168.1.10:5459/",
+       "https://192.168.1.10:5459/api/dataSets/",
+       "api/33/dataValueSets"
+     ],
+     "dhis-datim" : [
+       "https://192.168.1.10:5455/",
+       "https://192.168.1.10:5455/api/dataSets/",
+       "api/33/dataValueSets"
+     ]
+   }
+ 
