@@ -62,7 +62,7 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
   df_error_tmp        <- env_get(env = user_env,nm = "error_log_dhis_import")
   wd                  <- env_get(env = .GlobalEnv,nm =  "wd" )
   
-  #message("Check:  passando aaa 1.1 ")
+  message("Check:  passando aaa 1.1 ")
   tmp <- env_get(env = user_env ,nm =  datavalueset.template.name)
   df <- filter(tmp, dataElement==data.element.id & categoryoptioncombo==category.option.combo.id )
   
@@ -73,9 +73,9 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
     df_error_tmp_empty$indicator[1] <- indicator.name
     df_error_tmp_empty$error[1] <- 'NOT FOUND'
     df_error_tmp<- rbind.fill(df_error_tmp, df_error_tmp_empty)
-    #message("Check:  aaa passando 1.2 ")
+    message("Check:  aaa passando 1.2 ")
     writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'/logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
-    #assign(x = "error_log_dhis_import",value =df_error_tmp, envir = envir )
+    #assign(x = "error_log_dhis_import",value =df_error_tmp, user.envir = user.envir )
     env_poke(env = user_env,nm ="error_log_dhis_import",value = df_error_tmp ) # https://adv-r.hadley.nz/environments.html#getting-and-setting-1 - 7.2.5 Getting and setting
     return(FALSE)
   } else if(total_rows==1){
@@ -180,9 +180,9 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
 #' @param dataset.name nome do formualario dhis 2. ("MER C&T"  = "ct", "MER ATS" = "ats" , "MER SMI" = "smi" , "MER PREVENTION"="prevention", "MER HEALTH SYSTEM"="hs")
 #' @examples 
 #' is_consistent  <- checkDataConsistency(excell.mapping.template,file.to.import, dataset.name, sheet.name,vec.indicators)
-checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators , user.env  ){
+checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators , user.env, us.name  ){
  
-  withProgress(message = 'Running ',
+  withProgress(message = getUsNameFromSheetNames(us.name),
                detail = 'This may take a while...', value = 0, {
                  
   #wd <- get("wd",envir = .GlobalEnv)
@@ -251,9 +251,9 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        tmp_df$check <- ""
        tmp_df$value <- ""
        
-       #message("Passando I.2 - " , indicator)
+       #Fmessage("Iniciando 2.2 - " , indicator)
        tmp_df$check  <- mapply(checkIFDataElementExistsOnTemplate,tmp_df$dhisdataelementuid,tmp_df$dhiscategoryoptioncombouid ,datavalueset_template,indicator )
-      
+       #message("Passando 2.2 - " , indicator)
        #Indicar a tarefa em execucao : task_check_consistency_3
        tmp_log_exec_empty$Datetime[1] <- substr(x = Sys.time(),start = 1, stop = 22)
        tmp_log_exec_empty$US[1] <- sheet.name
@@ -270,7 +270,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        tmp_df$value <-  mapply(getDEValueOnExcell,tmp_df$excell_cell_ref, file.to.import, sheet.name=sheet.name )
        
        #assign(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), tmp_df , envir = user.env)
-       env_poke(env = user.env ,nm =  paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep='') ,value =  tmp_df)
+       env_poke(env = user.env ,nm =  paste(us.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep='') ,value =  tmp_df)
         #A tarefa anterior terminou com sucesso
        tmp_log_exec_empty$status[1] <- 'ok'
        #tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
@@ -379,7 +379,7 @@ getTemplateDatasetName <- function(dataset.name) {
 #' @param  vec.indicators indicadores a importar
 #' @example 
 #' string_json  <- merIndicatorsToJson(dataset.id, complete.date, period , org.unit, vec.indicators)
-merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, vec.indicators, user.env){
+merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, vec.indicators, user.env, org.unit.name){
   
   dataSetID    <- dataset.id
   completeDate <- complete.date
@@ -397,7 +397,7 @@ merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, ve
   for (indicator in  vec.indicators) {
     
     #df               <- get(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env)
-    df                <- env_get(env =user.env ,nm =  paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+    df                <- env_get(env =user.env ,nm =  paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
     
     if(nrow(df) > 0){
       
@@ -429,8 +429,8 @@ merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, ve
 #' @param json  string json    
 #' @example
 #' status <- apiDhisSendDataValues
-apiDhisSendDataValues <- function(json , dhis.conf){
-  withProgress(message = 'Enviando Dados para o DHIS',
+apiDhisSendDataValues <- function(json , dhis.conf, us.name){
+  withProgress(message = paste0(us.name, ': Enviando Dados para o DHIS'),
                detail = 'This may take a while...', value = 0, {
                  
   # url da API
@@ -463,8 +463,9 @@ apiDhisSendDataValues <- function(json , dhis.conf){
 #' @param json  string json    
 #' @example
 #' status <- apiDatimSendDataValues
-apiDatimSendDataValues <- function(json , dhis.conf){
-  withProgress(message = 'Enviando Dados para o DHIS',
+apiDatimSendDataValues <- function(json , dhis.conf, us.name){
+  
+  withProgress(message = paste0(us.name, ': Enviando Dados para o DHIS'),
                detail = 'This may take a while...', value = 0, {
                  
                  # url da API
@@ -499,7 +500,7 @@ apiDatimSendDataValues <- function(json , dhis.conf){
 #' @param  is.datim.form for datim form (all indicators in on form)
 #' @examples
 #' saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings, envir)
-saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,period,df.warnings , envir, is.datim.form){
+saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,period,df.warnings , user.env, is.datim.form,org.unit.name){
   
    upload_directory <- ""
   
@@ -533,7 +534,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
         for (indicator in vec.indicators) {
           
           #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
-          tmp_df <- env_get(env = envir , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+          tmp_df <- env_get(env = user.env , paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
           
           writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
           
@@ -550,8 +551,8 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
         #TODO save files here
         for (indicator in vec.indicators) {
           
-          #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
-          tmp_df <- env_get(env = envir , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+          #tmp_df <- get( paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
+          tmp_df <- env_get(env = user.env , paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
           writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
           
         }
@@ -573,8 +574,8 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
       #TODO Save files here
       for (indicator in vec.indicators) {
         
-        #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
-        tmp_df <- env_get(env = envir , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+        #tmp_df <- get( paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
+        tmp_df <- env_get(env = user.env , paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
         writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
         
       }
@@ -599,8 +600,8 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
     # TODO Save files here
     for (indicator in vec.indicators) {
       
-      #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), )
-      tmp_df <- env_get(env = envir , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+      #tmp_df <- get( paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), )
+      tmp_df <- env_get(env = user.env , paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
       writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
       
     }
@@ -939,7 +940,6 @@ getOrganizationUnits <- function(base.url, location_id) {
   r <- content(GET(url, authenticate(dhis2.username, dhis2.password)), as = "parsed")
   do.call(rbind.data.frame, r$organisationUnits)
 }
-
 
 getTrackerEvents <- function(base.url,org.unit,program.id, program.stage.id){
   url <-
