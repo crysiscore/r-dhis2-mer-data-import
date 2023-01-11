@@ -182,7 +182,7 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
 #' is_consistent  <- checkDataConsistency(excell.mapping.template,file.to.import, dataset.name, sheet.name,vec.indicators)
 checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators , user.env  ){
  
-  withProgress(message = 'Running checks',
+  withProgress(message = 'Running ',
                detail = 'This may take a while...', value = 0, {
                  
   #wd <- get("wd",envir = .GlobalEnv)
@@ -238,8 +238,10 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
      env_poke(env = user.env ,nm =  "log_execution",value =  tmp_log_exec)
      #message("Passando I.1")
      writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, '/logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
-     datavalueset_template <- getDataValuesetName(dataset.name)
-     
+
+      #datavalueset_template <- getDataValuesetName(dataset.name)
+      datavalueset_template <-  'datavalueset_template_dhis2_datim'
+ 
      for (indicator in vec.indicators) {
        # GET excell values
        setwd(wd)
@@ -332,7 +334,7 @@ checkImportTamplateIntegrity  <- function(file.to.import,dataset.name,sheet.name
   }
   #Write error 
   if(total_errors> 0){
-    writexl::write_xlsx(x = df_cells_to_ckeck,path = 'errors/template_errors.xlsx')
+    writexl::write_xlsx(x = df_cells_to_ckeck,path = paste0(get("upload_dir"),'/template_errors.xlsx'))
   }
   return(total_errors)
   
@@ -427,17 +429,19 @@ merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, ve
 #' @param json  string json    
 #' @example
 #' status <- apiDhisSendDataValues
-apiDhisSendDataValues <- function(json){
+apiDhisSendDataValues <- function(json , dhis.conf){
   withProgress(message = 'Enviando Dados para o DHIS',
                detail = 'This may take a while...', value = 0, {
                  
   # url da API
-  base.url <- paste0(get('api_dhis_base_url',envir = .GlobalEnv),get("api_dhis_datasetvalues_endpoint",envir = .GlobalEnv))
+  # 2 - DHIS2 API ENDPOINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
+                 
+  base.url <- paste0(dhis.conf['e-analisys'][[1]][1] , dhis.conf['e-analisys'][[1]][3])
   
   incProgress(1/2, detail = paste("This may take a while..." ))
   # Post data to DHIS2
   status <- POST(url = base.url,
-                 body = json, config=authenticate(get("dhis2.username",envir =  .GlobalEnv), get("dhis2.password",envir =  .GlobalEnv)),
+                 body = json, config=authenticate(get("dhis2.username",envir =  .GlobalEnv ,timeout(20000) ) , get("dhis2.password",envir =  .GlobalEnv)),
                  add_headers("Content-Type"="application/json") )
   
   incProgress(1/2, detail = paste("This may take a while..." ))
@@ -453,26 +457,68 @@ apiDhisSendDataValues <- function(json){
   
 }
 
+#' apiDatimSendDataValues ->  Envia dados  json para o endpoint '/api/33/dataValueSets' (https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html)
+#' No formulario do DATIM
+#'                        
+#' @param json  string json    
+#' @example
+#' status <- apiDatimSendDataValues
+apiDatimSendDataValues <- function(json , dhis.conf){
+  withProgress(message = 'Enviando Dados para o DHIS',
+               detail = 'This may take a while...', value = 0, {
+                 
+                 # url da API
+                 # 2 - DHIS2 API ENDPOINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
+                 
+                 base.url <- paste0(dhis.conf['dhis-datim'][[1]][1] , dhis.conf['dhis-datim'][[1]][3])
+                 
+                 incProgress(1/2, detail = paste("This may take a while..." ))
+                 # Post data to DHIS2
+                 status <- POST(url = base.url,
+                                body = json, config=authenticate(get("dhis2.username",envir =  .GlobalEnv ,timeout(20000) ) , get("dhis2.password",envir =  .GlobalEnv)),
+                                add_headers("Content-Type"="application/json") )
+                 
+                 incProgress(1/2, detail = paste("This may take a while..." ))
+                 
+               })
+  # The reponse from server will be an object with the following structure
+  # Response [http://192.168.1.10:5400/api/33/dataValueSets]
+  # Date: 2022-09-01 10:17
+  # Status: 200
+  # Content-Type: application/json;charset=UTF-8
+  # Size: 861 B
+  return(status)
+  
+}
 
 #' saveLogUploadedIndicators ->  guarda os datasets dos indicadores enviados ao dhis
 #' @param  vec.indicators indicadores a importar
 #' @param upload.date  data do upload   
 #' @param period  periodo
 #' @param df.warnings df com campos vazios
+#' @param  is.datim.form for datim form (all indicators in on form)
 #' @examples
-#' saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings)
-saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,period,df.warnings){
+#' saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings, envir)
+saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,period,df.warnings , envir, is.datim.form){
   
-
-  main_dir <- env_get(env = .GlobalEnv, "wd")
-  upload_dir <- paste0(main_dir,"/uploads/")
-  setwd(upload_dir)
+   upload_directory <- ""
   
+  if(is.datim.form==TRUE){
+    upload_directory <- paste0(get("upload_dir"),"/", "datim" , "/")
+  } else {
+    
+    upload_directory <- paste0(get("upload_dir"),"/", "mensal", "/")
+  }
+  #main_dir <- env_get(env = .GlobalEnv, "wd")
+  #upload_directory <- paste0(get("upload_dir"),"/")
+  #setwd(upload_dir)
+  setwd(upload_directory)
+  message(upload_directory)
   # check if sub directory exists 
   if (file.exists(upload.date)){
     
     # change to dir
-    curr_upload_dir <- paste0(upload_dir, upload.date)
+    curr_upload_dir <- paste0(upload_directory, upload.date)
     setwd(curr_upload_dir)
     
     # check  if us dir  is created
@@ -487,7 +533,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
         for (indicator in vec.indicators) {
           
           #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
-          tmp_df <- env_get(env = user_env , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+          tmp_df <- env_get(env = envir , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
           
           writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
           
@@ -505,7 +551,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
         for (indicator in vec.indicators) {
           
           #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
-          tmp_df <- env_get(env = user_env , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+          tmp_df <- env_get(env = envir , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
           writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
           
         }
@@ -528,7 +574,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
       for (indicator in vec.indicators) {
         
         #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
-        tmp_df <- env_get(env = user_env , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+        tmp_df <- env_get(env = envir , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
         writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
         
       }
@@ -541,8 +587,8 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
     
     # create a new sub directory inside
     # the main path
-    dir.create(file.path(upload_dir, upload.date))
-    tmp_dir <- paste0(upload_dir, upload.date)
+    dir.create(file.path(upload_directory, upload.date))
+    tmp_dir <- paste0(upload_directory, upload.date)
     setwd(tmp_dir)
     tmp_path_us <- paste0(tmp_dir, '/', us.name) # create us dir
     dir.create(file.path(tmp_path_us))
@@ -554,7 +600,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
     for (indicator in vec.indicators) {
       
       #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), )
-      tmp_df <- env_get(env = user_env , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+      tmp_df <- env_get(env = envir , paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
       writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
       
     }
@@ -564,28 +610,6 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
   
 }
 
-
-getDataValuesetName <- function(dataset.name) {
-  
-  datavalueset_template <- ""
-  if(dataset.name=='MER C&T'){
-    datavalueset_template <-"datavalueset_template_dhis2_mer_ct"
-  } else if(dataset.name=='MER ATS'){
-    datavalueset_template <- "datavalueset_template_dhis2_mer_ats"
-  } else if(dataset.name=='MER SMI'){
-    datavalueset_template <- "datavalueset_template_dhis2_mer_smi"
-  } else if(dataset.name=='MER PREVENTION'){
-    datavalueset_template <- "datavalueset_template_dhis2_mer_prevention"
-  }else if(dataset.name=='MER HEALTH SYSTEM'){
-    datavalueset_template <- "datavalueset_template_dhis2_mer_hs"
-  }else if(dataset.name=='MER ATS COMMUNITY'){
-    datavalueset_template <- "datavalueset_template_dhis2_mer_ats_community" 
-  } else {
-    return("unkown")
-  }
-  
-  return(datavalueset_template)
-}
 
 getUsNameFromSheetNames <-function(vector){
   
@@ -597,7 +621,7 @@ getUsNameFromSheetNames <-function(vector){
   vec
 }
 
-getDataSetDataElements <- function(base.url, dataset.id) {
+getDataSetDataElements  <- function(base.url, dataset.id) {
   
   url <-
     paste0(
@@ -620,5 +644,433 @@ getDataSetDataElements <- function(base.url, dataset.id) {
   
 }
 
+getDatimDataValueSet    <- function(url.api.dhis.datasets,dataset.id, period, org.unit){
+  
+  url_datavalues  <-  paste0(url.api.dhis.datasets,'api/33/dataValueSets','.json?', 'dataSet=',dataset.id,'&period=',period,'&orgUnit=',org.unit)
+  http_content    <-  content(GET(url_datavalues, authenticate(dhis2.username, dhis2.password),timeout(6000)),as = "text",type = 'application/json' )
+  df_datavalueset =   fromJSON(http_content) %>% as.data.frame
+ 
+   if(nrow(df_datavalueset) > 1 ){
+     
+    df_datavalueset = df_datavalueset[,c(5,3,4,8,9,10)]
+    names(df_datavalueset)[1]  <- "Dataelement"
+    names(df_datavalueset)[2]  <- "Period"
+    names(df_datavalueset)[3]  <- "OrgUnit"
+    names(df_datavalueset)[4]  <- "CategoryOptionCombo"
+    names(df_datavalueset)[5]  <- "AttributeOptionCombo"
+    names(df_datavalueset)[6]  <- "Value"
+    df_datavalueset
+    
+  } else {
+    return(NULL)
+  }
 
-#checkDataConsistency(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators )
+  
+}
+
+getUsName <- function(org.unit){
+  
+  us_name <- which(us_names_ids_dhis==org.unit)
+  names(us_name)
+}
+
+
+#' getDhisDataElement ->  Busca o ID do DataElement do datim com base no id do DataElement do DHIS CCS
+#' @param cat.opt.comb categoryoptioncombouid
+#' @param data.element dataelementuid   
+#' @examples
+#' getDhisDataElement("YiMCSzx23b",""YiMCSzx23b")
+getDhisDataElement<- function(cat.opt.comb, data.element) {
+  
+  dhis_data_elementid <- NA
+  
+  index <- which(df_datim_indicators$dhiscategoryoptioncombouid==cat.opt.comb & df_datim_indicators$dhisdataelementuid== data.element )
+  
+  dhis_data_elementid <- df_datim_indicators[index,]$dataelementuid[1]
+  
+  dhis_data_elementid
+  
+}
+
+#' getDhisCategoryOptionCombo ->  Busca o ID do CategoryOptionCombo do datim com base no id do CategoryOptionCombo do DHIS CCS
+#' @param cat.opt.comb categoryoptioncombouid
+#' @param data.element dataelementuid   
+#' @examples
+#' CategoryOptionCombo("YiMCSzx23b",""YiMCSzx23b")
+getDhisCategoryOptionCombo <- function(cat.opt.comb, data.element) {
+  
+  cat_option_comb <- NA
+  
+  
+  index <- which(df_datim_indicators$dhiscategoryoptioncombouid==cat.opt.comb & df_datim_indicators$dhisdataelementuid== data.element )
+  
+  cat_option_comb <- df_datim_indicators[index,]$categoryoptioncombouid[1]
+  
+  
+  cat_option_comb
+  
+}
+
+
+#' getDhisOrgUnit ->  Busca o ID da orgUnit do datim com base no id do orgUnit do DHIS CCS
+#' @param  ccs.orgunit orgUnit ID
+#' @examples
+#' getDhisOrgUnit("YiMCSzx23b")
+getDhisOrgUnit <-  function(ccs.orgunit) {
+  
+  index <- which(df_ccs_data_exchange_orgunits$ccs_orgunit_id==ccs.orgunit )
+  
+  df_ccs_data_exchange_orgunits[index,]$orgunit_internal_id[1]
+  
+}
+
+aDjustDhisPeriods <- function(period) {
+  
+  if(substr(period,5,6)=='Q1'){
+    return(paste0(as.integer(substr(period,1,4)) +1,'Q1'))
+    return(paste0(substr(period,1,4),'Q2'))
+  } else if(substr(period,5,6)=='Q2'){
+    return(paste0(substr(period,1,4),'Q3'))
+  } else if(substr(period,5,6)=='Q3'){
+    return(paste0(substr(period,1,4),'Q4'))
+  } else if(substr(period,5,6)=='Q4'){     # Q4 no DHIS corresponde ao ano seguinte no periodo do reporte do PEPFAR
+    return(paste0(as.integer(substr(period,1,4)) +1,'Q1'))
+  }
+  
+}
+
+isMissing <- function(x) { x== "" | is.na(x) } 
+
+
+indicatorsToString <- function(vec)  {
+  
+  t <- ""     
+  for (v in vec) {
+   if(t==""){
+     t <- paste0(t, v)
+   }else {
+     t <- paste0(t, ", ", v) 
+   }
+
+}
+  t
+  
+  }
+
+#' getProgramStages ->  Busca os estagios de um programa
+#' @param  base.url base.url 
+#' @param  program.id program.id
+#' @examples
+#' getProgramStages("YiMCSzx23b")
+getProgramStages <- function(base.url, program.id) {
+  ## location pode ser distrito , provincia
+  url <-
+    paste0(
+      base.url,
+      paste0(
+        "api/programs/",
+        program.id,
+        "/programStages?fields=id,name"
+      )
+    )
+  r <- content(GET(url, authenticate(dhis2.username, dhis2.password)), as = "parsed")
+  do.call(rbind.data.frame, r$programStages)
+}
+
+getDataElements <- function(base.url) {
+  url <-
+    paste0(base.url,
+           "api/dataElements?fields=id,name,shortName&paging=false")
+  r <- content(GET(url, authenticate(dhis2.username, dhis2.password)), as = "parsed")
+  do.call(rbind.data.frame, r$dataElements)
+}
+
+getEnrollments <- function(base.url,org.unit, program.id ) {
+  
+  url <-    paste0( base.url,paste0("api/tracker/enrollments?orgUnit=", org.unit, "&program=",program.id, "&ouMode=DESCENDANTS", "&skipPaging=TRUE"  )  )
+  
+  
+  r <- content(GET(url, authenticate(dhis2.username, dhis2.password), timeout(60000)), as = "parsed")
+  
+  # criar um df vazio para armazenar os Enrrolments
+  df_te <- data.frame(matrix(ncol = 8, nrow =  length(r$instances) ))
+  x <- c("enrollment", "trackedEntity", "status" , "createdAt", "deleted", "orgUnit" , "orgUnitName", "enrolledAt")
+  colnames(df_te) <- x
+  
+  
+  if(typeof(r)=="list" && length(r$instances)>0) {
+    
+    
+    
+    # Iterar a lista para extrair os attributes
+    for (i in 1:length(r$instances)) {
+      
+      
+      enrollment <- r$instances[[i]]
+      enrollment_id <- enrollment$enrollment
+      tracked_entity_id <- enrollment$trackedEntity
+      status <- enrollment$status
+      createdAt <- enrollment$createdAt
+      enrolledAt <- enrollment$enrolledAt
+      deleted <- enrollment$deleted
+      org_unit <- enrollment$orgUnit
+      orgUnitName <- enrollment$orgUnitName
+      
+      
+      # prencher o df df_te
+      df_te$enrollment[i] <-  enrollment_id 
+      df_te$trackedEntity[i] <- tracked_entity_id
+      df_te$status[i] <- status
+      df_te$createdAt[i] <-  createdAt
+      df_te$deleted[i] <- deleted
+      df_te$orgUnit[i] <- org_unit
+      df_te$orgUnitName[i] <- orgUnitName
+      df_te$enrolledAt[i] <- enrolledAt
+      
+    }
+    
+  }
+  
+  
+  df_te
+  
+}
+
+getTrackedInstances <- function(base.url, program.id,org.unit) {
+  ## location pode ser distrito , provincia
+  url <-
+    paste0(
+      base.url,
+      paste0(
+        "api/tracker/trackedEntities?orgUnit=",
+        org.unit,
+        "&program=",
+        program.id,
+        "&ouMode=DESCENDANTS",
+        "&skipPaging=TRUE"
+      )
+    )
+  r <- content(GET(url, authenticate(dhis2.username, dhis2.password),timeout(60000)), as = "parsed")
+  
+  # criar um df vazio para armazenar os TE
+  df_te <- data.frame(matrix(ncol = 8, nrow =  length(r$instances) ))
+  x <- c("sector_testagem", "ano_livro", "nr_livro" , "mod_testagem", "pagina", "linha_regist" ,"org_unit", "trackedEntity")
+  colnames(df_te) <- x
+  
+  
+  if(typeof(r)=="list" && length(r$instances)>0) {
+    
+    
+    
+    # Iterar a lista para extrair os attributes
+    for (i in 1:length(r$instances)) {
+      
+      
+      tracked_entity <- r$instances[[i]]
+      tracked_entity_id <- tracked_entity$trackedEntity
+      org_unit <- tracked_entity$orgUnit
+      tracked_entity_sector <- ""
+      tracked_entity_ano_livro <- ""
+      tracked_entity_nr_livro <- ""
+      tracked_entity_mod_test <- ""
+      tracked_entity_pagina <- ""
+      tracked_entity_linha_reg <- ""
+      
+      list_atributos <- tracked_entity$attributes
+      
+      for (v in 1:length(list_atributos)) {
+        
+        atributo <- list_atributos[[v]]
+        displayName <- atributo$displayName
+        value <- atributo$value
+        
+        if(displayName=="Setor de Testagem"){
+          tracked_entity_sector <- value
+          
+        } else  if(displayName=="Ano do livro"){
+          tracked_entity_ano_livro <- value
+          
+        } else if(displayName=="Número do livro"){
+          tracked_entity_nr_livro <- value
+          
+        } else if(displayName=="Modalidade De Testagem"){
+          tracked_entity_mod_test<- value
+          
+        } else if (displayName=="Página"){
+          tracked_entity_pagina<- value
+          
+        } else if (displayName=="Linha do Registo"){
+          tracked_entity_linha_reg <- value
+          
+        }
+      }
+      
+      # prencher o df df_te    x <- c("sector_testagem", "ano_livro", "nr_livro" , "mod_testagem", "pagina", "linha_regist" ,"org_unit")
+      df_te$sector_testagem[i] <-  tracked_entity_sector 
+      df_te$ano_livro[i] <- tracked_entity_ano_livro
+      df_te$nr_livro[i] <- tracked_entity_nr_livro
+      df_te$mod_testagem[i] <-  tracked_entity_mod_test
+      df_te$trackedEntity[i] <- tracked_entity_id
+      df_te$orgUnit[i] <- org_unit
+      df_te$pagina[i] <- tracked_entity_pagina
+      df_te$linha_regist[i] <- tracked_entity_linha_reg
+      
+      
+    }
+    
+  }
+  
+  
+  df_te
+  
+}
+
+getOrganizationUnits <- function(base.url, location_id) {
+  ## location pode ser distrito , provincia
+  url <-
+    paste0(
+      base.url,
+      paste0(
+        "api/organisationUnits/",
+        location_id,
+        "?includeDescendants=true&level=3&fields=id,name,shortName&paging=false"
+      )
+    )
+  r <- content(GET(url, authenticate(dhis2.username, dhis2.password)), as = "parsed")
+  do.call(rbind.data.frame, r$organisationUnits)
+}
+
+
+getTrackerEvents <- function(base.url,org.unit,program.id, program.stage.id){
+  url <-
+    paste0(base.url,
+           paste0(
+             "api/tracker/events.json?orgUnit=",
+             org.unit,
+             '&program=',
+             program.id,
+             '&programStage=',
+             program.stage.id,
+             "&ouMode=DESCENDANTS&skipPaging=true"
+           )
+    )
+  
+  # Get the data
+  r2 <- content(GET(url, authenticate(dhis2.username, dhis2.password),timeout(600000)),as = "parsed")
+  
+  if(typeof(r2)=="list" && length(r2$instances)>0) {
+    
+    vec_size_datavalues <- c()
+    for(event in r2$instances){
+      
+      size <- length( event$dataValues)
+      vec_size_datavalues <-  c(vec_size_datavalues,size)
+    }
+    
+    # primeiro evento da lista com maior  nr de colunas
+    index = which.max(vec_size_datavalues)
+    #event_metadata_col_names <- names(r2$instances[[index]])
+    #event_values_col_names   <- names(r2$instances[[index]]$dataValues[[1]])
+    # Quantidade de variaveis de cada evento
+    #length(r2$instances[[index]]$dataValues)
+    #df_events_col_names <- c(event_metadata_names, event_values_col_names)
+    
+    # inicializar o df 
+    df_event_values <- do.call(rbind.data.frame,r2$instances[[1]]$dataValues)
+    df_event_values <- df_event_values[1,]
+    df_event_values$storedBy <- ""
+    df_event_values$programStage <- ""
+    df_event_values$status <- ""
+    df_event_values$created <- ""
+    #df_event_values$notes <- ""
+    df_event_values$dueDate <- ""
+    df_event_values$orgUnit <- ""
+    df_event_values$orgUnitName <- ""
+    df_event_values$program <- ""
+    df_event_values$trackedEntityIntance <- ""
+    df_event_values$eventDate <- ""
+    df_event_values$deleted <- ""
+    df_event_values$href <- ""
+    df_event_values$enrollment <- ""
+    df_event_values$attributeCategoryOptions <- ""
+    df_event_values$attributeOptionCombo <- ""
+    df_event_values$event <- ""
+    df_event_values$enrollmentStatus <- ""
+    df_event_values <- df_event_values[0,]
+    
+    #  Junta todos  dataValues  de todos  eventos
+    
+    for (index in 1:length(r2$instances)) {
+      
+      if(length(r2$instances[[index]]$dataValues)>0) {
+        
+        temp <-  do.call(rbind.data.frame,r2$instances[[index]]$dataValues)
+        
+        
+        temp$storedBy <-r2$instances[[index]]$storedBy
+        temp$programStage <-r2$instances[[index]]$programStage
+        temp$status <- r2$instances[[index]]$status
+        temp$created <- r2$instances[[index]]$created
+        
+        # Existem eventos sem notas
+        #if(length(r2$instances[[index]]$notes)>0){
+        #
+        #  temp$notes <- r2$instances[[index]]$notes
+        #}
+        
+        temp$dueDate <- r2$instances[[index]]$dueDate
+        temp$orgUnit <- r2$instances[[index]]$orgUnit
+        temp$orrgUnitName <- r2$instances[[index]]$orgUnitName
+        temp$program <- r2$instances[[index]]$program
+        temp$trackedEntityIntance <- r2$instances[[index]]$trackedEntityInstance
+        temp$eventDate <- r2$instances[[index]]$eventDate
+        temp$deleted <- r2$instances[[index]]$deleted
+        temp$href <- r2$instances[[index]]$href
+        temp$enrollment <- r2$instances[[index]]$enrollment
+        temp$attributeCategoryOptions <- r2$instances[[index]]$attributeCategoryOptions
+        temp$attributeOptionCombo <- r2$instances[[index]]$attributeOptionCombo
+        temp$event <- r2$instances[[index]]$event
+        temp$enrollmentStatus <- r2$instances[[index]]$enrollmentStatus
+        
+        
+        df_event_values <- rbind.fill(df_event_values, temp)
+      }
+    }
+    
+  }
+  
+  df_event_values
+  
+  
+}
+
+findDataElementByID <- function(id){
+  
+  dataElement <- dataElements[which(dataElements$id==id),]
+  as.character(dataElement$name)
+}
+
+
+findTrackedInstanceByID <- function(id){
+  
+  trackedInstance <- trackedInstance[which(trackedInstances$Instance==id),]
+  as.character(trackedInstance$name)
+}
+
+
+findProgramStageByID <- function(id){
+  
+  stage <- programStages[which(programStages$id==id),]
+  as.character(stage$name)
+}
+
+
+getStageNameByID <- function(stage.id, df.stages){
+  
+  stage_name <- df.stages$name[which(df.stages$id==stage.id)]
+  stage_name
+}
+
+# df_datim_albasine <- getDatimDataValueSet(url.api.dhis.datasets,dataset.id, period, org.unit)
+# https://mail.ccsaude.org.mz:5459/api/33/dataValueSets.json?dataSet=RU5WjDrv2Hx&period=2022Q3&orgUnit=FTLV9nOnAFC
+# https://mail.ccsaude.org.mz:5459/api/33/dataValueSets.csv?dataSet=RU5WjDrv2Hx&period=2022Q3&orgUnit=FTLV9nOnAFC
