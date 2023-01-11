@@ -34,12 +34,11 @@ Data import into CCS DHIS2 is done using  <a href="https://docs.dhis2.org/en/dev
   $ sudo  chmod -R 777  /data_ssd_1/shiny-apps/dhis/history
 
 
-<h2> 6 - Create a docker shiny-server  container : image https://hub.docker.com/repository/docker/crysiscore/shiny-server/general </h2>
-# shiny-server listen on port 3838 by default
+<h2> 6 - Create a docker shiny-server  container : image https://hub.docker.com/repository/docker/crysiscore/shiny-server/general  , hiny-server listen on port 3838 by default</h2>
 
 $ docker run -d --name shiny-server -p5460:3838 -v /data_ssd_1/shiny-apps/dhis/history:/uploads -v /data_ssd_1/shiny-apps/dhis/apps:/srv/shiny-server/ crysiscore/shiny-server:1.0
 <h2> 8- Access the app through the host_ip and port server-ip:5460/app-name </h2>
 
 
-# In case of new  data elements/ categoryoption combos  on DATIM,  follow instructions to update the config files on report_generator.R file
+</h3> In case of new  data elements/ categoryoption combos  on DATIM,  follow instructions to update the config files on report_generator.R file</h3>
 
