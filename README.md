@@ -10,10 +10,10 @@ This  tool is intended to read DATIM MER indicators from excell files and upload
 </ul>   </br>
 Data import into CCS DHIS2 is done using  <a href="https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/introduction.html"> DHIS2 WEB API </a>.
 
-<h2>  1- Clone project </h2>
+<h3>  1- Clone project </h3>
  $ git clone https://github.com/crysiscore/r-dhis2-mer-data-import.git
 
- <h2> 2 - Create  needed dirs and files on hosting server  </h2>
+ <h3> 2 - Create  needed dirs and files on hosting server  </h3>
  $ mkdir -p  /data_ssd_1/shiny-apps/dhis/apps  - Store app files here
  $ mkdir -p  /data_ssd_1/shiny-apps/dhis/history          ->  Story upload history here
  $ mkdir -p  /data_ssd_1/shiny-apps/dhis/history/mensal   ->  monthly upload
@@ -21,23 +21,25 @@ Data import into CCS DHIS2 is done using  <a href="https://docs.dhis2.org/en/dev
  $ cp r-dhis2-mer-data-import/dataset_templates/template_errors.xlsx  /data_ssd_1/shiny-apps/dhis/history/
  $cp r-dhis2-mer-data-import/dataset_templates/DHIS2 UPLOAD HISTORY.xlsx /data_ssd_1/shiny-apps/dhis/history/
 
- <h2> 3- Create credentials.R file inside root dir r-dhis2-mer-data-import and write the following variables :
+ <h3> 3- Create credentials.R file inside root dir r-dhis2-mer-data-import and write the following variables :
    dhis2.password =''
-   dhis2.password=''  </h2>
+   dhis2.password=''  </h3>
  $ touch r-dhis2-mer-data-import/credentials.R
 
- <h2> 4- Copy  r-dhis2-mer-data-import  to apps dir and give it any name  </h2>
+ <h3> 4- Copy  r-dhis2-mer-data-import  to apps dir and give it any name  </h3>
   $ cp -r r-dhis2-mer-data-import /data_ssd_1/shiny-apps/dhis/apps/datim-app
 
-<h2> 5- Give read and write permission to all dir </h2>
+<h3> 5- Give read and write permission to all dir </h3>
   $ sudo  chmod -R 777  /data_ssd_1/shiny-apps/dhis/apps
   $ sudo  chmod -R 777  /data_ssd_1/shiny-apps/dhis/history
 
 
-<h2> 6 - Create a docker shiny-server  container : image https://hub.docker.com/repository/docker/crysiscore/shiny-server/general  , hiny-server listen on port 3838 by default</h2>
+<h3> 6 - Create a docker shiny-server  container : image https://hub.docker.com/repository/docker/crysiscore/shiny-server/general  , hiny-server listen on port 3838 by default</h3>
 
 $ docker run -d --name shiny-server -p5460:3838 -v /data_ssd_1/shiny-apps/dhis/history:/uploads -v /data_ssd_1/shiny-apps/dhis/apps:/srv/shiny-server/ crysiscore/shiny-server:1.0
-<h2> 8- Access the app through the host_ip and port server-ip:5460/app-name </h2>
+
+
+<h3> 8- Access the app through the host_ip and port server-ip:5460/app-name </h3>
 
 
 </h3> In case of new  data elements/ categoryoption combos  on DATIM,  follow instructions to update the config files on report_generator.R file</h3>
