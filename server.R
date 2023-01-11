@@ -477,7 +477,7 @@ server <- function(input, output) {
       
       message("Dataset name:    ", ds_name)
       message("Dataset id:      ", dataset_id)
-      message("Indicators name: ", paste(vec_indicators,sep =  " | "))
+      message("Indicators name: ", indicatorsToString(vec_indicators))
       message("US Name :        ", us_name)
       message("Org unit:        ", org_unit)
       message("Period:          ", period)
@@ -499,18 +499,20 @@ server <- function(input, output) {
               
               shinyalert("Sucess", "Dados enviados com sucesso", type = "success")
               # Registar info do upload
+              message("iniciando o upload")
               upload_history = readxl::read_xlsx(path = paste0( get("upload_dir"),'/DHIS2 UPLOAD HISTORY.xlsx'))
               upload_history_empty <- upload_history[1,]
               upload_history_empty$`#`[1]         <- nrow(upload_history)+1
               upload_history_empty$upload_date[1] <- submission_date
-              upload_history_empty$dataset[1]     <- ds_name
-              upload_history_empty$indicadores[1] <-  paste(vec_indicators,sep =  " | ")
+              upload_history_empty$dataset[1]     <- "MER DATIM"
+              upload_history_empty$indicadores[1] <-  indicatorsToString(vec_indicators)
               upload_history_empty$periodo[1] <- period
-              upload_history_empty$`org. unit`[1] <- org_unit
+              upload_history_empty$`org. unit`[1] <- us_name
               upload_history_empty$status[1] <- "Sucess"
               upload_history_empty$status_code[1] <- 200
               upload_history_empty$url[1]<- status$url
               upload_history <- plyr::rbind.fill(upload_history,upload_history_empty)
+          
               writexl::write_xlsx(x =upload_history,path = paste0( get("upload_dir"),'/DHIS2 UPLOAD HISTORY.xlsx') ,col_names = TRUE,format_headers = TRUE)
               
               # carregar variaves e dfs para armazenar logs
@@ -589,7 +591,7 @@ server <- function(input, output) {
               upload_history_empty$`#`[1]         <- nrow(upload_history)+1
               upload_history_empty$upload_date[1] <- submission_date
               upload_history_empty$dataset[1]     <- ds_name
-              upload_history_empty$indicadores[1] <- paste(vec_indicators,sep =  " | ")
+              upload_history_empty$indicadores[1] <- indicatorsToString(vec_indicators)
               upload_history_empty$periodo[1] <- period
               upload_history_empty$`org. unit`[1] <- org_unit
               upload_history_empty$status[1] <- "Error"
@@ -660,9 +662,9 @@ server <- function(input, output) {
               upload_history_empty$`#`[1]         <- nrow(upload_history)+1
               upload_history_empty$upload_date[1] <- submission_date
               upload_history_empty$dataset[1]     <- ds_name
-              upload_history_empty$indicadores[1] <-  paste(vec_indicators,sep =  " | ")
+              upload_history_empty$indicadores[1] <-  indicatorsToString(vec_indicators)
               upload_history_empty$periodo[1] <- period
-              upload_history_empty$`org. unit`[1] <- org_unit
+              upload_history_empty$`org. unit`[1] <- us_name
               upload_history_empty$status[1] <- "Sucess"
               upload_history_empty$status_code[1] <- 200
               upload_history_empty$url[1]<- status$url
@@ -745,7 +747,7 @@ server <- function(input, output) {
               upload_history_empty$`#`[1]         <- nrow(upload_history)+1
               upload_history_empty$upload_date[1] <- submission_date
               upload_history_empty$dataset[1]     <- ds_name
-              upload_history_empty$indicadores[1] <- paste(vec_indicators,sep =  " | ")
+              upload_history_empty$indicadores[1] <- indicatorsToString(vec_indicators)
               upload_history_empty$periodo[1] <- period
               upload_history_empty$`org. unit`[1] <- org_unit
               upload_history_empty$status[1] <- "Error"
@@ -810,12 +812,12 @@ server <- function(input, output) {
         error=function(e) {
           shinyalert("Erro", paste0("Erro durante o envio de dados, Tente novamente", as.character(e)), type = "error")
           message(e)
-        },
-        #if a warning occurs, tell me the warning
-          warning=function(w) {
-          message(w)
-
         }
+        #,
+        #if a warning occurs, tell me the warning
+        #  warning=function(w) {
+        #message(w)
+        #}
       )
       
 

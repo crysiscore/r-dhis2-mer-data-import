@@ -182,7 +182,7 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
 #' is_consistent  <- checkDataConsistency(excell.mapping.template,file.to.import, dataset.name, sheet.name,vec.indicators)
 checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators , user.env  ){
  
-  withProgress(message = 'Running checks',
+  withProgress(message = 'Running ',
                detail = 'This may take a while...', value = 0, {
                  
   #wd <- get("wd",envir = .GlobalEnv)
@@ -441,7 +441,7 @@ apiDhisSendDataValues <- function(json , dhis.conf){
   incProgress(1/2, detail = paste("This may take a while..." ))
   # Post data to DHIS2
   status <- POST(url = base.url,
-                 body = json, config=authenticate(get("dhis2.username",envir =  .GlobalEnv ,timeout(10000) ) , get("dhis2.password",envir =  .GlobalEnv)),
+                 body = json, config=authenticate(get("dhis2.username",envir =  .GlobalEnv ,timeout(20000) ) , get("dhis2.password",envir =  .GlobalEnv)),
                  add_headers("Content-Type"="application/json") )
   
   incProgress(1/2, detail = paste("This may take a while..." ))
@@ -475,7 +475,7 @@ apiDatimSendDataValues <- function(json , dhis.conf){
                  incProgress(1/2, detail = paste("This may take a while..." ))
                  # Post data to DHIS2
                  status <- POST(url = base.url,
-                                body = json, config=authenticate(get("dhis2.username",envir =  .GlobalEnv ,timeout(10000) ) , get("dhis2.password",envir =  .GlobalEnv)),
+                                body = json, config=authenticate(get("dhis2.username",envir =  .GlobalEnv ,timeout(20000) ) , get("dhis2.password",envir =  .GlobalEnv)),
                                 add_headers("Content-Type"="application/json") )
                  
                  incProgress(1/2, detail = paste("This may take a while..." ))
@@ -513,7 +513,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
   #upload_directory <- paste0(get("upload_dir"),"/")
   #setwd(upload_dir)
   setwd(upload_directory)
-  
+  message(upload_directory)
   # check if sub directory exists 
   if (file.exists(upload.date)){
     
@@ -739,11 +739,23 @@ aDjustDhisPeriods <- function(period) {
   
 }
 
-
-
 isMissing <- function(x) { x== "" | is.na(x) } 
 
 
+indicatorsToString <- function(vec)  {
+  
+  t <- ""     
+  for (v in vec) {
+   if(t==""){
+     t <- paste0(t, v)
+   }else {
+     t <- paste0(t, ", ", v) 
+   }
+
+}
+  t
+  
+  }
 
 #' getProgramStages ->  Busca os estagios de um programa
 #' @param  base.url base.url 
