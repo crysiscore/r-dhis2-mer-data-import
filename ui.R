@@ -76,17 +76,28 @@ ui <- dashboardPage(
                   # Input: Create a group of checkboxes Unidades Sanitarias
                   #checkboxGroupInput("chkbxUsGroup", "Unidades Sanitarias: "
                   #) ,
-                  hidden(pickerInput(
-                    inputId = "chkbxUsGroup",
-                    label = "U. Sanitarias:", 
-                    choices = NULL,
-                    selected = NULL,
-                    multiple = TRUE,
-                    options = pickerOptions(maxOptions = 1,`live-search` = TRUE),
-                    width = '60%'
-                  )),
+                  # hidden(pickerInput(
+                  #   inputId = "chkbxUsGroup",
+                  #   label = "U. Sanitarias:", 
+                  #   choices = NULL,
+                  #   selected = NULL,
+                  #   multiple = TRUE,
+                  #   options = pickerOptions(maxOptions = 1,`live-search` = TRUE),
+                  #   width = '60%'
+                  # )),
                   # Horizontal line ----
-                  
+                  hidden(awesomeCheckboxGroup(
+                    inputId = "chkbxUsGroup",
+                    label = "U. Sanitarias:",
+                    choices = c("opt1","opt2"),
+                    inline = TRUE, 
+                    status = "primary"
+                    # checkIcon = list(
+                    #   yes = icon("ok", 
+                    #              lib = "glyphicon"),
+                    #   no = icon("xmark",
+                    #             lib = "glyphicon"))
+                  )),
                   tags$hr(),
                   hidden(
                     awesomeCheckbox(
