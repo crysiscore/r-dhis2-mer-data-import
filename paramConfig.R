@@ -50,7 +50,8 @@ vec_datim_reporting_periods <- list("January - March 2022 (Q2)"= "2022Q1", "Apri
                                     "July - September 2023 (Q4)"="2023Q3", "October - December 2023 (Q1)"="2023Q4")  
 
 #IP Funding Mechanism ->   https://www.datim.org/api/sqlViews/fgUtV6e9YIX/data.html+css
-funding_mechanism <- 'VGk8OiHSXM7'  #Code =160451
+funding_mechanism <- 160451  
+#funding_mechanism_uid <-  'VGk8OiHSXM7'  
 
 # 6- MER TEMPLATES -  Planilhas de mapeamento
 excell_mapping_template_mer_prevention     <- 'MER PREVENTION.xlsx'

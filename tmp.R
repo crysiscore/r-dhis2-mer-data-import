@@ -2,33 +2,33 @@
 # In case of updating indicators in the mapping worksheets, the following files must be re-generated 
 # 1 - dataset_templates/datimDataSetElementsCC.RData
 # load("~/Git/ccs_datim_maping/dataset_templates/datimDataSetElementsCC.RData")
-# df_datim_indicators <- df_datim_indicators[0,]
-# 
-# df_datim_indicators$indicator <-""
-# 
-# vec_files <- c('MER ATS COMMUNITY.xlsx',  'MER CARE & TREATMENT.xlsx'  , 'MER PREVENTION.xlsx','MER ATS.xlsx' ,
-#                'MER HEALTH SYSTEM.xlsx'  ,   'MER SMI.xlsx'  )
-# 
-# for (file  in vec_files) {
-# 
-#   sheet_names <- readxl::excel_sheets(path = paste0('mapping/',file))
-# 
-# 
-#   for (sheet  in sheet_names) {
-#     if(sheet=="Data sets, elements and combos " | sheet == "Data sets, elements and combos"){
-# 
-#     } else {
-#       df_tmp <- readxl::read_xlsx(path = paste0('mapping/',file),sheet = sheet,skip = 1,col_names = TRUE)
-#       df_tmp$indicator <-  gsub(" ","",sheet)
-#       assign(x = gsub(" ","",sheet) ,value = df_tmp,envir = .GlobalEnv  )
-# 
-#       df_datim_indicators <- plyr::rbind.fill(df_datim_indicators,df_tmp )
-#     }
-#   }
-# 
-# }
-# 
-# save(df_datim_indicators,file = 'dataset_templates/datimDataSetElementsCC.RData')
+df_datim_indicators <- df_datim_indicators[0,]
+
+df_datim_indicators$indicator <-""
+
+vec_files <- c('MER ATS COMMUNITY.xlsx',  'MER CARE & TREATMENT.xlsx'  , 'MER PREVENTION.xlsx','MER ATS.xlsx' ,
+               'MER HEALTH SYSTEM.xlsx'  ,   'MER SMI.xlsx'  )
+
+for (file  in vec_files) {
+
+  sheet_names <- readxl::excel_sheets(path = paste0('mapping/',file))
+
+
+  for (sheet  in sheet_names) {
+    if(sheet=="Data sets, elements and combos " | sheet == "Data sets, elements and combos"){
+
+    } else {
+      df_tmp <- readxl::read_xlsx(path = paste0('mapping/',file),sheet = sheet,skip = 1,col_names = TRUE)
+      df_tmp$indicator <-  gsub(" ","",sheet)
+      assign(x = gsub(" ","",sheet) ,value = df_tmp,envir = .GlobalEnv  )
+
+      df_datim_indicators <- plyr::rbind.fill(df_datim_indicators,df_tmp )
+    }
+  }
+
+}
+
+save(df_datim_indicators,file = 'dataset_templates/datimDataSetElementsCC.RData')
 # 
 # 
 # 2 -dataset_templates/dataset_templates.RDATA
