@@ -542,7 +542,7 @@ server <- function(input, output) {
                 #df_warnings <-  get("error_log_dhis_import", user_env = envir)
                 df_warnings <-  env_get(env = user_env, "error_log_dhis_import")
                 df_warnings<- df_warnings[2:nrow(df_warnings),]
-                saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings ,user.env = user_env, is.datim.form = TRUE,selected_us)
+                saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings ,user.env  = user_env, is.datim.form = TRUE,org.unit.name = selected_us)
 
                 # # Reset Panes after upload
                 # shinyjs::hide(id = "chkbxPeriodGroup")
@@ -705,7 +705,7 @@ server <- function(input, output) {
                 #df_warnings <-  get("error_log_dhis_import", user_env = envir)
                 df_warnings <-  env_get(env = user_env, "error_log_dhis_import")
                 df_warnings<- df_warnings[2:nrow(df_warnings),]
-                saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings ,envir = user_env, is.datim.form = FALSE , selected_us)
+                saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings ,user.env = user_env, is.datim.form = FALSE , org.unit.name= selected_us)
 
                 # Reset Panes after upload
                 # shinyjs::hide(id = "chkbxPeriodGroup")

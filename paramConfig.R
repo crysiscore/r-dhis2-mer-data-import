@@ -16,7 +16,8 @@ print(wd)
 #     cp ../dataset_templates/DHIS2\ UPLOAD\ HISTORY.xlsx  /data_ssd_1/dhis_uploads/
 
 # ## docker run -d --name shiny-server -p5460:3838  -v /data_ssd_1/dhis_uploads:/dhis_uploads crysiscore/shiny-server:1.0
-upload_dir <- "/home/agnaldo/Documents/datim_uploads"
+#upload_dir <- "/home/agnaldo/Documents/datim_uploads"
+upload_dir <- "/uploads"
 
 # 3- DHIS2 DATASET NAMES (DO NOT CHANGE)
 mer_datasets_names            <- c("MER C&T"  = "ct", "MER ATS" = "ats" , "MER SMI" = "smi" , "MER PREVENTION"="prevention",
@@ -42,7 +43,11 @@ vec_reporting_periods <- list("January 2020"= "202001", "February 2020" ="202002
                                    "September 2021" = "202109","October 2021"  = "202110","November 2021" = "202111" ,"December 2021"  = "202112",
                                    "January 2022"= "202201","February 2022" = "202202", "March 2022"  ="202203","April 2022" = "202204",
                                    "May 2022" = "202205","June 2022" =  "202206","July 2022" =  "202207", "August 2022"  =  "202208",
-                                   "September 2022" = "202209", "October 2022" ="202210",  "November 2022"="202211" ,"December 2022" = "202212")
+                                   "September 2022" = "202209", "October 2022" ="202210",  "November 2022"="202211" ,"December 2022" = "202212",
+                                  "January 2023"= "202301", "February 2023" ="202302", "March 2023"  = "202303", "April 2023" = "202304", 
+                                  "May 2023" = "202305",  "June 2023" = "202306", "July 2023" =  "202307",  "August 2023"  = "202308",
+                                  "September 2023" = "202309")
+
 
 vec_datim_reporting_periods <- list("January - March 2022 (Q2)"= "2022Q1", "April - June 2022 (Q3)" ="2022Q2",
                                     "July - September 2022 (Q4)"="2022Q3", "October - December 2022 (Q1)"="2022Q4",
