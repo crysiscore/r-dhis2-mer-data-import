@@ -18,9 +18,9 @@ server <- function(input, output) {
   
   # 2 - DHIS2 API END POINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
   dhis_conf  <- env_get(env = user_env,nm = "dhis_conf")
-  api_dhis_base_url               <-  dhis_conf['e-analisys'][[1]][1]
-  api_dhis_datasets               <-  dhis_conf['e-analisys'][[1]][2]
-  api_dhis_datasetvalues_endpoint <-  dhis_conf['e-analisys'][[1]][3]
+  api_dhis_base_url               <-  dhis_conf['dhis-datim'][[1]][1]
+  api_dhis_datasets               <-  dhis_conf['dhis-datim'][[1]][2]
+  api_dhis_datasetvalues_endpoint <-  dhis_conf['dhis-datim'][[1]][3]
   assign(x = "api_dhis_base_url", value = api_dhis_base_url , envir = user_env)
   assign(x = "api_dhis_datasets", value = api_dhis_datasets , envir = user_env)
   assign(x = "api_dhis_datasetvalues_endpoint", value = api_dhis_datasetvalues_endpoint , envir = user_env)
@@ -40,6 +40,7 @@ server <- function(input, output) {
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimDataSetElementsCC.RData'), envir = user_env)
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'),    envir = user_env)
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/ccsDataExchangeOrgUnits.RData'),envir = user_env)
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimMappingTemplate.RData'), envir = user_env)
    
    #  
    # IF deploying on the same DHIS2 Server ignore ssl certificate errors
@@ -271,6 +272,7 @@ server <- function(input, output) {
                              choices = character(0),
     )
     
+    
     updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",label = "",choices = c("")
     )
     updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
@@ -291,7 +293,12 @@ server <- function(input, output) {
     shinyjs::hide(id = "chkbxIndicatorsGroup")
     shinyjs::hide(id = "chkbxPeriodGroup")
     shinyjs::hide(id = "btn_upload")
-    shinyjs::hide(id = "chkbxDatim")
+    
+    # Reset is datim upload checkbox
+    updateAwesomeCheckbox(getDefaultReactiveDomain(), "chkbxDatim",
+                                  value=FALSE
+    )
+    
   })
   
   # Observe US checkboxes 
@@ -371,7 +378,6 @@ server <- function(input, output) {
     file_to_import          <- file$datapath
     dataset_name            <- input$dhis_datasets
     ds_name                 <- names(which(vec_temp_dsnames==dataset_name))
-    excell_mapping_template <- getTemplateDatasetName(ds_name)
     vec_indicators          <-input$chkbxIndicatorsGroup
     vec_selected_us         <-  input$chkbxUsGroup
 
@@ -382,13 +388,19 @@ server <- function(input, output) {
     message("Indicators: ",indicatorsToString(vec_indicators))
     message(indicatorsToString(vec_selected_us))
     counter = 0
+    #TODO verificar se e importacao para datim
+    is_datim_upload <- input$chkbxDatim
+    excell_mapping_template <- getTemplateDatasetName(ds_name)
+    
     #TODO
     for (selected_us in vec_selected_us) {
       us_name          <- getUsNameFromSheetNames(selected_us)
       showNotification(paste0(us_name, " - Iniciando Processamento"),session = getDefaultReactiveDomain(), duration = 3 ,type =  "message" )
       Sys.sleep(2)
-      status <- checkDataConsistency(excell.mapping.template = excell_mapping_template , file.to.import = file_to_import ,dataset.name =ds_name , sheet.name=selected_us, vec.indicators=vec_indicators, user.env = user_env,us.name = selected_us )
-      
+
+      status <- checkDataConsistency(excell.mapping.template = excell_mapping_template , file.to.import = file_to_import ,dataset.name =ds_name , sheet.name=selected_us, vec.indicators=vec_indicators, user.env = user_env,us.name = selected_us,is.datim.upload = is_datim_upload )
+
+
       if(status=='Integrity error'){
         shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")
         shinyjs::hide(id = "btn_upload")
@@ -1058,7 +1070,7 @@ server <- function(input, output) {
         withProgress(message = 'Carregando Conceitos do DHIS      ',
                      detail = 'This may take a while...', value = 0, {
                        
-                       api.dhis.base.url <-  dhis_conf['e-analisys'][[1]][1]
+                       api.dhis.base.url <-  dhis_conf['dhis-datim'][[1]][1]
                        
                        incProgress(1/(3), detail = ("Carregando Org Units... " ))   
                        unidadesSanitarias <- getOrganizationUnits(api.dhis.base.url,org.unit)
@@ -1116,7 +1128,7 @@ server <- function(input, output) {
         withProgress(message = 'Carregando Eventos do DHIS2     ',
                      detail = 'This may take a while...', value = 0, {
                        
-         api.dhis.base.url <-  dhis_conf['e-analisys'][[1]][1]
+         api.dhis.base.url <-  dhis_conf['dhis-datim'][[1]][1]
                        
                        incProgress(1/(7), detail = ("Carregando Enrollments... " )) 
                        

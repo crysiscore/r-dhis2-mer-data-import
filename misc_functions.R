@@ -180,7 +180,7 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
 #' @param dataset.name nome do formualario dhis 2. ("MER C&T"  = "ct", "MER ATS" = "ats" , "MER SMI" = "smi" , "MER PREVENTION"="prevention", "MER HEALTH SYSTEM"="hs")
 #' @examples 
 #' is_consistent  <- checkDataConsistency(excell.mapping.template,file.to.import, dataset.name, sheet.name,vec.indicators)
-checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators , user.env, us.name  ){
+checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators , user.env, us.name , is.datim.upload=FALSE ){
  
   withProgress(message = getUsNameFromSheetNames(us.name),
                detail = 'This may take a while...', value = 0, {
@@ -241,17 +241,27 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
 
       #datavalueset_template <- getDataValuesetName(dataset.name)
       datavalueset_template <-  'datavalueset_template_dhis2_datim'
- 
+      # verifica os dataelements usando o template do formulario datim
+      if(is.datim.upload){
+        datavalueset_template <-  'datim_mapping_template'
+      }
+      
      for (indicator in vec.indicators) {
        # GET excell values
        setwd(wd)
        # Carregar os indicadores do ficheiro do template de Mapeamento  & excluir os dataElements que nao reportamos (observation==99)
-       tmp_df <- read_xlsx(path =paste0('mapping/',excell.mapping.template), sheet = indicator , skip = 1 )
+      
+        if(is.datim.upload){
+         tmp_df <- read_xlsx(path =paste0('mapping/Datim/',excell.mapping.template), sheet = indicator , skip = 1 )
+        } else {
+          tmp_df <- read_xlsx(path =paste0('mapping/',excell.mapping.template), sheet = indicator , skip = 1 )
+       }
+
        tmp_df <- filter(tmp_df, is.na(observation) )
        tmp_df$check <- ""
        tmp_df$value <- ""
        
-       #Fmessage("Iniciando 2.2 - " , indicator)
+       #Message("Iniciando 2.2 - " , indicator)
        tmp_df$check  <- mapply(checkIFDataElementExistsOnTemplate,tmp_df$dhisdataelementuid,tmp_df$dhiscategoryoptioncombouid ,datavalueset_template,indicator )
        #message("Passando 2.2 - " , indicator)
        #Indicar a tarefa em execucao : task_check_consistency_3
@@ -370,7 +380,7 @@ getTemplateDatasetName <- function(dataset.name) {
 }
 
 
-#' merIndicatorsToJson ->  Transforma para o formato json os datagframes gerados apos o correr os checks do ficheiro de importacao
+#' merIndicatorsToJson ->  Transforma para o formato json os dataframes gerados apos o correr os checks do ficheiro de importacao
 #'                        o json sera usado para enviar os dados para o DHIS2
 #' @param dataset.id id do dataset no DHIS2
 #' @param  complete.date data de submissao
@@ -436,7 +446,7 @@ apiDhisSendDataValues <- function(json , dhis.conf, us.name){
   # url da API
   # 2 - DHIS2 API ENDPOINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
                  
-  base.url <- paste0(dhis.conf['e-analisys'][[1]][1] , dhis.conf['e-analisys'][[1]][3])
+  base.url <- paste0(dhis.conf['dhis-datim'][[1]][1] , dhis.conf['dhis-datim'][[1]][3])
   
   incProgress(1/2, detail = paste("This may take a while..." ))
   # Post data to DHIS2
@@ -470,9 +480,9 @@ apiDatimSendDataValues <- function(json , dhis.conf, us.name){
                  
                  # url da API
                  # 2 - DHIS2 API ENDPOINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
-                 
+
+                 #base.url <- paste0(dhis.conf['e-analisys'][[1]][1] , dhis.conf['e-analisys'][[1]][3])
                  base.url <- paste0(dhis.conf['dhis-datim'][[1]][1] , dhis.conf['dhis-datim'][[1]][3])
-                 
                  incProgress(1/2, detail = paste("This may take a while..." ))
                  # Post data to DHIS2
                  status <- POST(url = base.url,
