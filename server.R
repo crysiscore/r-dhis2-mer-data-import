@@ -13,7 +13,7 @@ server <- function(input, output) {
   datim_logs <- ""
   
   # CCS DHIS2 urls
-  assign( x = "dhis_conf" ,value =   as.list(jsonlite::read_json(path = 'dhisconfig.json')) ,envir =user_env )
+  assign( x = "dhis_conf" ,value =   as.list(jsonlite::read_json(path = paste0(env_get(env = .GlobalEnv, nm = 'wd'),'/dhisconfig.json')))  ,envir =user_env )
   
   
   # 2 - DHIS2 API END POINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
@@ -41,7 +41,7 @@ server <- function(input, output) {
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'),    envir = user_env)
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/ccsDataExchangeOrgUnits.RData'),envir = user_env)
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimMappingTemplate.RData'), envir = user_env)
-   
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datim_dataelement_ids.RDATA'), envir = user_env)
    #  
    # IF deploying on the same DHIS2 Server ignore ssl certificate errors
    httr::set_config(httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L))
@@ -361,6 +361,7 @@ server <- function(input, output) {
          shinyjs::hide(id = "chkbxPeriodGroup")
          #cat(indicator_selected, sep = " | ")
          shinyjs::show(id = "chkbxUsGroup", animType = "slide" )
+         shinyjs::show(id = "chkbxDatim" )
 
        }
 
@@ -384,13 +385,14 @@ server <- function(input, output) {
     
     message("File :", file_to_import)
     message("Dataset name: ", ds_name)
+    excell_mapping_template <- getTemplateDatasetName(ds_name)
     message("Template name: ", excell_mapping_template)
     message("Indicators: ",indicatorsToString(vec_indicators))
     message(indicatorsToString(vec_selected_us))
     counter = 0
     #TODO verificar se e importacao para datim
     is_datim_upload <- input$chkbxDatim
-    excell_mapping_template <- getTemplateDatasetName(ds_name)
+
     
     #TODO
     for (selected_us in vec_selected_us) {

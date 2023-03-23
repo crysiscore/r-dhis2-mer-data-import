@@ -47,7 +47,8 @@ credentials.R
 # Data dir
 
 # Data dir
- data/data/*
+data/data/*
 data/remove_after_sync_data.sh
-#uploads/*.xlsx
+uploads/*.xlsx
+/logs/
 #uploads/*.xlsx

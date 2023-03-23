@@ -62,8 +62,10 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
   df_error_tmp        <- env_get(env = user_env,nm = "error_log_dhis_import")
   wd                  <- env_get(env = .GlobalEnv,nm =  "wd" )
   
-  message("Check:  passando aaa 1.1 ")
-  tmp <- env_get(env = user_env ,nm =  datavalueset.template.name)
+ # message("Check:  passando aaa 1.1")
+  tmp <- env_get(env = user_env , nm =  datavalueset.template.name)
+ # message("Rows: " ,nrows(tmp))
+
   df <- filter(tmp, dataElement==data.element.id & categoryoptioncombo==category.option.combo.id )
   
   total_rows <- nrow(df)
@@ -73,7 +75,7 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
     df_error_tmp_empty$indicator[1] <- indicator.name
     df_error_tmp_empty$error[1] <- 'NOT FOUND'
     df_error_tmp<- rbind.fill(df_error_tmp, df_error_tmp_empty)
-    message("Check:  aaa passando 1.2 ")
+    #message("Check:  aaa passando 1.2 ")
     writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'/logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
     #assign(x = "error_log_dhis_import",value =df_error_tmp, user.envir = user.envir )
     env_poke(env = user_env,nm ="error_log_dhis_import",value = df_error_tmp ) # https://adv-r.hadley.nz/environments.html#getting-and-setting-1 - 7.2.5 Getting and setting
@@ -180,7 +182,7 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
 #' @param dataset.name nome do formualario dhis 2. ("MER C&T"  = "ct", "MER ATS" = "ats" , "MER SMI" = "smi" , "MER PREVENTION"="prevention", "MER HEALTH SYSTEM"="hs")
 #' @examples 
 #' is_consistent  <- checkDataConsistency(excell.mapping.template,file.to.import, dataset.name, sheet.name,vec.indicators)
-checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators , user.env, us.name , is.datim.upload=FALSE ){
+checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators , user.env, us.name , is.datim.upload ){
  
   withProgress(message = getUsNameFromSheetNames(us.name),
                detail = 'This may take a while...', value = 0, {
@@ -243,7 +245,8 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
       datavalueset_template <-  'datavalueset_template_dhis2_datim'
       # verifica os dataelements usando o template do formulario datim
       if(is.datim.upload){
-        datavalueset_template <-  'datim_mapping_template'
+        datavalueset_template <-  'template_dhis2_datim'
+        
       }
       
      for (indicator in vec.indicators) {
@@ -253,6 +256,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
       
         if(is.datim.upload){
          tmp_df <- read_xlsx(path =paste0('mapping/Datim/',excell.mapping.template), sheet = indicator , skip = 1 )
+         
         } else {
           tmp_df <- read_xlsx(path =paste0('mapping/',excell.mapping.template), sheet = indicator , skip = 1 )
        }
@@ -262,7 +266,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        tmp_df$value <- ""
        
        #Message("Iniciando 2.2 - " , indicator)
-       tmp_df$check  <- mapply(checkIFDataElementExistsOnTemplate,tmp_df$dhisdataelementuid,tmp_df$dhiscategoryoptioncombouid ,datavalueset_template,indicator )
+       tmp_df$check  <- mapply(checkIFDataElementExistsOnTemplate,tmp_df$dhisdataelementuid,tmp_df$dhiscategoryoptioncombouid ,datavalueset_template ,indicator )
        #message("Passando 2.2 - " , indicator)
        #Indicar a tarefa em execucao : task_check_consistency_3
        tmp_log_exec_empty$Datetime[1] <- substr(x = Sys.time(),start = 1, stop = 22)
@@ -695,9 +699,9 @@ getDhisDataElement<- function(cat.opt.comb, data.element) {
   
   dhis_data_elementid <- NA
   
-  index <- which(df_datim_indicators$dhiscategoryoptioncombouid==cat.opt.comb & df_datim_indicators$dhisdataelementuid== data.element )
+  index <- which(datim_mapping_template$dhiscategoryoptioncombouid==cat.opt.comb & datim_mapping_template$dhisdataelementuid== data.element )
   
-  dhis_data_elementid <- df_datim_indicators[index,]$dataelementuid[1]
+  dhis_data_elementid <- datim_mapping_template[index,]$dataelementuid[1]
   
   dhis_data_elementid
   
@@ -713,9 +717,9 @@ getDhisCategoryOptionCombo <- function(cat.opt.comb, data.element) {
   cat_option_comb <- NA
   
   
-  index <- which(df_datim_indicators$dhiscategoryoptioncombouid==cat.opt.comb & df_datim_indicators$dhisdataelementuid== data.element )
+  index <- which(datim_mapping_template$dhiscategoryoptioncombouid==cat.opt.comb & datim_mapping_template$dhisdataelementuid== data.element )
   
-  cat_option_comb <- df_datim_indicators[index,]$categoryoptioncombouid[1]
+  cat_option_comb <- datim_mapping_template[index,]$categoryoptioncombouid[1]
   
   
   cat_option_comb

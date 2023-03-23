@@ -8,8 +8,7 @@ df_datim_indicators$indicator <-""
 
 #vec_files <- c('MER ATS COMMUNITY.xlsx',  'MER CARE & TREATMENT.xlsx'  , 'MER PREVENTION.xlsx','MER ATS.xlsx' ,
 #               'MER HEALTH SYSTEM.xlsx'  ,   'MER SMI.xlsx'  )
-
-vec_files <- c('MER ATS COMMUNITY.xlsx',  'MER CARE & TREATMENT.xlsx' , 'MER PREVENTION.xlsx','MER ATS.xlsx' ,  'MER SMI.xlsx'  )
+vec_files <- c('MER ATS COMMUNITY.xlsx',  'MER CARE & TREATMENT.xlsx'  , 'MER PREVENTION.xlsx','MER ATS.xlsx' ,  'MER SMI.xlsx'  )
 
 
 for (file  in vec_files) {

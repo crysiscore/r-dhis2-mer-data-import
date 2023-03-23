@@ -16,8 +16,8 @@ print(wd)
 #     cp ../dataset_templates/DHIS2\ UPLOAD\ HISTORY.xlsx  /data_ssd_1/dhis_uploads/
 
 # ## docker run -d --name shiny-server -p5460:3838  -v /data_ssd_1/dhis_uploads:/dhis_uploads crysiscore/shiny-server:1.0
-#upload_dir <- "/home/agnaldo/Documents/datim_uploads"
-upload_dir <- "/uploads"
+upload_dir <- "/home/agnaldo/Documents/datim_uploads"
+#upload_dir <- "/uploads"
 
 # 3- DHIS2 DATASET NAMES (DO NOT CHANGE)
 mer_datasets_names            <- c("MER C&T"  = "ct", "MER ATS" = "ats" , "MER SMI" = "smi" , "MER PREVENTION"="prevention",
