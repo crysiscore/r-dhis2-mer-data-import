@@ -18,17 +18,17 @@ server <- function(input, output) {
   
   # 2 - DHIS2 API END POINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
   dhis_conf  <- env_get(env = user_env,nm = "dhis_conf")
-  api_dhis_base_url               <-  dhis_conf['dhis-datim'][[1]][1]
-  api_dhis_datasets               <-  dhis_conf['dhis-datim'][[1]][2]
-  api_dhis_datasetvalues_endpoint <-  dhis_conf['dhis-datim'][[1]][3]
+  api_dhis_base_url               <-  dhis_conf['e-analisys'][[1]][1]
+  api_dhis_datasets               <-  dhis_conf['e-analisys'][[1]][2]
+  api_dhis_datasetvalues_endpoint <-  dhis_conf['e-analisys'][[1]][3]
   assign(x = "api_dhis_base_url", value = api_dhis_base_url , envir = user_env)
   assign(x = "api_dhis_datasets", value = api_dhis_datasets , envir = user_env)
   assign(x = "api_dhis_datasetvalues_endpoint", value = api_dhis_datasetvalues_endpoint , envir = user_env)
   
 
-  api_datim_base_url               <-  dhis_conf['dhis-datim'][[1]][1]
-  api_datim_datasets               <-  dhis_conf['dhis-datim'][[1]][2]
-  api_datim_datasetvalues_endpoint <-  dhis_conf['dhis-datim'][[1]][3]
+  api_datim_base_url               <-  dhis_conf['e-analisys'][[1]][1]
+  api_datim_datasets               <-  dhis_conf['e-analisys'][[1]][2]
+  api_datim_datasetvalues_endpoint <-  dhis_conf['e-analisys'][[1]][3]
   assign(x = "api_datim_base_url", value = api_datim_base_url , envir = user_env)
   assign(x = "api_datim_datasets", value = api_datim_datasets , envir = user_env)
   assign(x = "api_datim_datasetvalues_endpoint", value = api_dhis_datasetvalues_endpoint , envir = user_env)
@@ -1072,7 +1072,7 @@ server <- function(input, output) {
         withProgress(message = 'Carregando Conceitos do DHIS      ',
                      detail = 'This may take a while...', value = 0, {
                        
-                       api.dhis.base.url <-  dhis_conf['dhis-datim'][[1]][1]
+                       api.dhis.base.url <-  dhis_conf['e-analisys'][[1]][1]
                        
                        incProgress(1/(3), detail = ("Carregando Org Units... " ))   
                        unidadesSanitarias <- getOrganizationUnits(api.dhis.base.url,org.unit)
@@ -1130,7 +1130,7 @@ server <- function(input, output) {
         withProgress(message = 'Carregando Eventos do DHIS2     ',
                      detail = 'This may take a while...', value = 0, {
                        
-         api.dhis.base.url <-  dhis_conf['dhis-datim'][[1]][1]
+         api.dhis.base.url <-  dhis_conf['e-analisys'][[1]][1]
                        
                        incProgress(1/(7), detail = ("Carregando Enrollments... " )) 
                        

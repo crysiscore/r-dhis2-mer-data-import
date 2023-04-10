@@ -450,7 +450,7 @@ apiDhisSendDataValues <- function(json , dhis.conf, us.name){
   # url da API
   # 2 - DHIS2 API ENDPOINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
                  
-  base.url <- paste0(dhis.conf['dhis-datim'][[1]][1] , dhis.conf['dhis-datim'][[1]][3])
+  base.url <- paste0(dhis.conf['e-analisys'][[1]][1] , dhis.conf['e-analisys'][[1]][3])
   
   incProgress(1/2, detail = paste("This may take a while..." ))
   # Post data to DHIS2
@@ -486,7 +486,7 @@ apiDatimSendDataValues <- function(json , dhis.conf, us.name){
                  # 2 - DHIS2 API ENDPOINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
 
                  #base.url <- paste0(dhis.conf['e-analisys'][[1]][1] , dhis.conf['e-analisys'][[1]][3])
-                 base.url <- paste0(dhis.conf['dhis-datim'][[1]][1] , dhis.conf['dhis-datim'][[1]][3])
+                 base.url <- paste0(dhis.conf['e-analisys'][[1]][1] , dhis.conf['e-analisys'][[1]][3])
                  incProgress(1/2, detail = paste("This may take a while..." ))
                  # Post data to DHIS2
                  status <- POST(url = base.url,
