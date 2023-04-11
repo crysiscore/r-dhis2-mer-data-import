@@ -68,23 +68,18 @@ ui <- dashboardPage(
                     choices = c('')
                     
                   )), 
-                  #checkboxGroupInput("chkbxIndicatorsGroup", "Indicadores:"
-                  # ) ,
+
+                  tags$hr(),
+                  hidden(
+                    awesomeCheckbox(
+                      inputId = "chkbxDatim",
+                      label = "MER - DATIM FORM", 
+                      value = FALSE
+                    )
+                  ),
                   # Horizontal line ----
                   tags$hr(),
-                  
-                  # Input: Create a group of checkboxes Unidades Sanitarias
-                  #checkboxGroupInput("chkbxUsGroup", "Unidades Sanitarias: "
-                  #) ,
-                  # hidden(pickerInput(
-                  #   inputId = "chkbxUsGroup",
-                  #   label = "U. Sanitarias:", 
-                  #   choices = NULL,
-                  #   selected = NULL,
-                  #   multiple = TRUE,
-                  #   options = pickerOptions(maxOptions = 1,`live-search` = TRUE),
-                  #   width = '60%'
-                  # )),
+
                   # Horizontal line ----
                   hidden(awesomeCheckboxGroup(
                     inputId = "chkbxUsGroup",
@@ -98,14 +93,7 @@ ui <- dashboardPage(
                     #   no = icon("xmark",
                     #             lib = "glyphicon"))
                   )),
-                  tags$hr(),
-                  hidden(
-                    awesomeCheckbox(
-                      inputId = "chkbxDatim",
-                      label = "MER - DATIM FORM", 
-                      value = FALSE
-                    )
-                  ),
+               
                   
                   tags$hr(),
                   

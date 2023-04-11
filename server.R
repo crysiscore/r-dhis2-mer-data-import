@@ -13,7 +13,7 @@ server <- function(input, output) {
   datim_logs <- ""
   
   # CCS DHIS2 urls
-  assign( x = "dhis_conf" ,value =   as.list(jsonlite::read_json(path = 'dhisconfig.json')) ,envir =user_env )
+  assign( x = "dhis_conf" ,value =   as.list(jsonlite::read_json(path = paste0(env_get(env = .GlobalEnv, nm = 'wd'),'/dhisconfig.json')))  ,envir =user_env )
   
   
   # 2 - DHIS2 API END POINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
@@ -26,9 +26,9 @@ server <- function(input, output) {
   assign(x = "api_dhis_datasetvalues_endpoint", value = api_dhis_datasetvalues_endpoint , envir = user_env)
   
 
-  api_datim_base_url               <-  dhis_conf['dhis-datim'][[1]][1]
-  api_datim_datasets               <-  dhis_conf['dhis-datim'][[1]][2]
-  api_datim_datasetvalues_endpoint <-  dhis_conf['dhis-datim'][[1]][3]
+  api_datim_base_url               <-  dhis_conf['e-analisys'][[1]][1]
+  api_datim_datasets               <-  dhis_conf['e-analisys'][[1]][2]
+  api_datim_datasetvalues_endpoint <-  dhis_conf['e-analisys'][[1]][3]
   assign(x = "api_datim_base_url", value = api_datim_base_url , envir = user_env)
   assign(x = "api_datim_datasets", value = api_datim_datasets , envir = user_env)
   assign(x = "api_datim_datasetvalues_endpoint", value = api_dhis_datasetvalues_endpoint , envir = user_env)
@@ -40,7 +40,8 @@ server <- function(input, output) {
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimDataSetElementsCC.RData'), envir = user_env)
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'),    envir = user_env)
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/ccsDataExchangeOrgUnits.RData'),envir = user_env)
-   
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimMappingTemplate.RData'), envir = user_env)
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datim_dataelement_ids.RDATA'), envir = user_env)
    #  
    # IF deploying on the same DHIS2 Server ignore ssl certificate errors
    httr::set_config(httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L))
@@ -271,6 +272,7 @@ server <- function(input, output) {
                              choices = character(0),
     )
     
+    
     updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",label = "",choices = c("")
     )
     updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = TRUE  )
@@ -291,7 +293,12 @@ server <- function(input, output) {
     shinyjs::hide(id = "chkbxIndicatorsGroup")
     shinyjs::hide(id = "chkbxPeriodGroup")
     shinyjs::hide(id = "btn_upload")
-    shinyjs::hide(id = "chkbxDatim")
+    
+    # Reset is datim upload checkbox
+    updateAwesomeCheckbox(getDefaultReactiveDomain(), "chkbxDatim",
+                                  value=FALSE
+    )
+    
   })
   
   # Observe US checkboxes 
@@ -354,6 +361,7 @@ server <- function(input, output) {
          shinyjs::hide(id = "chkbxPeriodGroup")
          #cat(indicator_selected, sep = " | ")
          shinyjs::show(id = "chkbxUsGroup", animType = "slide" )
+         shinyjs::show(id = "chkbxDatim" )
 
        }
 
@@ -371,24 +379,30 @@ server <- function(input, output) {
     file_to_import          <- file$datapath
     dataset_name            <- input$dhis_datasets
     ds_name                 <- names(which(vec_temp_dsnames==dataset_name))
-    excell_mapping_template <- getTemplateDatasetName(ds_name)
     vec_indicators          <-input$chkbxIndicatorsGroup
     vec_selected_us         <-  input$chkbxUsGroup
 
     
     message("File :", file_to_import)
     message("Dataset name: ", ds_name)
+    excell_mapping_template <- getTemplateDatasetName(ds_name)
     message("Template name: ", excell_mapping_template)
     message("Indicators: ",indicatorsToString(vec_indicators))
     message(indicatorsToString(vec_selected_us))
     counter = 0
+    #TODO verificar se e importacao para datim
+    is_datim_upload <- input$chkbxDatim
+
+    
     #TODO
     for (selected_us in vec_selected_us) {
       us_name          <- getUsNameFromSheetNames(selected_us)
       showNotification(paste0(us_name, " - Iniciando Processamento"),session = getDefaultReactiveDomain(), duration = 3 ,type =  "message" )
       Sys.sleep(2)
-      status <- checkDataConsistency(excell.mapping.template = excell_mapping_template , file.to.import = file_to_import ,dataset.name =ds_name , sheet.name=selected_us, vec.indicators=vec_indicators, user.env = user_env,us.name = selected_us )
-      
+
+      status <- checkDataConsistency(excell.mapping.template = excell_mapping_template , file.to.import = file_to_import ,dataset.name =ds_name , sheet.name=selected_us, vec.indicators=vec_indicators, user.env = user_env,us.name = selected_us,is.datim.upload = is_datim_upload )
+
+
       if(status=='Integrity error'){
         shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")
         shinyjs::hide(id = "btn_upload")
