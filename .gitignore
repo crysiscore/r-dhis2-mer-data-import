@@ -50,5 +50,5 @@ credentials.R
 data/data/*
 data/remove_after_sync_data.sh
 uploads/*.xlsx
-/logs/
+#/logs/
 #uploads/*.xlsx
