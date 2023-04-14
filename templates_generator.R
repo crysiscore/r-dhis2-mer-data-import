@@ -42,6 +42,7 @@ setwd(dir = '~/Git/ccs_datim_maping/mapping/Datim/')
 vec_files <- c('MER ATS COMMUNITY.xlsx',  'MER CARE & TREATMENT.xlsx'  , 'MER PREVENTION.xlsx','MER ATS.xlsx' ,
                'MER HEALTH SYSTEM.xlsx'  ,   'MER SMI.xlsx'  )
 
+vec_files <- c('MER ATS COMMUNITY.xlsx',  'MER CARE & TREATMENT.xlsx'  , 'MER PREVENTION.xlsx','MER ATS.xlsx' , 'MER SMI.xlsx'  )
 for (file  in vec_files) {
   
   sheet_names <- readxl::excel_sheets(path =file)
@@ -61,7 +62,7 @@ for (file  in vec_files) {
   
 }
 
-save(datim_mapping_template,file = 'dataset_templates/datimMappingTemplate.RData')
+save(datim_mapping_template,file = '/home/agnaldo/Git/ccs_datim_maping/dataset_templates/datimMappingTemplate.RData')
 
 
 # 2 - Templates : Dataset_templates/dataset_templates.RDATA
