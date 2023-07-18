@@ -46,3 +46,21 @@ save(df_datim_indicators,file = 'dataset_templates/datimDataSetElementsCC.RData'
 # save(df_ccs_data_exchange_orgunits , file = 'dataset_templates/ccsDataExchangeOrgUnits.RData')
 # 
 # 
+
+
+# dhisconfig.json
+# {
+#   "e-analisys" : [
+#     "https://192.168.1.10:5459/",
+#     "https://192.168.1.10:5459/api/dataSets/",
+#     "api/33/dataValueSets"
+#   ],
+#   "dhis-datim" : [
+#     "https://192.168.1.10:5455/",
+#     "https://192.168.1.10:5455/api/dataSets/",
+#     "api/33/dataValueSets"
+#   ]
+# }
+
+vec_us_names <- c( "1Junho","Albazine","Hulene","MavalaneCS","MavalaneHG", "Pescadores","Romao", "1Maio","PCanico","AltMae","CCivil")
+

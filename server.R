@@ -36,7 +36,7 @@ server <- function(input, output) {
   
   # load pre-existing templates
   # See templates_generator.R
-   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/dataset_templates.RDATA' ),    envir = user_env)
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/dataset_templates.RDATA' ),    envir = user_env) # contem todos DE do DHIS, em caso de novos formularios deve-se gerar novamente este ficheiro
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimDataSetElementsCC.RData'), envir = user_env)
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'),    envir = user_env)
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/ccsDataExchangeOrgUnits.RData'),envir = user_env)
@@ -174,9 +174,11 @@ server <- function(input, output) {
           } else if(dataset %in% mer_datasets_names  ){
             
             output$instruction <- renderText({ "" })
-            # Prencher checkboxgroup das US atraves do ficheiro a ser importado, cada item representa uma folha (sheet) no ficheiro.
-            
-            # Mostras os indicadores associados ao dataset 
+
+            # Mostras os indicadores associados ao dataset
+            # TODO transformar este codigo de modo a fazer verficacao automatica analisando  datasetname e indicatorname 
+            # ex se for ct ->vec_mer_ct_indicator. estes dados devem ser mapeados num ficheiro excell
+
              shinyjs::show(id = "chkbxIndicatorsGroup", animType = "slide" )
             if(dataset=='ct'){
               updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",
@@ -232,7 +234,16 @@ server <- function(input, output) {
                                                         style = "color: steelblue"),
                                            no = tags$i(class = "fa fa-square-o", 
                                                        style = "color: steelblue"))     )
-            } 
+            } else if(dataset=='non_mer_mds'){
+              updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",
+                                         label = "Indicadores: ",
+                                         choices = vec_non_mer_mds,
+                                         checkIcon = list(
+                                           yes = tags$i(class = "fa fa-check-square", 
+                                                        style = "color: steelblue"),
+                                           no = tags$i(class = "fa fa-square-o", 
+                                                       style = "color: steelblue"))     )
+            }
             
             
             #updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
@@ -333,30 +344,36 @@ server <- function(input, output) {
     
     
     vec_sheets <- excel_sheets(path = input$file1$datapath)
-    
-    # verifica se alguma us foi selecionada
+    #message(vec_sheets)
     indicator_selected = input$chkbxIndicatorsGroup
     if(length(indicator_selected)==0){
       
     } else {
       output$instruction <- renderText({ "" })
 
-      
+      #TODO no futuro adicionar os nomes das provincias num ficheiro excell 1Junho
+      # Albazine ,  Hulene, MavalaneCS,MavalaneHG, Pescadores, Romao,1Maio, PCanico
+      # AltMae,CCivil, HCMPed,Malhangalene,Maxaquene,PCimento, Porto, Bagamoio
+      # HPI,Inhagoia,MagoanineA,MTendas, Zimpeto,Inhaca,Catembe, Incassane
+      # ChamanculoCS,ChamanculoHG, JMCS, JMHG,Xipamanine, 
        us.names <- getUsNameFromSheetNames(vec_sheets)
+       vec_sheet_names <- getSheetNamesFormUSName(us.names , vec_sheets)
+       
        if(length(which(is.na(us.names)))>0 ){
-         shinyalert("Aviso", "Ums das sheets tem o nome vazio. Deve corrigir antes de avancar.", type = "warning")
+         shinyalert("Aviso", "Uma das das sheets  do ficheiro a ser importado tem um nome de US que nao esta padronizado. Deve corrigir antes de avancar.", type = "warning")
        } else {
          # updatePickerInput(getDefaultReactiveDomain(), "chkbxUsGroup",
          #                   label = paste("U. Sanitarias:(", length(vec_sheets),")" ),
          #                   choices =  setNames(as.list(vec_sheets), getUsNameFromSheetNames(vec_sheets)),
          #                   selected = NULL
          # )
+         sapply(us.names, print)
          updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "chkbxUsGroup",
                            label = paste("U. Sanitarias:(", length(vec_sheets),")" ),
-                           choices =  setNames(as.list(vec_sheets), getUsNameFromSheetNames(vec_sheets)),
+                           choices =  setNames(as.list(vec_sheet_names), us.names),
                            selected = NULL
          )
-         
+
          shinyjs::hide(id = "btn_upload")
          shinyjs::hide(id = "chkbxPeriodGroup")
          #cat(indicator_selected, sep = " | ")
@@ -390,16 +407,16 @@ server <- function(input, output) {
     message("Indicators: ",indicatorsToString(vec_indicators))
     message(indicatorsToString(vec_selected_us))
     counter = 0
-    #TODO verificar se e importacao para datim
+    # verificar se e importacao para datim
     is_datim_upload <- input$chkbxDatim
 
     
-    #TODO
+
     for (selected_us in vec_selected_us) {
       us_name          <- getUsNameFromSheetNames(selected_us)
       showNotification(paste0(us_name, " - Iniciando Processamento"),session = getDefaultReactiveDomain(), duration = 3 ,type =  "message" )
       Sys.sleep(2)
-
+      # TODO antes de inciar checkDataConsistency verficar se os ficheiros necessarios existem nos directorios correctos 
       status <- checkDataConsistency(excell.mapping.template = excell_mapping_template , file.to.import = file_to_import ,dataset.name =ds_name , sheet.name=selected_us, vec.indicators=vec_indicators, user.env = user_env,us.name = selected_us,is.datim.upload = is_datim_upload )
 
 
@@ -426,14 +443,6 @@ server <- function(input, output) {
         showNotification( paste0(us_name, " Processed sucessfully"),session = getDefaultReactiveDomain(), duration = 3 ,type =  "message" )
         Sys.sleep(2)
         counter = counter+1
-        #shinyalert("Execucao Terminada", "Alguns campos estao Vazios, verifique a tabela de avisos ", type = "warning")
-        
-        
-        # shinyjs::show(id = "chkbxDatim")
-        # 
-        # shinyjs::show(id = "btn_upload",animType = "slide")
-        # 
-        # shinyjs::show(id = "chkbxPeriodGroup")
         
       }
     }
@@ -510,7 +519,6 @@ server <- function(input, output) {
         message(" Converted to json")
         message(json_data)
         tryCatch(
-          #try to do this
           {
             if(is_datim_upload=="TRUE"){
 

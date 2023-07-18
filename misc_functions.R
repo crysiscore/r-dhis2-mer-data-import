@@ -184,6 +184,7 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
 #' is_consistent  <- checkDataConsistency(excell.mapping.template,file.to.import, dataset.name, sheet.name,vec.indicators)
 checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators , user.env, us.name , is.datim.upload ){
  
+
   withProgress(message = getUsNameFromSheetNames(us.name),
                detail = 'This may take a while...', value = 0, {
                  
@@ -253,7 +254,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        # GET excell values
        setwd(wd)
        # Carregar os indicadores do ficheiro do template de Mapeamento  & excluir os dataElements que nao reportamos (observation==99)
-      
+ 
         if(is.datim.upload){
          tmp_df <- read_xlsx(path =paste0('mapping/Datim/',excell.mapping.template), sheet = indicator , skip = 1 )
          
@@ -331,7 +332,7 @@ checkImportTamplateIntegrity  <- function(file.to.import,dataset.name,sheet.name
       cell_value <- df_cells_to_ckeck$Value[index]
       
       value_on_template <- getDEValueOnExcell( cell_ref ,file.to.import = file.to.import,sheet.name = sheet.name   )
-      if(trimws(value_on_template) != cell_value){
+      if(trimws(value_on_template) != trimws(cell_value)){
         #TODO escrever os erros num ficheiro de texto para posterior apresentacao
         error_msg <- paste0(Sys.Date()," TEMPLATE ERROR ('",dataset.name,"|",sheet.name,"'): O ficheiro de importacao nao esta consistente, a cellula: ",cell_ref, " Devia ter o valor: '", cell_value,"'")
         message(error_msg )
@@ -359,7 +360,7 @@ checkImportTamplateIntegrity  <- function(file.to.import,dataset.name,sheet.name
 #' @param dataset.name nome do dataset c("MER C&T"  = "ct", "MER ATS" = "ats" , "MER SMI" = "smi" , "MER PREVENTION"="prevention", "MER HEALTH SYSTEM"="hs")
 #' @examples 
 #' mer_template  <- getTemplateDatasetName(dataset.name)
-getTemplateDatasetName <- function(dataset.name) {
+getTemplateDatasetName <- function(dataset.name) {  #TODO Change this code to read directly from an excell file
   
   template_name <- ""
   if(dataset.name=='MER C&T'){
@@ -376,6 +377,8 @@ getTemplateDatasetName <- function(dataset.name) {
     datavalueset_template <- "MER ATS COMMUNITY.xlsx"
   }else if(dataset.name=='MER HEALTH SYSTEM'){
     datavalueset_template <- "MER HEALTH SYSTEM.xlsx"
+  }else if(dataset.name=='NON MER - MDS e Avaliacao de Retencao'){
+    datavalueset_template <- "NON MER MAPPING MDS.xlsx"
   } else {
     return("unkown")
   }
@@ -626,12 +629,35 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
 }
 
 
+getSheetNamesFormUSName <- function(vec.usname, vec.sheet.names){
+  
+  vec_sheetnames <- c()
+  tmp_vec_sheetnames <- vec.sheet.names
+  for (item in vec.usname) {
+       sheet <- tmp_vec_sheetnames[which(grepl(pattern = item,x = tmp_vec_sheetnames,ignore.case = TRUE))]
+       vec_sheetnames <- c(vec_sheetnames, sheet)
+  }
+  vec_sheetnames
+  
+}
+  
+  
 getUsNameFromSheetNames <-function(vector){
   
   vec <- c()
   for (item in vector) {
-    
-    vec <- c(vec, strsplit(item, "_")[[1]][3])
+    if(!is.na(item)){
+      
+      if(!is.na(strsplit(item, "_")[[1]][3])){ # Ingore NA empty sheet names
+        if(strsplit(item, "_")[[1]][3] != "Provincia"){
+          vec <- c(vec, strsplit(item, "_")[[1]][3])
+          
+        }
+      }
+      
+    }
+
+
   }
   vec
 }
