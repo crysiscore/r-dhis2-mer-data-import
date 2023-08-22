@@ -349,6 +349,7 @@ server <- function(input, output) {
     if(length(indicator_selected)==0){
       
     } else {
+      
       output$instruction <- renderText({ "" })
 
       #TODO no futuro adicionar os nomes das provincias num ficheiro excell 1Junho
@@ -356,34 +357,34 @@ server <- function(input, output) {
       # AltMae,CCivil, HCMPed,Malhangalene,Maxaquene,PCimento, Porto, Bagamoio
       # HPI,Inhagoia,MagoanineA,MTendas, Zimpeto,Inhaca,Catembe, Incassane
       # ChamanculoCS,ChamanculoHG, JMCS, JMHG,Xipamanine, 
-       us.names <- getUsNameFromSheetNames(vec_sheets)
-       vec_sheet_names <- getSheetNamesFormUSName(us.names , vec_sheets)
+       us.names <- getUsNameFromSheetNames(vec_sheets)[1]$health_facilities
+       warnings <- getUsNameFromSheetNames(vec_sheets)[1]$warnings
        
-       if(length(which(is.na(us.names)))>0 ){
-         shinyalert("Aviso", "Uma das das sheets  do ficheiro a ser importado tem um nome de US que nao esta padronizado. Deve corrigir antes de avancar.", type = "warning")
-       } else {
-         # updatePickerInput(getDefaultReactiveDomain(), "chkbxUsGroup",
-         #                   label = paste("U. Sanitarias:(", length(vec_sheets),")" ),
-         #                   choices =  setNames(as.list(vec_sheets), getUsNameFromSheetNames(vec_sheets)),
-         #                   selected = NULL
-         # )
+       if ( length(us.names) > 0 ) {
+         
          sapply(us.names, print)
+         vec_sheet_names <- getSheetNamesFormUSName(us.names , vec_sheets)
          updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "chkbxUsGroup",
-                           label = paste("U. Sanitarias:(", length(vec_sheets),")" ),
-                           choices =  setNames(as.list(vec_sheet_names), us.names),
-                           selected = NULL
-         )
+                                    label = paste("U. Sanitarias:(", length(us.names),")" ),
+                                    choices =  setNames(as.list(vec_sheet_names), us.names),
+                                    selected = NULL )
+         
 
+         
          shinyjs::hide(id = "btn_upload")
          shinyjs::hide(id = "chkbxPeriodGroup")
-         #cat(indicator_selected, sep = " | ")
+         # cat(indicator_selected, sep = " | ")
          shinyjs::show(id = "chkbxUsGroup", animType = "slide" )
          shinyjs::show(id = "chkbxDatim" )
 
+         if(length(warnings) > 0 ){  for (v in warnings) { shinyalert("Aviso", v , type = "warning") }  } 
+         
+         
+       } else {
+         shinyalert("Aviso", "Nomes das US  nao estao padronizados. Deve corrigir antes de avancar.", type = "warning")
        }
+    }
 
-      
-    } 
     
   })
   
@@ -409,42 +410,60 @@ server <- function(input, output) {
     counter = 0
     # verificar se e importacao para datim
     is_datim_upload <- input$chkbxDatim
-
+    # verificar se os sheetnames tem os nomes das US 
+    
     
 
     for (selected_us in vec_selected_us) {
-      us_name          <- getUsNameFromSheetNames(selected_us)
-      showNotification(paste0(us_name, " - Iniciando Processamento"),session = getDefaultReactiveDomain(), duration = 3 ,type =  "message" )
-      Sys.sleep(2)
-      # TODO antes de inciar checkDataConsistency verficar se os ficheiros necessarios existem nos directorios correctos 
-      status <- checkDataConsistency(excell.mapping.template = excell_mapping_template , file.to.import = file_to_import ,dataset.name =ds_name , sheet.name=selected_us, vec.indicators=vec_indicators, user.env = user_env,us.name = selected_us,is.datim.upload = is_datim_upload )
-
-
-      if(status=='Integrity error'){
-        shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")
-        shinyjs::hide(id = "btn_upload")
-        output$tbl_integrity_errors <- renderDT({
-          df <- read_xlsx(path = paste0(get("upload_dir"),'/template_errors.xlsx'))
-          datatable( df,  extensions = c('Buttons'),
-                     options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
-                                     pageLength = 15,
-                                     dom = 'Blfrti',
-                                     buttons = list(
-                                       list(extend = 'excel', title = NULL),
-                                       'pdf',
-                                       'print'  ) ))
-        })
-        output$instruction <- renderText({ paste0("Erro durante o processamento dos dados: " ,us_name, " Por favor tentar novamente" )})
-        break
-        #todo
-      }
-      else {
+      list_us<-    getUsNameFromSheetNames(selected_us)
+      us_name <- list_us$health_facilities
+      warnings <-  list_us$warnings
+      if(length(warnings)>0){
+        for (v in warnings) {
+          showNotification(paste0(v, " - Sheet Name invalido... Continuando "),session = getDefaultReactiveDomain(), duration = 3 ,type =  "warning" )
+          Sys.sleep(2)
+        }
+      } else if(length(us_name)>0){
+        # verificar se os sheetnames tem os nomes das US 
+        showNotification(paste0(us_name, " - Iniciando Processamento"),session = getDefaultReactiveDomain(), duration = 3 ,type =  "message" )
         
-        showNotification( paste0(us_name, " Processed sucessfully"),session = getDefaultReactiveDomain(), duration = 3 ,type =  "message" )
+        # TODO antes de inciar checkDataConsistency verficar se os ficheiros necessarios existem nos directorios correctos 
+        status <- checkDataConsistency(excell.mapping.template = excell_mapping_template , file.to.import = file_to_import ,dataset.name =ds_name , sheet.name=selected_us, vec.indicators=vec_indicators, user.env = user_env,us.name = us_name,is.datim.upload = is_datim_upload )
+        
+        
+        if(status=='Integrity error'){
+          shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")
+          shinyjs::hide(id = "btn_upload")
+          output$tbl_integrity_errors <- renderDT({
+            df <- read_xlsx(path = paste0(get("upload_dir"),'/template_errors.xlsx'))
+            datatable( df,  extensions = c('Buttons'),
+                       options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
+                                       pageLength = 15,
+                                       dom = 'Blfrti',
+                                       buttons = list(
+                                         list(extend = 'excel', title = NULL),
+                                         'pdf',
+                                         'print'  ) ))
+          })
+          output$instruction <- renderText({ paste0("Erro durante o processamento dos dados: " ,us_name, " Por favor tentar novamente" )})
+          break
+          #todo
+        }
+        else {
+          
+          showNotification( paste0(us_name, " Processed sucessfully"),session = getDefaultReactiveDomain(), duration = 3 ,type =  "message" )
+          Sys.sleep(2)
+          counter = counter+1
+          
+        }
+        
+      } else {
+        
+        showNotification( paste0(us_name, "Nenhu sheetname valido encontrado.... Verifique a planilha de importacao"),session = getDefaultReactiveDomain(), duration = 5 ,type =  "message" )
         Sys.sleep(2)
-        counter = counter+1
         
       }
+
     }
 
    if(length(vec_selected_us)==counter){
@@ -509,13 +528,16 @@ server <- function(input, output) {
       counter = 0
       
       for (selected_us in vec_selected_us) {
-        us_name          <- getUsNameFromSheetNames(selected_us)
+        
+        us_name          <- getUsNameFromSheetNames(selected_us)[1]$health_facilities
+        # us.names <- getUsNameFromSheetNames(vec_sheets)[1]$health_facilities
+        # warnings <- getUsNameFromSheetNames(vec_sheets)[1]$warnings
         org_unit         <- us_names_ids_dhis[which(names(us_names_ids_dhis)==us_name )][[1]]
 
         message("us_name:          ", us_name)
         message("selected_us:          ", selected_us)
         message("org_unit:          ", org_unit)
-        json_data <- merIndicatorsToJson(dataset_id,  submission_date,  period , org_unit, vec_indicators,user.env = user_env  ,selected_us )
+        json_data <- merIndicatorsToJson(dataset_id,  submission_date,  period , org_unit, vec_indicators,user.env = user_env  , us_name )
         message(" Converted to json")
         message(json_data)
         tryCatch(
@@ -564,7 +586,7 @@ server <- function(input, output) {
                 #df_warnings <-  get("error_log_dhis_import", user_env = envir)
                 df_warnings <-  env_get(env = user_env, "error_log_dhis_import")
                 df_warnings<- df_warnings[2:nrow(df_warnings),]
-                saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings ,user.env  = user_env, is.datim.form = TRUE,org.unit.name = selected_us)
+                saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings ,user.env  = user_env, is.datim.form = TRUE,org.unit.name = us_name)
 
                 # # Reset Panes after upload
                 # shinyjs::hide(id = "chkbxPeriodGroup")
@@ -727,7 +749,7 @@ server <- function(input, output) {
                 #df_warnings <-  get("error_log_dhis_import", user_env = envir)
                 df_warnings <-  env_get(env = user_env, "error_log_dhis_import")
                 df_warnings<- df_warnings[2:nrow(df_warnings),]
-                saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings ,user.env = user_env, is.datim.form = FALSE , org.unit.name= selected_us)
+                saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings ,user.env = user_env, is.datim.form = FALSE , org.unit.name= us_name)
 
                 # Reset Panes after upload
                 # shinyjs::hide(id = "chkbxPeriodGroup")

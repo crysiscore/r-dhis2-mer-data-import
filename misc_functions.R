@@ -185,7 +185,7 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
 checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators , user.env, us.name , is.datim.upload ){
  
 
-  withProgress(message = getUsNameFromSheetNames(us.name),
+  withProgress(message = us.name,
                detail = 'This may take a while...', value = 0, {
                  
   #wd <- get("wd",envir = .GlobalEnv)
@@ -629,11 +629,11 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
 }
 
 
-getSheetNamesFormUSName <- function(vec.usname, vec.sheet.names){
+getSheetNamesFormUSName <- function(vec.us.names, vec.sheet.names){
   
   vec_sheetnames <- c()
   tmp_vec_sheetnames <- vec.sheet.names
-  for (item in vec.usname) {
+  for (item in vec.us.names) {
        sheet <- tmp_vec_sheetnames[which(grepl(pattern = item,x = tmp_vec_sheetnames,ignore.case = TRUE))]
        vec_sheetnames <- c(vec_sheetnames, sheet)
   }
@@ -644,22 +644,91 @@ getSheetNamesFormUSName <- function(vec.usname, vec.sheet.names){
   
 getUsNameFromSheetNames <-function(vector){
   
-  vec <- c()
+  list_us_names <- list()
+  vec_warnings <- c()
+  counter <- 0 
+  temp_vec <- c()
   for (item in vector) {
+    
+    counter <- counter + 1  
     if(!is.na(item)){
       
-      if(!is.na(strsplit(item, "_")[[1]][3])){ # Ingore NA empty sheet names
-        if(strsplit(item, "_")[[1]][3] != "Provincia"){
-          vec <- c(vec, strsplit(item, "_")[[1]][3])
-          
+      dash_count = stringr::str_count(item,"_")
+      
+      if(dash_count==0) { # take the first item an check if it exists in vector_us from the paramConfig.R
+        
+        us_name <- item
+        
+        # Sample list of us_names
+        my_list <- tolower(names(us_names_ids_dhis))
+        
+        # String to check
+        substring_to_check <- us_name
+        
+        # Use lapply with %in% to check if the substring occurs in each element of the list
+        substring_present <- unlist(lapply(my_list, function(x) substring_to_check %in% x))
+        
+        # Check if the substring is present in any element of the list
+        if (any(substring_present)) {
+          vec <- c(vec, us_name)
+          list_us_names$health_facilities <- vec
+        } else {
+          vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+          list_us_names$warnings <- vec_warnings
         }
+        
+        
+      } 
+      else if(dash_count==3){
+        
+        if(!is.na(strsplit(item, "_")[[1]][3])){ # Ingore NA empty sheet names
+          if(strsplit(item, "_")[[1]][3] != "Provincia"){
+
+            
+            us_name <- strsplit(item, "_")[[1]][3]
+            
+            # Sample list of us_names
+            my_list <- tolower(names(us_names_ids_dhis))
+            
+            # String to check
+            substring_to_check <- tolower(us_name)
+            
+            # Use lapply with %in% to check if the substring occurs in each element of the list
+            substring_present <- unlist(lapply(my_list, function(x) substring_to_check %in% x))
+            
+            # Check if the substring is present in any element of the list
+            if (any(substring_present)) {
+              temp_vec <- c(temp_vec, us_name)
+              list_us_names$health_facilities <- temp_vec
+            } else {
+              vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+              #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+              list_us_names$warnings <- vec_warnings
+            }
+            
+
+            
+          }
+        }
+        else {
+          vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+          #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+          list_us_names$warnings <- vec_warnings
+        }
+      } 
+      else{
+        vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+       # shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+        list_us_names$warnings <- vec_warnings
       }
+      
+
       
     }
 
 
   }
-  vec
+  list_us_names
 }
 
 getDataSetDataElements  <- function(base.url, dataset.id) {
