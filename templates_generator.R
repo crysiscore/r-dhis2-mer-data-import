@@ -37,8 +37,8 @@ load("~/Git/ccs_datim_maping/dataset_templates/datimDataSetElementsCC.RData")
 datim_mapping_template <- df_datim_indicators[0,]
 datim_mapping_template$indicator <-""
 
-setwd(dir = '~/Git/ccs_datim_maping/mapping/Datim/')
 
+setwd(dir = '~/Git/ccs_datim_maping/mapping/Datim/')
 vec_files <- c('MER ATS COMMUNITY.xlsx',  'MER CARE & TREATMENT.xlsx'  , 'MER PREVENTION.xlsx','MER ATS.xlsx' ,
                'MER HEALTH SYSTEM.xlsx'  ,   'MER SMI.xlsx'  )
 
@@ -60,8 +60,8 @@ for (file  in vec_files) {
   }
   
 }
-
-save(datim_mapping_template,file = 'dataset_templates/datimMappingTemplate.RData')
+setwd(dir = '~/Git/ccs_datim_maping/dataset_templates')
+save(datim_mapping_template,file = 'datimMappingTemplate.RData')
 
 
 # 2 - Templates : Dataset_templates/dataset_templates.RDATA
