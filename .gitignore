@@ -1,10 +1,11 @@
 # History files
 .Rhistory
 .Rapp.history
-
+ccs_datim_maping.Rproj
+uploads/
 # Session Data files
 #.RData
-
+.secrets/
 # User-specific files
 .Ruserdata
 
