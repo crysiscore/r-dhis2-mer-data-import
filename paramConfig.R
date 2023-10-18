@@ -8,7 +8,7 @@ print(wd)
 
 # Project Dir
 # Commet the following line when runing on local PC
-upload_dir <- "/home/agnaldo/Documents/datim_uploads"
+#upload_dir <- "/home/agnaldo/Documents/datim_uploads"
 
 # Uncomment the following line when deployinh on Server
 #upload_dir <- "/uploads"
