@@ -32,24 +32,25 @@ dataset_id_mer_datim          <- "Z9agMHXo792"
 dataset_id_non_mer_mds        <- 'LUsbbPX9hlO'
 
 # 5- Reporting Periods   
-vec_reporting_periods <- list("January 2020"= "202001", "February 2020" ="202002", "March 2020"  = "202003", "April 2020" = "202004", 
-                                   "May 2020" = "202005",  "June 2020" = "202006", "July 2020" =  "202007",  "August 2020"  = "202008",
-                                   "September 2020" = "202009",  "October 2020"  = "202010", "November 2020" = "202011" ,"December 2020"  = "202012",
-                                   "January 2021"= "202101", "February 2021" ="202102",  "March 2021"  = "202103", "April 2021" =  "202104", 
-                                   "May 2021" = "202105", "June 2021" = "202106", "July 2021" = "202107",  "August 2021"  = "202108",
-                                   "September 2021" = "202109","October 2021"  = "202110","November 2021" = "202111" ,"December 2021"  = "202112",
-                                   "January 2022"= "202201","February 2022" = "202202", "March 2022"  ="202203","April 2022" = "202204",
+vec_reporting_periods <- list( "January 2022"= "202201","February 2022" = "202202", "March 2022"  ="202203","April 2022" = "202204",
                                    "May 2022" = "202205","June 2022" =  "202206","July 2022" =  "202207", "August 2022"  =  "202208",
                                    "September 2022" = "202209", "October 2022" ="202210",  "November 2022"="202211" ,"December 2022" = "202212",
                                   "January 2023"= "202301", "February 2023" ="202302", "March 2023"  = "202303", "April 2023" = "202304", 
                                   "May 2023" = "202305",  "June 2023" = "202306", "July 2023" =  "202307",  "August 2023"  = "202308",
-                                  "September 2023" = "202309")
+                                  "September 2023" = "202309","October 2023" ="202310",  "November 2023"="202311" ,"December 2023" = "202312",
+                                  "January 2024"= "202401","February 2024" = "202402", "March 2024"  ="202403","April 2024" = "202404",
+                                  "May 2024" = "202405","June 2024" =  "202406","July 2024" =  "202407", "August 2024"  =  "202408",
+                                  "September 2024" = "202409", "October 2024" ="202410",  "November 2024"="202411" ,"December 2024" = "202412")
 
 
-vec_datim_reporting_periods <- list("January - March 2022 (Q2)"= "2022Q1", "April - June 2022 (Q3)" ="2022Q2",
-                                    "July - September 2022 (Q4)"="2022Q3", "October - December 2022 (Q1)"="2022Q4",
+vec_datim_reporting_periods <- list(
                                     "January - March 2023 (Q2)"= "2023Q1", "April - June 2023 (Q3)" ="2023Q2",
-                                    "July - September 2023 (Q4)"="2023Q3", "October - December 2023 (Q1)"="2023Q4")  
+                                    "July - September 2023 (Q4)"="2023Q3", "October - December 2023 (Q1)"="2023Q4",
+                                    "January - March 2024 (Q2)"= "2024Q1", "April - June 2024 (Q3)" ="2024Q2",
+                                    "July - September 2024 (Q4)"="2024Q3", "October - December 2024 (Q1)"="2024Q4"
+                                    #"January - March 2022 (Q2)"= "2022Q1", "April - June 2022 (Q3)" ="2022Q2",
+                                    #"July - September 2022 (Q4)"="2022Q3", "October - December 2022 (Q1)"="2022Q4",
+                                    )  
 
 #IP Funding Mechanism ->   https://www.datim.org/api/sqlViews/fgUtV6e9YIX/data.html+css
 funding_mechanism <- 160451  
@@ -76,7 +77,7 @@ vec_mer_ats_indicators         <- c('DSD HTS TST','DSD HTS INDEX','DSD HTS SELF'
 vec_mer_smi_indicators         <- c('DSD PMTCT STAT','DSD PMTCT EID','DSD PMTCT HEI POS','DSD CXCA SCRN','DSD CXCA TX')
 vec_mer_prevention_indicators  <- c('DSD PREP','DSD TB PREV','DSD GEND GBV', 'DSD FPINT SITE')
 vec_mer_ats_community          <- c('DSD HTS TST COMMUNITY OTHER','DSD HTS INDEX COMMUNITY')
-vec_mer_hs_indicators          <- c('LAB PTCQI','EMR SITE', 'FPINT')
+vec_mer_hs_indicators          <- c('LAB PTCQI','EMR SITE', 'FPINT', 'PMTCT FO')
 # NON MER INDICATORS
 vec_non_mer_mds                <- c('IM_ER', 'MDS')
 
