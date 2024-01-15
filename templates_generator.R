@@ -115,6 +115,3 @@ dataset_id_non_mer            <- "LUsbbPX9hlO" # novo
 #df_ccs_data_exchange_orgunits <- readxl::read_xlsx(path = paste0(working_dir, '/mapping/CCS DATA EXCHANGE ORG UNITS.xlsx' ,col_names = TRUE))
 #save(df_ccs_data_exchange_orgunits , file = paste0(working_dir, '/dataset_templates/ccsDataExchangeOrgUnits.RData'))
  
- 
-library(devtools)
-install_git('https://github.com/pepfar-datim/datim-validation')
