@@ -13,5 +13,5 @@ library(shinyalert)
 library(shinyjs)
 library(rlang)
 library(httr)
-source(file = 'paramConfig.R')      #  Carrega os paramentros globais
+source(file = 'conf/paramConfig.R')      #  Carrega os paramentros globais
 

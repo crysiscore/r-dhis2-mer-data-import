@@ -6,14 +6,14 @@ server <- function(input, output) {
   wd <- env_get(env = .GlobalEnv, nm = 'wd')
   print(wd)
   source(paste0(wd,"/misc_functions.R"),  local=user_env)
-  source(paste0(wd,"/credentials.R"), local=user_env)
+  source(paste0(wd,"/conf/credentials.R"), local=user_env)
   attach(user_env, name="sourced_scripts")
   
   # Store datim dataset extraction output here
   datim_logs <- ""
   
   # CCS DHIS2 urls
-  assign( x = "dhis_conf" ,value =   as.list(jsonlite::read_json(path = paste0(env_get(env = .GlobalEnv, nm = 'wd'),'/dhisconfig.json')))  ,envir =user_env )
+  assign( x = "dhis_conf" ,value =   as.list(jsonlite::read_json(path = paste0(env_get(env = .GlobalEnv, nm = 'wd'),'/conf/dhisconfig.json')))  ,envir =user_env )
   
   
   # 2 - DHIS2 API END POINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
@@ -41,26 +41,20 @@ server <- function(input, output) {
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'),    envir = user_env)
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/ccsDataExchangeOrgUnits.RData'),envir = user_env)
    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimMappingTemplate.RData'), envir = user_env)
-   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datim_dataelement_ids.RDATA'), envir = user_env)
-   #  
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datavalueset_template_dhis2_ccs_forms.RDATA'), envir = user_env)
+
    # IF deploying on the same DHIS2 Server ignore ssl certificate errors
    httr::set_config(httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L))
    
-   # load DHIS2 datavalueset  template
-   #
-   # api_dhis_base_url <- "http://192.168.1.10:5400"
-   # api_dhis_datasets <- 'https://mail.ccsaude.org.mz:5459/api/dataSets/'
-   # dataset_id_mer_datim          <- "RU5WjDrv2Hx"
-   # datavalueset_template_dhis2_datim         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_datim)
-   # save(datavalueset_template_dhis2_datim, file = 'dataset_templates/dataset_templates.RDATA') 
+   # load DHIS2  data_element templates
    template_dhis2_datim        <- env_get(env = user_env, nm =    "datavalueset_template_dhis2_datim" ) 
-  
+   template_dhis_ccs_forms   <- env_get(env = user_env, nm =     "datavalueset_template_dhis2_ccs_forms")
    
+   # Bind  the templates to user environment
+  env_bind(user_env,  template_dhis2_datim = template_dhis2_datim)
+  env_bind(user_env,  template_dhis_ccs_forms = template_dhis_ccs_forms)
+  #browser()
   
-  # Bind  DHIS2 datavalueset to user environment
-  env_bind(user_env,  datavalueset_template_dhis2_datim = template_dhis2_datim)
-  
-  #
   temporizador <-reactiveValues( started=FALSE, df_execution_log=NULL, df_warning_log=NULL , datim_logs =NULL)
   
   #
@@ -83,7 +77,7 @@ server <- function(input, output) {
   
   # Temporizador activado pelo botao runChecks
   observe({
-    invalidateLater(millis = 5000, session = getDefaultReactiveDomain())
+    invalidateLater(millis = 15000, session = getDefaultReactiveDomain())
     tmp_log_exec <-  env_get(env = user_env, nm =  "log_execution")
     tmp <- env_get(env = user_env, nm =  "error_log_dhis_import") 
     path <- env_get(env = .GlobalEnv , nm =  "wd") 
@@ -95,14 +89,17 @@ server <- function(input, output) {
         } else {  temporizador$df_execution_log <- tmp_log_exec  }
 
         if(nrow(tmp)>1){
-          temporizador$df_warning_log <-  tmp[2:nrow(tmp),c(1,2,3,8,9)]
-        } else {temporizador$df_warning_log <-  tmp[,c(1,2,3,8,9)]  }
+
+          #temporizador$df_warning_log <-  tmp[2:nrow(tmp),c(1,2,3,8,9)]
+          temporizador$df_warning_log <-  tmp[2:nrow(tmp),c(4,6,7,8,9)]
+        } else {temporizador$df_warning_log <-  tmp[,c(4,2,6,7,9)]  }
                })
 
     } else  
       { 
       temporizador$df_execution_log <- tmp_log_exec
-      temporizador$df_warning_log <-  tmp[2:nrow(env_get(env = user_env, nm =  "log_execution")),c(1,2,3,8,9)]
+      #temporizador$df_warning_log <-  tmp[2:nrow(env_get(env = user_env, nm =  "log_execution")),c(1,2,3,8,9)]
+      temporizador$df_warning_log <-  tmp[2:nrow(env_get(env = user_env, nm =  "log_execution")),c(4,2,6,7,9)]
     }
   } , priority = 2)
   
@@ -1015,7 +1012,8 @@ server <- function(input, output) {
           #msg        <- paste0(getUsName(us), " - Dados processados com sucesso.", '\n')
           #datim_logs =  paste(datim_logs, msg, sep = '')
       
-        } else {
+        } 
+        else {
           message(getUsName(us), "   - Dataset esta vazio!!!")
           msg        <- paste0(getUsName(us), " - Nao contem dados neste periodo.", '\n')
           datim_logs =     paste(datim_logs, msg, sep = '')
@@ -1075,7 +1073,8 @@ server <- function(input, output) {
           
           
         })
-      } else {
+      } 
+      else {
         
         
         output$txt_datim_logs <-  renderText({ HTML(datim_logs)})

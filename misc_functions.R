@@ -42,6 +42,8 @@ getDhis2DatavalueSetTemplate <- function(url.api.dhis.datasets,dataset.id){
   df_dataset_template = df_dataset_template[,c(1,2,4)]
   names(df_dataset_template)[1] <- 'dataElement'
   names(df_dataset_template)[2] <- 'categoryoptioncombo'
+  #names(df_dataset_template)[1] <- 'categoryoptioncombo'
+  #names(df_dataset_template)[2] <- 'dataElement'
   names(df_dataset_template)[3] <- 'value'
   df_dataset_template
   
@@ -54,7 +56,7 @@ getDhis2DatavalueSetTemplate <- function(url.api.dhis.datasets,dataset.id){
 #' @param datavalueset.template.name nome do datafram do template de importacao para DHIS2
 #' @examples 
 #'df_dhis2_data_mapping$check <- mapply(checkIFDataElementExistsOnTemplate,df_dhis2_data_mapping$dhisdataelementuid,df_dhis2_data_mapping$dhiscategoryoptioncombouid ,"datavalueset_template_dhis2_mer_ct")
-checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option.combo.id, datavalueset.template.name, indicator.name  ) {
+checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option.combo.id, datavalueset.template.name, indicator.name, excell.cell.ref, sheet.name  ) {
   
 
   
@@ -69,12 +71,20 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
   df <- filter(tmp, dataElement==data.element.id & categoryoptioncombo==category.option.combo.id )
   
   total_rows <- nrow(df)
+
   if(total_rows==0){
+
     df_error_tmp_empty$dhisdataelementuid[1] <- data.element.id
     df_error_tmp_empty$dhiscategoryoptioncombouid[1] <- category.option.combo.id
     df_error_tmp_empty$indicator[1] <- indicator.name
     df_error_tmp_empty$error[1] <- 'NOT FOUND'
+
+    df_error_tmp_empty$sheetname[1] <- sheet.name
+    df_error_tmp_empty$excell_cell_ref[1] <- excell.cell.ref
+    df_error_tmp_empty$observation[1]<-  paste0( "DE nao encontrado: CELL", excell.cell.ref, ' on  sheetname: ' ,sheet.name)
     df_error_tmp<- rbind.fill(df_error_tmp, df_error_tmp_empty)
+    
+    #browser()
     #message("Check:  aaa passando 1.2 ")
     writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'/logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
     #assign(x = "error_log_dhis_import",value =df_error_tmp, user.envir = user.envir )
@@ -104,20 +114,23 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
 #' @param sheet.name nome do sheet
 #' @examples 
 #' val  <- function(cell.ref, file.to.import, sheet.name)
-getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
+getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name,data.element.id,category.option.combo.id, indicator.name ){
   
   data_value <- tryCatch({
     #wd <- get("wd", envir = .GlobalEnv)
     wd <- env_get(env = .GlobalEnv, "wd")
     tmp <-   read_xlsx(path = file.to.import,sheet = sheet.name,range = paste0(cell.ref,':',cell.ref),col_names = FALSE)
     if(nrow(tmp)==0){
-      warning_msg <- paste0( "Empty excell cell ", cell.ref, ' on  sheetname: ' ,sheet.name)
+      warning_msg <- paste0( "Celula Vazia ", cell.ref, ' on  sheetname: ' ,sheet.name)
       
       tmp          <-  env_get(env = user_env, "error_log_dhis_import_empty")
       df_error_tmp <-  env_get(env = user_env, "error_log_dhis_import")
       
       #tmp  <- get('error_log_dhis_import_empty',envir = user.env)
       #df_error_tmp <- get('error_log_dhis_import',envir = user.env)
+      tmp$dhisdataelementuid[1] <- data.element.id
+      tmp$dhiscategoryoptioncombouid[1] <- category.option.combo.id
+      tmp$indicator[1] <- indicator.name
       
       tmp$sheetname[1] <- sheet.name
       tmp$excellfilename[1] <- path_file(file.to.import)
@@ -126,6 +139,7 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
       tmp$error[1] <- "Warning"
       message("Warning :", warning_msg)
       df_error_tmp  <- rbind.fill(df_error_tmp, tmp)
+      #browser()
       writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'/logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
       #assign(x = "error_log_dhis_import",value =df_error_tmp, envir = user.env )
       env_poke(env = user_env ,nm =  "error_log_dhis_import",value =  df_error_tmp)
@@ -141,6 +155,11 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name ){
     error_msg <- paste0( "Error reading from excell: ", cell.ref, 'on sheetname:' ,sheet.name)
     tmp          <-  env_get(env = user_env, "error_log_dhis_import_empty")
     df_error_tmp <-  env_get(env = user_env, "error_log_dhis_import")
+    
+    tmp$dhisdataelementuid[1] <- data.element.id
+    tmp$dhiscategoryoptioncombouid[1] <- category.option.combo.id
+    tmp$indicator[1] <- indicator.name
+    
     tmp$sheetname[1] <- sheet.name
     tmp$excellfilename[1] <- path_file(file.to.import)
     tmp$excell_cell_ref[1] <- cell.ref
@@ -243,7 +262,9 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
      writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, '/logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
 
       #datavalueset_template <- getDataValuesetName(dataset.name)
-      datavalueset_template <-  'datavalueset_template_dhis2_datim'
+      #datavalueset_template <-  'datavalueset_template_dhis2_datim'
+      datavalueset_template <-  'template_dhis_ccs_forms'
+      
       # verifica os dataelements usando o template do formulario datim
       if(is.datim.upload){
         datavalueset_template <-  'template_dhis2_datim'
@@ -259,7 +280,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
          tmp_df <- read_xlsx(path =paste0('mapping/Datim/',excell.mapping.template), sheet = indicator , skip = 1 )
          
         } else {
-          tmp_df <- read_xlsx(path =paste0('mapping/',excell.mapping.template), sheet = indicator , skip = 1 )
+          tmp_df <- read_xlsx(path =paste0('mapping/DHIS2/',excell.mapping.template), sheet = indicator , skip = 1 )
        }
 
        tmp_df <- filter(tmp_df, is.na(observation) )
@@ -267,7 +288,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        tmp_df$value <- ""
        
        #Message("Iniciando 2.2 - " , indicator)
-       tmp_df$check  <- mapply(checkIFDataElementExistsOnTemplate,tmp_df$dhisdataelementuid,tmp_df$dhiscategoryoptioncombouid ,datavalueset_template ,indicator )
+       tmp_df$check  <- mapply(checkIFDataElementExistsOnTemplate,tmp_df$dhisdataelementuid,tmp_df$dhiscategoryoptioncombouid ,datavalueset_template ,indicator , tmp_df$excell_cell_ref, sheet.name=sheet.name )
        #message("Passando 2.2 - " , indicator)
        #Indicar a tarefa em execucao : task_check_consistency_3
        tmp_log_exec_empty$Datetime[1] <- substr(x = Sys.time(),start = 1, stop = 22)
@@ -282,7 +303,10 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        #message("Passando II")
        #Get excell values
        setwd('data/')
-       tmp_df$value <-  mapply(getDEValueOnExcell,tmp_df$excell_cell_ref, file.to.import, sheet.name=sheet.name )
+       
+       # Remove rows with 99 (not used) on observations
+       tmp_df <- subset(tmp_df, !observation %in% c(99) ,)
+       tmp_df$value <-  mapply(getDEValueOnExcell,tmp_df$excell_cell_ref, file.to.import, sheet.name=sheet.name , tmp_df$dhisdataelementuid, tmp_df$dhiscategoryoptioncombouid, indicator )
        
        #assign(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), tmp_df , envir = user.env)
        env_poke(env = user.env ,nm =  paste(us.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep='') ,value =  tmp_df)

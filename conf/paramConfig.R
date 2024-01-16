@@ -8,7 +8,7 @@ print(wd)
 
 # Project Dir
 # Commet the following line when runing on local PC
-upload_dir <- "/home/agnaldo/Documents/datim_uploads"
+upload_dir <- "/Users/asamuel/Projects/ccs-datim-data-import/datim_uploads"
 
 # Uncomment the following line when deployinh on Server
 #upload_dir <- "/uploads"
@@ -66,8 +66,8 @@ excell_mapping_template_mer_ats_community  <- 'MER ATS COMMUNITY.xlsx'
 excell_mapping_template_non_mer_mds        <- 'NON MER MAPPING MDS.xlsx'
 
 # 7- DF Value templates (DO NOT CHANGE)
-vec_mer_dataset_valuetemplates_names <- c("datavalueset_template_dhis2_mer_ct","datavalueset_template_dhis2_mer_ats" ,"datavalueset_template_dhis2_mer_prevention",
-                                          "datavalueset_template_dhis2_mer_smi","datavalueset_template_dhis2_mer_hs","datavalueset_template_dhis2_mer_ats_community")
+#vec_mer_dataset_valuetemplates_names <- c("datavalueset_template_dhis2_mer_ct","datavalueset_template_dhis2_mer_ats" ,"datavalueset_template_dhis2_mer_prevention",
+#                                         "datavalueset_template_dhis2_mer_smi","datavalueset_template_dhis2_mer_hs","datavalueset_template_dhis2_mer_ats_community")
 
 # 8- MER INDICATORS
 # Nomes dos indicadores mapeados em cada planilha excell no ficheiro de  mapeamentos. 
@@ -96,15 +96,6 @@ task_check_consistency_1  <- "Verficar a integridade do ficheiro de importacao"
 task_check_consistency_2  <- "Verificar se todos os dataElements do Ficheiro de Mapeamento existem no DHIS2"
 task_check_consistency_3  <- "Buscar valores para cada indicador: "
 
-
-
-# Get data from DHIS CCU TRACKER  (NO RUN)
-#program.id                      <- 'PuNhQ0F6I7H' #Aconselhamento e testagem em saude            
-#org.unit                        <- 'ebcn8hWYrg3' # CIDADE DE MAPUTO
-#distric.org.uni                 <- 'c1N79yeN7S2'
-#program.stage.id.registo.diario <- 'sNCq7QAZmMF' # Registo diario do ATS
-#program.stage.id.ligacao        <- 'buuvxzLEfWZ' # Ligacao Clinica 
-#program.stage.id.cpn            <- 'KGVOhPMAdag' # CPN
 
 
 
