@@ -50,6 +50,6 @@ credentials.R
 # Data dir
 data/data/*
 data/remove_after_sync_data.sh
-uploads/*.xlsx
-/logs/
+datim_uploads/mensal/*.xlsx
+datim_uploads/datim/*.xlsx
 #uploads/*.xlsx
