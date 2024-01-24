@@ -3,7 +3,7 @@
 
 #Change here
 working_dir <- '/Users/asamuel/Projects/ccs-datim-data-import'
-
+source(paste0(working_dir,'/misc_functions.R'))
 ##############################################################################################################
 # 1 - DHIS2 CCS (e-analysis)                                                                                 #
 # Se houver mudancas nos indicadores do DHIS2 CCS (e-analysis) deve-se fazer os devidos mapeamentos nos      #
@@ -33,10 +33,14 @@ for (file  in vec_files) {
       assign(x = gsub(" ","",sheet) ,value = df_tmp,envir = .GlobalEnv  )
 
       df_datim_indicators <- plyr::rbind.fill(df_datim_indicators,df_tmp )
+      
     }
   }
 
 }
+
+# filter 99
+df_datim_indicators <- subset(df_datim_indicators, is.na(observation)   )
 save(df_datim_indicators,file = paste0(working_dir, '/dataset_templates/datimDataSetElementsCC.RData'))
 
 
@@ -51,7 +55,7 @@ save(df_datim_indicators,file = paste0(working_dir, '/dataset_templates/datimDat
 ##############################################################################################################
 load( file = paste0(working_dir, "/dataset_templates/datimDataSetElementsCC.RData"))
 datim_mapping_template <- df_datim_indicators[0,]
-datim_mapping_template$indicator <-""
+#datim_mapping_template$indicator <-""
 
 setwd(dir =paste0(working_dir, '/mapping/Datim/'))
 vec_files <- c('MER ATS COMMUNITY.xlsx',  'MER CARE & TREATMENT.xlsx'  , 'MER PREVENTION.xlsx','MER ATS.xlsx' ,
@@ -73,10 +77,13 @@ for (file  in vec_files) {
       assign(x = gsub(" ","",sheet) ,value = df_tmp,envir = .GlobalEnv  )
       
       datim_mapping_template <- plyr::rbind.fill(datim_mapping_template,df_tmp )
+
     }
   }
   
 }
+# filter 99
+datim_mapping_template <- subset(datim_mapping_template, is.na(observation)   )
 setwd(dir = paste0(working_dir, '/dataset_templates'))
 save(datim_mapping_template,file = 'datimMappingTemplate.RData')
 
@@ -87,17 +94,15 @@ save(datim_mapping_template,file = 'datimMappingTemplate.RData')
 ##############################################################################################################
 api_dhis_datasets <- 'https://mail.ccsaude.org.mz:5459/api/dataSets/'
 dataset_id_mer_datim          <- "Z9agMHXo792"
-dataset_id_non_mer            <- "LUsbbPX9hlO" # novo
+
 
 # NOT RUN ( Ja foi adicionado)
  datavalueset_template_dhis2_datim         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_datim)
 # NOT RUN ( Ja foi adicionado)
- df_non_mer_mds <-   getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_non_mer) # Novo dataset
 # Junta o novo data set com o template padrao
  datavalueset_template_dhis2_datim = plyr::rbind.fill(datavalueset_template_dhis2_datim,df_non_mer_mds)
  save(datavalueset_template_dhis2_datim, file =  paste0(working_dir, '/dataset_templates/dataset_templates.RDATA'))
 
- 
  ##############################################################################################################
  # template_dhis_ccs_forms
  # 4- Gera template de dados dos Formularios Mensais (CT,SMI,PREVENTION,Health systems, NON MEER) do e-analisys 
@@ -107,7 +112,7 @@ dataset_id_non_mer            <- "LUsbbPX9hlO" # novo
  #dataset_id_mer_smi            <- 'OQDQqOI7brV'
  #dataset_id_mer_hs             <- 'AAw69FykQil'
  #dataset_id_mer_ats_community  <- 'aWAxctvA9jY'
- #dataset_id_non_mer_mds        <- 'LUsbbPX9hlO'
+ #dataset_id_non_mer            <- "LUsbbPX9hlO" # novo
  ##############################################################################################################
  api_dhis_datasets <- 'https://mail.ccsaude.org.mz:5459/api/dataSets/'
  ccs_monthly_forms_ids         <- c('WmHFZdWbzU2','b2a0MuC3lb1','JbLlGyAwQkd', 'OQDQqOI7brV','AAw69FykQil', 'aWAxctvA9jY','LUsbbPX9hlO')

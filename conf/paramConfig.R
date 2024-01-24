@@ -7,11 +7,8 @@ wd <- getwd()
 print(wd)
 
 # Project Dir
-# Commet the following line when runing on local PC
-upload_dir <- "/Users/asamuel/Projects/ccs-datim-data-import/datim_uploads"
-
-# Uncomment the following line when deployinh on Server
-#upload_dir <- "/uploads"
+# Uncomment the following line when deploying on Server
+upload_dir <- paste0(wd,'/datim_uploads')
 
 # 3- DHIS2 DATASET NAMES (DO NOT CHANGE)
 mer_datasets_names            <- c("MER C&T"  = "ct", "MER ATS" = "ats" , "MER SMI" = "smi" , "MER PREVENTION"="prevention",
