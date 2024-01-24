@@ -207,12 +207,11 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
   withProgress(message = us.name,
                detail = 'This may take a while...', value = 0, {
                  
-  #wd <- get("wd",envir = .GlobalEnv)
+
   wd <- env_get(env = .GlobalEnv, "wd")
   # carregar variaves e dfs para armazenar logs
-  # tmp_log_exec <- get('log_execution',envir = user.env)
+
   tmp_log_exec <- env_get(env = user.env, "log_execution")
-  #vec_tmp_dataset_names <-  get('mer_datasets_names',envir = .GlobalEnv)
   vec_tmp_dataset_names <- env_get(env = .GlobalEnv, "mer_datasets_names")
   tmp_log_exec_empty <- tmp_log_exec[1,]
   
@@ -220,7 +219,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
   tmp_log_exec_empty$Datetime[1] <- substr(x = Sys.time(),start = 1, stop = 22)
   tmp_log_exec_empty$US[1] <- sheet.name
   tmp_log_exec_empty$Dataset[1] <- dataset.name
-  #tmp_log_exec_empty$task[1] <- get('task_check_consistency_1',envir = .GlobalEnv)
+
   tmp_log_exec_empty$task[1] <- env_get(env = .GlobalEnv, "task_check_consistency_1")
   message( "Stage 1: ", env_get(env = .GlobalEnv, "task_check_consistency_1") )
 
@@ -255,14 +254,12 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
      message( "Stage 2: ",  env_get(env = .GlobalEnv, "task_check_consistency_2"))
 
      tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
-     #message("Passando I")
-     #assign(x = "log_execution",value =tmp_log_exec, envir = user.env )
+
+
      env_poke(env = user.env ,nm =  "log_execution",value =  tmp_log_exec)
-     #message("Passando I.1")
+
      writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, '/logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
 
-      #datavalueset_template <- getDataValuesetName(dataset.name)
-      #datavalueset_template <-  'datavalueset_template_dhis2_datim'
       datavalueset_template <-  'template_dhis_ccs_forms'
       
       # verifica os dataelements usando o template do formulario datim
@@ -312,8 +309,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        env_poke(env = user.env ,nm =  paste(us.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep='') ,value =  tmp_df)
         #A tarefa anterior terminou com sucesso
        tmp_log_exec_empty$status[1] <- 'ok'
-       #tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
-       #writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, 'logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
+
        incProgress(1/(length(vec.indicators)+ 1), detail = paste("STAGE III - Processando  o indicador: ", indicator , " " ))
        #message("Passando III")
        }
@@ -512,7 +508,6 @@ apiDatimSendDataValues <- function(json , dhis.conf, us.name){
                  # url da API
                  # 2 - DHIS2 API ENDPOINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
 
-                 #base.url <- paste0(dhis.conf['e-analisys'][[1]][1] , dhis.conf['e-analisys'][[1]][3])
                  base.url <- paste0(dhis.conf['e-analisys'][[1]][1] , dhis.conf['e-analisys'][[1]][3])
                  incProgress(1/2, detail = paste("This may take a while..." ))
                  # Post data to DHIS2
@@ -551,9 +546,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
     
     upload_directory <- paste0(get("upload_dir"),"/", "mensal", "/")
   }
-  #main_dir <- env_get(env = .GlobalEnv, "wd")
-  #upload_directory <- paste0(get("upload_dir"),"/")
-  #setwd(upload_dir)
+
   setwd(upload_directory)
   message(upload_directory)
   # check if sub directory exists 
@@ -1204,6 +1197,4 @@ getStageNameByID <- function(stage.id, df.stages){
   stage_name
 }
 
-# df_datim_albasine <- getDatimDataValueSet(url.api.dhis.datasets,dataset.id, period, org.unit)
-# https://mail.ccsaude.org.mz:5459/api/33/dataValueSets.json?dataSet=RU5WjDrv2Hx&period=2022Q3&orgUnit=FTLV9nOnAFC
-# https://mail.ccsaude.org.mz:5459/api/33/dataValueSets.csv?dataSet=RU5WjDrv2Hx&period=2022Q3&orgUnit=FTLV9nOnAFC
+
