@@ -2,6 +2,8 @@
 require(httr)
 require(readxl)
 require(plyr)
+require(dplyr)
+require(jsonlite)
 
 #############################################  Helper functions     ####################################################
 

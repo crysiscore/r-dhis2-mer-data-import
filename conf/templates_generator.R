@@ -94,13 +94,11 @@ save(datim_mapping_template,file = 'datimMappingTemplate.RData')
 ##############################################################################################################
 api_dhis_datasets <- 'https://mail.ccsaude.org.mz:5459/api/dataSets/'
 dataset_id_mer_datim          <- "Z9agMHXo792"
-
+source('../conf/credentials.R')
 
 # NOT RUN ( Ja foi adicionado)
  datavalueset_template_dhis2_datim         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_datim)
 # NOT RUN ( Ja foi adicionado)
-# Junta o novo data set com o template padrao
- datavalueset_template_dhis2_datim = plyr::rbind.fill(datavalueset_template_dhis2_datim,df_non_mer_mds)
  save(datavalueset_template_dhis2_datim, file =  paste0(working_dir, '/dataset_templates/dataset_templates.RDATA'))
 
  ##############################################################################################################
