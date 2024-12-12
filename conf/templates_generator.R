@@ -99,7 +99,7 @@ source('../conf/credentials.R')
 # NOT RUN ( Ja foi adicionado)
  datavalueset_template_dhis2_datim         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_datim)
 # NOT RUN ( Ja foi adicionado)
- save(datavalueset_template_dhis2_datim, file =  paste0(working_dir, '/dataset_templates/dataset_templates.RDATA'))
+save(datavalueset_template_dhis2_datim, file =  paste0(working_dir, '/dataset_templates/dataset_templates.RDATA'))
 
  ##############################################################################################################
  # template_dhis_ccs_forms

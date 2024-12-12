@@ -2,6 +2,11 @@
 .Rhistory
 .Rapp.history
 ccs_datim_maping.Rproj
+ccs-datim-data-import.Rproj
+*.DS_Store*
+
+*.zip
+
 uploads/
 # Session Data files
 #.RData
