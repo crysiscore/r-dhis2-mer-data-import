@@ -653,15 +653,26 @@ getSheetNamesFormUSName <- function(vec.us.names, vec.sheet.names){
   vec_sheetnames <- c()
   tmp_vec_sheetnames <- vec.sheet.names
   for (item in vec.us.names) {
-       sheet <- tmp_vec_sheetnames[which(grepl(pattern = item,x = tmp_vec_sheetnames,ignore.case = TRUE))]
-       vec_sheetnames <- c(vec_sheetnames, sheet)
+    
+    if(item == "Hokwe"){
+      sheet <- tmp_vec_sheetnames[which(grepl(pattern = "_Hokwe",x = tmp_vec_sheetnames,ignore.case = TRUE))]
+    }else if(item == "Cumba"){
+      
+      sheet <- tmp_vec_sheetnames[which(grepl(pattern = "_Cumba",x = tmp_vec_sheetnames,ignore.case = TRUE))]
+    }
+    else {
+      sheet <- tmp_vec_sheetnames[which(grepl(pattern = item,x = tmp_vec_sheetnames,ignore.case = TRUE))]
+      
+    }
+    
+    vec_sheetnames <- c(vec_sheetnames, sheet)
   }
   vec_sheetnames
   
 }
   
   
-getUsNameFromSheetNames <-function(vector){
+getUsNameFromSheetNames <-function(vector, province){
   
   list_us_names <- list()
   vec_warnings <- c()
@@ -697,14 +708,58 @@ getUsNameFromSheetNames <-function(vector){
         }
         
         
-      } 
-      else if(dash_count==3){
+      }
+      if(dash_count==1){
         
-        if(!is.na(strsplit(item, "_")[[1]][3])){ # Ingore NA empty sheet names
-          if(strsplit(item, "_")[[1]][3] != "Provincia"){
+        if(!is.na(strsplit(item, "_")[[1]][1])){ # Ingore NA empty sheet names
+          if(strsplit(item, "_")[[1]][1] != "Provincia"){
+            
+            us_name <- strsplit(item, "_")[[1]][1]
+            
+            
+            if(province=="Maputo"){
+              # Sample list of us_names
+              my_list <- tolower(names(maputo_us_names_ids_dhis))
+              
+            } else if( province=="Gaza"){
+              my_list <- tolower(names(gaza_us_names_ids_dhis))
+            }
 
             
-            us_name <- strsplit(item, "_")[[1]][3]
+            
+            # String to check
+            substring_to_check <- tolower(us_name)
+            
+            # Use lapply with %in% to check if the substring occurs in each element of the list
+            substring_present <- unlist(lapply(my_list, function(x) substring_to_check %in% x))
+            
+            # Check if the substring is present in any element of the list
+            if (any(substring_present)) {
+              temp_vec <- c(temp_vec, us_name)
+              list_us_names$health_facilities <- temp_vec
+              
+            } else {
+              vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+              #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+              list_us_names$warnings <- vec_warnings
+              
+            }
+            
+          }
+        }
+        else {
+          vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+          #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+          list_us_names$warnings <- vec_warnings
+        }
+        
+      }
+      else if(dash_count==2){
+        
+        if(!is.na(strsplit(item, "_")[[1]][2])){ # Ingore NA empty sheet names
+          if(strsplit(item, "_")[[1]][2] != "Provincia"){
+            
+            us_name <-  paste0( strsplit(item, "_")[[1]][1], "_", strsplit(item, "_")[[1]][2])
             
             # Sample list of us_names
             my_list <- tolower(names(us_names_ids_dhis))
@@ -725,7 +780,91 @@ getUsNameFromSheetNames <-function(vector){
               list_us_names$warnings <- vec_warnings
             }
             
-
+          }
+        }
+        else {
+          vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+          #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+          list_us_names$warnings <- vec_warnings
+        }
+      }   
+      else if(dash_count==3){
+        
+        if(!is.na(strsplit(item, "_")[[1]][3])){ # Ingore NA empty sheet names
+          if(strsplit(item, "_")[[1]][3] != "Provincia"){
+            
+            us_name <- strsplit(item, "_")[[1]][3]
+            
+            # Sample list of us_names
+            
+            if(province=="Maputo"){
+              # Sample list of us_names
+              my_list <- tolower(names(maputo_us_names_ids_dhis))
+              
+            } else if( province=="Gaza"){
+              my_list <- tolower(names(gaza_us_names_ids_dhis))
+            }
+            
+            
+            # String to check
+            substring_to_check <- tolower(us_name)
+            
+            # Use lapply with %in% to check if the substring occurs in each element of the list
+            substring_present <- unlist(lapply(my_list, function(x) substring_to_check %in% x))
+            
+            # Check if the substring is present in any element of the list
+            if (any(substring_present)) {
+              temp_vec <- c(temp_vec, us_name)
+              list_us_names$health_facilities <- temp_vec
+              
+            } else {
+              vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+              #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+              list_us_names$warnings <- vec_warnings
+              
+            }
+            
+          }
+        } else {
+          vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+          #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+          list_us_names$warnings <- vec_warnings
+        }
+      } 
+      else if(dash_count==4){
+        
+        if(!is.na(strsplit(item, "_")[[1]][4])){ # Ingore NA empty sheet names
+          if(strsplit(item, "_")[[1]][4] != "Provincia"){
+            
+            us_name <-  paste0( strsplit(item, "_")[[1]][3], "_", strsplit(item, "_")[[1]][4])
+            
+            # Sample list of us_names
+           
+            if(province=="Maputo"){
+              # Sample list of us_names
+              my_list <- tolower(names(maputo_us_names_ids_dhis))
+              
+            } else if( province=="Gaza"){
+              my_list <- tolower(names(gaza_us_names_ids_dhis))
+            }
+            
+            # String to check
+            substring_to_check <- tolower(us_name)
+            
+            # Use lapply with %in% to check if the substring occurs in each element of the list
+            substring_present <- unlist(lapply(my_list, function(x) substring_to_check %in% x))
+            
+            # Check if the substring is present in any element of the list
+            if (any(substring_present)) {
+              temp_vec <- c(temp_vec, us_name)
+              list_us_names$health_facilities <- temp_vec
+              
+            } else {
+              vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+              #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+              list_us_names$warnings <- vec_warnings
+              
+            }
             
           }
         }
@@ -740,12 +879,7 @@ getUsNameFromSheetNames <-function(vector){
        # shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
         list_us_names$warnings <- vec_warnings
       }
-      
-
-      
     }
-
-
   }
   list_us_names
 }

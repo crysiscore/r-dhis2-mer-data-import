@@ -269,6 +269,11 @@ server <- function(input, output) {
     updateAwesomeRadio(getDefaultReactiveDomain(), inputId = "dhis_datasets",label =  "DHIS2 Datasets",
                        choices = mer_datasets_names,
                        selected = ""       )
+    # Reset the province 
+    updateAwesomeRadio(getDefaultReactiveDomain(), inputId = "province",label =  "Provincia",
+                       choices = c("Maputo","Gaza"),
+                       selected = ""       )
+                       
     # updatePickerInput(getDefaultReactiveDomain(), "chkbxUsGroup",
     #                   label = "U. Sanitarias: ",
     #                   choices =  list(),
@@ -306,6 +311,7 @@ server <- function(input, output) {
     updateAwesomeCheckbox(getDefaultReactiveDomain(), "chkbxDatim",
                                   value=FALSE
     )
+  
     
   })
   
@@ -343,39 +349,48 @@ server <- function(input, output) {
     vec_sheets <- excel_sheets(path = input$file1$datapath)
     #message(vec_sheets)
     indicator_selected = input$chkbxIndicatorsGroup
-    if(length(indicator_selected)==0){
+    selected_province  = input$province
+    
+    if(length(indicator_selected)==0 || length(selected_province)==0){
+      
+      shinyalert("Aviso", "Selecione os indicadores e a provincia", type = "warning")
       
     } else {
       
       output$instruction <- renderText({ "" })
 
-      #TODO no futuro adicionar os nomes das provincias num ficheiro excell 1Junho
-      # Albazine ,  Hulene, MavalaneCS,MavalaneHG, Pescadores, Romao,1Maio, PCanico
-      # AltMae,CCivil, HCMPed,Malhangalene,Maxaquene,PCimento, Porto, Bagamoio
-      # HPI,Inhagoia,MagoanineA,MTendas, Zimpeto,Inhaca,Catembe, Incassane
-      # ChamanculoCS,ChamanculoHG, JMCS, JMHG,Xipamanine, 
-       us.names <- getUsNameFromSheetNames(vec_sheets)[1]$health_facilities
-       warnings <- getUsNameFromSheetNames(vec_sheets)[1]$warnings
+      # Obter os nomes das US a partir dos sheetnames
+      sheetnames <- getUsNameFromSheetNames(vec_sheets,selected_province )
+       us.names <- sheetnames[1]$health_facilities
+       warnings <- sheetnames[1]$warnings
        
        if ( length(us.names) > 0 ) {
          
          sapply(us.names, print)
          vec_sheet_names <- getSheetNamesFormUSName(us.names , vec_sheets)
-         updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "chkbxUsGroup",
-                                    label = paste("U. Sanitarias:(", length(us.names),")" ),
-                                    choices =  setNames(as.list(vec_sheet_names), us.names),
-                                    selected = NULL )
-         
-
-         
-         shinyjs::hide(id = "btn_upload")
-         shinyjs::hide(id = "chkbxPeriodGroup")
-         # cat(indicator_selected, sep = " | ")
-         shinyjs::show(id = "chkbxUsGroup", animType = "slide" )
-         shinyjs::show(id = "chkbxDatim" )
-
-         if(length(warnings) > 0 ){  for (v in warnings) { shinyalert("Aviso", v , type = "warning") }  } 
-         
+         if(length(us.names) != length(vec_sheet_names)){
+           shinyalert("Aviso", "Deve rever a formatacao dos nomes das US (sheetNames) na Planilha", type = "warning")
+           
+         } else {
+           
+           updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "chkbxUsGroup",
+                                      label = paste("U. Sanitarias:(", length(us.names),")" ),
+                                      choices =  setNames(as.list(vec_sheet_names), us.names),
+                                      selected = NULL )
+           
+           
+           
+           shinyjs::hide(id = "btn_upload")
+           shinyjs::hide(id = "chkbxPeriodGroup")
+           # cat(indicator_selected, sep = " | ")
+           shinyjs::show(id = "chkbxUsGroup", animType = "slide" )
+           shinyjs::show(id = "chkbxDatim" )
+           
+           if(length(warnings) > 0 )
+           { 
+             for (v in warnings) { shinyalert("Aviso", v , type = "warning") }  } 
+           
+         }
          
        } else {
          shinyalert("Aviso", "Nomes das US  nao estao padronizados. Deve corrigir antes de avancar.", type = "warning")
@@ -394,9 +409,9 @@ server <- function(input, output) {
     file_to_import          <- file$datapath
     dataset_name            <- input$dhis_datasets
     ds_name                 <- names(which(vec_temp_dsnames==dataset_name))
-    vec_indicators          <-input$chkbxIndicatorsGroup
-    vec_selected_us         <-  input$chkbxUsGroup
-
+    vec_indicators          <- input$chkbxIndicatorsGroup
+    vec_selected_us         <- input$chkbxUsGroup
+    selected_province       <- input$province
     
     message("File :", file_to_import)
     message("Dataset name: ", ds_name)
@@ -412,7 +427,7 @@ server <- function(input, output) {
     
 
     for (selected_us in vec_selected_us) {
-      list_us<-    getUsNameFromSheetNames(selected_us)
+      list_us<-    getUsNameFromSheetNames(selected_us, selected_province)
       us_name <- list_us$health_facilities
       warnings <-  list_us$warnings
       if(length(warnings)>0){
@@ -505,8 +520,9 @@ server <- function(input, output) {
     vec_selected_us  <- input$chkbxUsGroup
     period           <- input$chkbxPeriodGroup
     submission_date  <- as.character(Sys.Date())
-    # Check IF chckbox DATIM FORM UPLOAD is clicked
-
+    selected_province  = input$province
+    
+    
     is_datim_upload <- input$chkbxDatim
 
     if(is_datim_upload=="TRUE"){
@@ -526,7 +542,7 @@ server <- function(input, output) {
       
       for (selected_us in vec_selected_us) {
         
-        us_name          <- getUsNameFromSheetNames(selected_us)[1]$health_facilities
+        us_name          <- getUsNameFromSheetNames(selected_us, selected_province)[1]$health_facilities
         # us.names <- getUsNameFromSheetNames(vec_sheets)[1]$health_facilities
         # warnings <- getUsNameFromSheetNames(vec_sheets)[1]$warnings
         org_unit         <- us_names_ids_dhis[which(names(us_names_ids_dhis)==us_name )][[1]]

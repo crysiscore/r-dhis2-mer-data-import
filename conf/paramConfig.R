@@ -6,80 +6,81 @@
 wd <- getwd()
 print(wd)
 
+
 # Project Dir
 # Uncomment the following line when deploying on Server
 upload_dir <- paste0(wd,'/datim_uploads')
 
-# 3- DHIS2 DATASET NAMES (DO NOT CHANGE)
-mer_datasets_names            <- c("MER C&T"  = "ct", "MER ATS" = "ats" , "MER SMI" = "smi" , "MER PREVENTION"="prevention",
-                                   "MER HEALTH SYSTEM"="hs","MER ATS COMMUNITY"="ats_community", "NON MER - MDS e Avaliacao de Retencao"="non_mer_mds")
-
-# 4- CCS DHIS2 Datasets IDs (DO NOT CHANGE)
-mer_datasets_ids              <- c("MER C&T"  = "WmHFZdWbzU2", "MER ATS" = "b2a0MuC3lb1" , "MER SMI" = "OQDQqOI7brV" , "MER PREVENTION"="JbLlGyAwQkd", 
-                                   "MER HEALTH SYSTEM"="AAw69FykQil", "MER ATS COMMUNITY"="aWAxctvA9jY", "MER - DATIM FORM"="Z9agMHXo792",
-                                   "NON MER - MDS e Avaliacao de Retencao"="LUsbbPX9hlO")
-
-dataset_id_mer_ct             <- 'WmHFZdWbzU2'
-dataset_id_mer_ats            <- 'b2a0MuC3lb1'
-dataset_id_mer_prevention     <- 'JbLlGyAwQkd'
-dataset_id_mer_smi            <- 'OQDQqOI7brV'
-dataset_id_mer_hs             <- 'AAw69FykQil'
-dataset_id_mer_ats_community  <- 'aWAxctvA9jY'
-dataset_id_mer_datim          <- "Z9agMHXo792"
-dataset_id_non_mer_mds        <- 'LUsbbPX9hlO'
-
-# 5- Reporting Periods   
-vec_reporting_periods <- list( "September 2024" = "202409", "October 2024" ="202410",  "November 2024"="202411" ,"December 2024" = "202412",
-                               "January 2025"= "202501","February 2025" = "202502", "March 2025"  ="202503","April 2025" = "202504",
-                               "May 2025" = "202505","June 2025" =  "202506","July 2025" =  "202507", "August 2025"  =  "202508",
-                               "September 2025" = "202509", "October 2025" ="202510",  "November 2025"="202511" ,"December 2025" = "202512")
+# 3- DHIS2 DATASET NAMES 
+# Read data from excell
+mer_datasets_names <- readxl::read_xlsx(path = paste0(wd,'/conf/paramConfig.xlsx'), sheet = 'mer_datasets_names', col_names = TRUE)
+mer_datasets_names <- setNames(mer_datasets_names$label, mer_datasets_names$name)
 
 
-vec_datim_reporting_periods <- list(
-                                    "January - March 2024 (Q2)"= "2024Q1", "April - June 2024 (Q3)" ="2024Q2",
-                                    "July - September 2024 (Q4)"="2024Q3", "October - December 2024 (Q1)"="2024Q4",
-                                    "January - March 2025 (Q2)"= "2025Q1", "April - June 2025 (Q3)" ="2025Q2",
-                                    "July - September 2025 (Q4)"="2025Q3", "October - December 2025 (Q1)"="2025Q4" )  
+# 4- CCS DHIS2 Datasets IDs
+# Read data from excell
+mer_datasets_ids <- readxl::read_xlsx(path = paste0(wd,'/conf/paramConfig.xlsx'), sheet = 'mer_datasets_ids', col_names = TRUE)
+mer_datasets_ids <- setNames(mer_datasets_ids$id, mer_datasets_ids$name)
+
+
+# 4- CCS DHIS2 Datasets IDs
+tmp_df <- readxl::read_xlsx(path = paste0(wd,'/conf/paramConfig.xlsx'), sheet = 'mer_datasets_id', col_names = TRUE)
+for (i in 1:nrow(tmp_df)){
+  assign(x = tmp_df$name[i], value = tmp_df$id[i], envir = .GlobalEnv)
+}
+
+
+# 5- Reporting Periods
+# Read data from excel
+vec_reporting_periods <- readxl::read_xlsx(path = paste0(wd,'/conf/paramConfig.xlsx'), sheet = 'vec_reporting_periods', col_names = TRUE)
+vec_reporting_periods <- as.list(setNames(as.character(vec_reporting_periods$code), vec_reporting_periods$period))
+
+vec_datim_reporting_periods <- readxl::read_xlsx(path = paste0(wd,'/conf/paramConfig.xlsx'), sheet = 'vec_datim_reporting_periods', col_names = TRUE)
+vec_datim_reporting_periods <- as.list(setNames(as.character(vec_datim_reporting_periods$code), vec_datim_reporting_periods$period))
 
 
 #IP Funding Mechanism ->   https://www.datim.org/api/sqlViews/fgUtV6e9YIX/data.html+css
-funding_mechanism <- 160451  
-#funding_mechanism_uid <-  'VGk8OiHSXM7'  
+funding_mechanism <- readxl::read_xlsx(path = paste0(wd,'/conf/paramConfig.xlsx'), sheet = 'funding_mechanism', col_names = TRUE)
+assign(x = funding_mechanism$name, value = funding_mechanism$code, envir = .GlobalEnv)
 
-# 6- MER TEMPLATES -  Planilhas de mapeamento
-excell_mapping_template_mer_prevention     <- 'MER PREVENTION.xlsx'
-excell_mapping_template_mer_ct             <- 'MER CARE & TREATMENT.xlsx'
-excell_mapping_template_mer_ats            <- 'MER ATS.xlsx'
-excell_mapping_template_mer_smi            <- 'MER SMI.xlsx'
-excell_mapping_template_mer_hs             <- 'MER HEALTH SYSTEM.xlsx' 
-excell_mapping_template_mer_ats_community  <- 'MER ATS COMMUNITY.xlsx' 
-excell_mapping_template_non_mer_mds        <- 'NON MER MAPPING MDS.xlsx'
+# 6- MER TEMPLATES 
+excell_mapping_template <- readxl::read_xlsx(path = paste0(wd,'/conf/paramConfig.xlsx'), sheet = 'excell_mapping_template', col_names = TRUE)
 
-# 7- DF Value templates (DO NOT CHANGE)
-#vec_mer_dataset_valuetemplates_names <- c("datavalueset_template_dhis2_mer_ct","datavalueset_template_dhis2_mer_ats" ,"datavalueset_template_dhis2_mer_prevention",
-#                                         "datavalueset_template_dhis2_mer_smi","datavalueset_template_dhis2_mer_hs","datavalueset_template_dhis2_mer_ats_community")
+for (i in 1:nrow(excell_mapping_template)){
+  assign(x =excell_mapping_template$template_name[i], value = excell_mapping_template$file_name[i], envir = .GlobalEnv)
+}
+
 
 # 8- MER INDICATORS
 # Nomes dos indicadores mapeados em cada planilha excell no ficheiro de  mapeamentos. 
 
-vec_mer_ct_indicators          <- c('DSD TX NEW', 'DSD TX CURR',  'DSD TX RTT', 'DSD TX ML','DSD PMCT ART','DSD TX PVLS','DSD TX TB','DSD TB ART')
-vec_mer_ats_indicators         <- c('DSD HTS TST','DSD HTS INDEX','DSD HTS SELF','DSD TB STAT')
-vec_mer_smi_indicators         <- c('DSD PMTCT STAT','DSD PMTCT EID','DSD PMTCT HEI POS','DSD CXCA SCRN','DSD CXCA TX')
-vec_mer_prevention_indicators  <- c('DSD PREP','DSD TB PREV','DSD GEND GBV', 'DSD FPINT SITE')
-vec_mer_ats_community          <- c('DSD HTS TST COMMUNITY OTHER','DSD HTS INDEX COMMUNITY')
-vec_mer_hs_indicators          <- c('LAB PTCQI', 'PMTCT FO')
-# NON MER INDICATORS
-vec_non_mer_mds                <- c('IM_ER', 'MDS')
+df_tmp <- readxl::read_xlsx(path = paste0(wd,'/conf/paramConfig.xlsx'), sheet = 'vec_mer_indicators', col_names = TRUE)
+for (i in 1:nrow(df_tmp)){
+   # for each value in the column value, extract each separated by comma and assign add to a vector named vec_value
+   vec_value <- unlist(strsplit(df_tmp$value[i], ","))
+   assign(x = df_tmp$name[i], value = vec_value, envir = .GlobalEnv)
+}
 
 
-# 9- Nomes das US (org. units) que aparecem nos sheets gerados automaticamente nos temlates de importacao: J. Mandlate e os respectivos IDs no DHIS
-us_names_ids_dhis    <- list( "1Junho"="FTLV9nOnAFC","Albazine" ="z8g2CUKUMCF","Hulene" = "Ma6u8rJ3faa","MavalaneCS" ="wafWzemVbX4" , "MavalaneHG"="aqka8xA6c7u" ,
-                           "Pescadores" ="XNYN71gD1ps" ,  "Romao" = "cEqnyE9ahXG" , "1Maio"="iv9D81uQSZc", "PCanico"="ehepVdZYP6u", "AltMae"="kt468XD802Y","CCivil"="hTu6J1VOBcZ", 
-                           "HCMPed"="aMaDE2B3W0b","Malhangalene" ="DFudgV3AdHI", "Maxaquene" ="Dz4coB1P1l5","PCimento"="yGhwOKR4gBj","Porto"="DoyPc35A7zI", "Bagamoio"="aywqWn0Qkf8"
-                           ,"HPI" = "QzORjiSM4Yz","Inhagoia"="EysXJHRv7xJ","MagoanineA"="o4HThkC2OEY","MTendas"="oKA7Ub02ze5", "Zimpeto"="KxezVOQ2TVR",
-                           "Inhaca"="GJaIp0bKoXH","Catembe"="RYReGTxpYTF", "Incassane" ="MaU3nWtTalb","ChamanculoCS" ="CtlQF8Vac9k" ,"ChamanculoHG"="g0bRtxKVUVQ","JMCS"="pB4dqFQTJix",
-                           "JMHG" = "yrfeiAhBKeO",  "Xipamanine"="sWChmRhN9eS", "Kamavota"="iOs7EQeuLLG","Kamaxakeni"="AVjKUWRgKBG", "Kampfumu"="PtWKKinaEXb","Kamubukwana"="at6Mv4Zw321",
-                           "Kanyaka"="BFNOLjUjAoG", "Katembe"="CVwHv6utuLy","Nlhamankulu"="c1N79yeN7S2" )  
+# 9- Nomes das US (org. units) que aparecem nos sheets gerados automaticamente nos temlates de importacao: J. Mandlate e os respectivos IDs no DHIS2
+
+maputo_us_names_ids_dhis <- readxl::read_xlsx(path = paste0(wd,'/conf/paramConfig.xlsx'), sheet = 'mpt_us_names_ids_dhis', col_names = TRUE)
+gaza_us_names_ids_dhis   <- readxl::read_xlsx(path = paste0(wd,'/conf/paramConfig.xlsx'), sheet = 'gaza_us_names_ids_dhis ', col_names = TRUE)
+                                            
+maputo_us_names_ids_dhis <- as.list(setNames(maputo_us_names_ids_dhis$code, maputo_us_names_ids_dhis$name))
+gaza_us_names_ids_dhis   <-  as.list(setNames(gaza_us_names_ids_dhis$code, gaza_us_names_ids_dhis$name))
+
+
+# TODO
+#modificar o codigo no server para  reconhecerUS Maputo e Gaza
+
+# us_names_ids_dhis    <- list( "1Junho"="FTLV9nOnAFC","Albazine" ="z8g2CUKUMCF","Hulene" = "Ma6u8rJ3faa","MavalaneCS" ="wafWzemVbX4" , "MavalaneHG"="aqka8xA6c7u" ,
+#                            "Pescadores" ="XNYN71gD1ps" ,  "Romao" = "cEqnyE9ahXG" , "1Maio"="iv9D81uQSZc", "PCanico"="ehepVdZYP6u", "AltMae"="kt468XD802Y","CCivil"="hTu6J1VOBcZ", 
+#                            "HCMPed"="aMaDE2B3W0b","Malhangalene" ="DFudgV3AdHI", "Maxaquene" ="Dz4coB1P1l5","PCimento"="yGhwOKR4gBj","Porto"="DoyPc35A7zI", "Bagamoio"="aywqWn0Qkf8"
+#                            ,"HPI" = "QzORjiSM4Yz","Inhagoia"="EysXJHRv7xJ","MagoanineA"="o4HThkC2OEY","MTendas"="oKA7Ub02ze5", "Zimpeto"="KxezVOQ2TVR",
+#                            "Inhaca"="GJaIp0bKoXH","Catembe"="RYReGTxpYTF", "Incassane" ="MaU3nWtTalb","ChamanculoCS" ="CtlQF8Vac9k" ,"ChamanculoHG"="g0bRtxKVUVQ","JMCS"="pB4dqFQTJix",
+#                            "JMHG" = "yrfeiAhBKeO",  "Xipamanine"="sWChmRhN9eS", "Kamavota"="iOs7EQeuLLG","Kamaxakeni"="AVjKUWRgKBG", "Kampfumu"="PtWKKinaEXb","Kamubukwana"="at6Mv4Zw321",
+#                            "Kanyaka"="BFNOLjUjAoG", "Katembe"="CVwHv6utuLy","Nlhamankulu"="c1N79yeN7S2")  
 
 # 10- Task names - Nomes dos estagios a executar durante os checks
 task_check_consistency_1  <- "Verficar a integridade do ficheiro de importacao"
