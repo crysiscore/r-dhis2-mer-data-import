@@ -514,8 +514,10 @@ apiDatimSendDataValues <- function(json , dhis.conf, us.name){
                  incProgress(1/2, detail = paste("This may take a while..." ))
                  # Post data to DHIS2
                  status <- POST(url = base.url,
-                                body = json, config=authenticate(get("dhis2.username",envir =  .GlobalEnv ,timeout(20000) ) , get("dhis2.password",envir =  .GlobalEnv)),
-                                add_headers("Content-Type"="application/json") )
+                                body = json, 
+                                config=authenticate(get("dhis2.username",envir =  .GlobalEnv  ) , get("dhis2.password",envir =  .GlobalEnv)),
+                                add_headers("Content-Type"="application/json"),
+                                timeout(15))
                  
                  incProgress(1/2, detail = paste("This may take a while..." ))
                  
@@ -690,7 +692,14 @@ getUsNameFromSheetNames <-function(vector, province){
         us_name <- item
         
         # Sample list of us_names
-        my_list <- tolower(names(us_names_ids_dhis))
+        if(province=="Maputo"){
+          # Sample list of us_names
+          my_list <- tolower(names(maputo_us_names_ids_dhis))
+          
+        } else if( province=="Gaza"){
+          my_list <- tolower(names(gaza_us_names_ids_dhis))
+        }
+        
         
         # String to check
         substring_to_check <- us_name
@@ -762,7 +771,14 @@ getUsNameFromSheetNames <-function(vector, province){
             us_name <-  paste0( strsplit(item, "_")[[1]][1], "_", strsplit(item, "_")[[1]][2])
             
             # Sample list of us_names
-            my_list <- tolower(names(us_names_ids_dhis))
+            if(province=="Maputo"){
+              # Sample list of us_names
+              my_list <- tolower(names(maputo_us_names_ids_dhis))
+              
+            } else if( province=="Gaza"){
+              my_list <- tolower(names(gaza_us_names_ids_dhis))
+            }
+            
             
             # String to check
             substring_to_check <- tolower(us_name)
@@ -910,7 +926,7 @@ getDataSetDataElements  <- function(base.url, dataset.id) {
 getDatimDataValueSet    <- function(url.api.dhis.datasets,dataset.id, period, org.unit){
   
   url_datavalues  <-  paste0(url.api.dhis.datasets,'api/33/dataValueSets','.json?', 'dataSet=',dataset.id,'&period=',period,'&orgUnit=',org.unit)
-  http_content    <-  content(GET(url_datavalues, authenticate(dhis2.username, dhis2.password),timeout(6000)),as = "text",type = 'application/json' )
+  http_content    <-  content(GET(url_datavalues, authenticate(dhis2.username, dhis2.password)),as = "text",type = 'application/json' ,timeout(25) )
   df_datavalueset =   fromJSON(http_content) %>% as.data.frame
  
    if(nrow(df_datavalueset) > 1 ){

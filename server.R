@@ -536,28 +536,41 @@ server <- function(input, output) {
        message("Indicators name: ", indicatorsToString(vec_indicators))
        message("Period:          ", period)
        message("Submission date: ", submission_date)
+       message("Selected province: ", selected_province)    
+
+       
+       
       # store us names for sucessfully sent data
       vec_us_dados_enviados <- c()
       counter = 0
       
+      # select the correct us names and ids based on the selected province
+      if(selected_province=="Gaza"){
+        us_names_ids_dhis <- env_get(env = .GlobalEnv, nm =  "gaza_us_names_ids_dhis")
+      } else {
+        us_names_ids_dhis <- env_get(env = .GlobalEnv, nm =  "maputo_us_names_ids_dhis")
+      }
+      
+      
       for (selected_us in vec_selected_us) {
-        
-        us_name          <- getUsNameFromSheetNames(selected_us, selected_province)[1]$health_facilities
-        # us.names <- getUsNameFromSheetNames(vec_sheets)[1]$health_facilities
-        # warnings <- getUsNameFromSheetNames(vec_sheets)[1]$warnings
-        org_unit         <- us_names_ids_dhis[which(names(us_names_ids_dhis)==us_name )][[1]]
 
+        us_name          <- getUsNameFromSheetNames(selected_us, selected_province)[1]$health_facilities
+        
+        org_unit         <- us_names_ids_dhis[which(names(us_names_ids_dhis)==us_name )][[1]]
+        
         message("us_name:          ", us_name)
-        message("selected_us:          ", selected_us)
         message("org_unit:          ", org_unit)
+
+   
         json_data <- merIndicatorsToJson(dataset_id,  submission_date,  period , org_unit, vec_indicators,user.env = user_env  , us_name )
         message(" Converted to json")
         message(json_data)
+        #message("iniciando o upload")
         tryCatch(
           {
             if(is_datim_upload=="TRUE"){
 
-
+              
               status <- apiDatimSendDataValues(json_data ,dhis.conf = env_get(env = user_env , nm = "dhis_conf"),us.name = us_name)
 
               if(as.integer(status$status_code)==200){
@@ -589,8 +602,8 @@ server <- function(input, output) {
 
                 #Indicar a tarefa em execucao: task_check_consistency_1
                 tmp_log_exec_empty$Datetime[1] <- substr(x = Sys.time(),start = 1, stop = 22)
-                tmp_log_exec_empty$US[1] <- us_name
-                tmp_log_exec_empty$Dataset[1] <- ds_name
+
+                                tmp_log_exec_empty$Dataset[1] <- ds_name
                 tmp_log_exec_empty$task[1] <- "Sending Datim data to DHIS2"
                 tmp_log_exec_empty$status[1] <- "ok"
                 tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
@@ -991,6 +1004,7 @@ server <- function(input, output) {
     datim_logs       <- ""
     period           <- input$chkbxDatimPeriodGroup
     message(period)
+    #TODO check selected province
     hf_names         <- env_get(env = .GlobalEnv, nm =  "us_names_ids_dhis") 
     api_dhis_url     <- env_get(env = user_env, nm =  "api_datim_base_url") 
     dataset.id       <- env_get(env = .GlobalEnv, nm =  "dataset_id_mer_datim")
