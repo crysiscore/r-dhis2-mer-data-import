@@ -17,7 +17,7 @@ require(jsonlite)
 #' dhisLogin(dhis2.username = dhis2.username,dhis2.password = dhis2.password,base.url = api_dhis_base_url )
 dhisLogin <- function(dhis2.username, dhis2.password, base.url) {
   url <- paste0(base.url, "api/me")
-  r <- GET(url, authenticate(dhis2.username, dhis2.password),timeout(10))
+  r <- GET(url, authenticate(dhis2.username, dhis2.password),timeout(35))
   if (r$status == 200L) {
     print("Logged in successfully!")
   } else {
@@ -39,7 +39,7 @@ dhisLogin <- function(dhis2.username, dhis2.password, base.url) {
 #' datavalueset_template_dhis2_mer_ct <- getDhis2DatavalueSetTemplate(api_dhis_datasets,dataset_id_mer_ct)
 getDhis2DatavalueSetTemplate <- function(url.api.dhis.datasets,dataset.id){
   url_datavalueset_template <- paste0(url.api.dhis.datasets,dataset.id,'/dataValueSet.json')
-  http_content <-  content(GET(url_datavalueset_template, authenticate(dhis2.username, dhis2.password),timeout(10)),as = "text",type = 'application/json')
+  http_content <-  content(GET(url_datavalueset_template, authenticate(dhis2.username, dhis2.password),timeout(35)),as = "text",type = 'application/json')
   df_dataset_template =    fromJSON(http_content) %>% as.data.frame
   df_dataset_template = df_dataset_template[,c(1,2,4)]
   names(df_dataset_template)[1] <- 'dataElement'
@@ -480,7 +480,7 @@ apiDhisSendDataValues <- function(json , dhis.conf, us.name){
   incProgress(1/2, detail = paste("This may take a while..." ))
   # Post data to DHIS2
   status <- POST(url = base.url,
-                 body = json, config=authenticate(get("dhis2.username",envir =  .GlobalEnv ,timeout(20000) ) , get("dhis2.password",envir =  .GlobalEnv)),
+                 body = json, config=authenticate(get("dhis2.username",envir =  .GlobalEnv ,timeout(50) ) , get("dhis2.password",envir =  .GlobalEnv)),
                  add_headers("Content-Type"="application/json") )
   
   incProgress(1/2, detail = paste("This may take a while..." ))
@@ -517,7 +517,7 @@ apiDatimSendDataValues <- function(json , dhis.conf, us.name){
                                 body = json, 
                                 config=authenticate(get("dhis2.username",envir =  .GlobalEnv  ) , get("dhis2.password",envir =  .GlobalEnv)),
                                 add_headers("Content-Type"="application/json"),
-                                timeout(15))
+                                timeout(35))
                  
                  incProgress(1/2, detail = paste("This may take a while..." ))
                  
@@ -567,8 +567,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
        setwd(tmp_wd)
       if(file.exists(period )){
         setwd(period)
-        # set  wd
-        #TODO save files here
+        # save files here
         for (indicator in vec.indicators) {
           
           #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
@@ -585,8 +584,8 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
         tmp_dir <- paste0(tmp_wd,'/',period )
         dir.create(file.path(tmp_dir))
         setwd(tmp_dir)
-        # set as wd
-        #TODO save files here
+    
+        # save files here
         for (indicator in vec.indicators) {
           
           #tmp_df <- get( paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
@@ -608,8 +607,8 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
       tmp_dir <- paste0(tmp_path,'/',period )           # Then creates period dir inside us dir
       dir.create(file.path(tmp_dir))
       setwd(tmp_dir)
-      #setwd
-      #TODO Save files here
+
+      #save files here
       for (indicator in vec.indicators) {
         
         #tmp_df <- get( paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
@@ -635,7 +634,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
     tmp_dir_period <- paste0(tmp_path_us,'/',period )           # Then creates period dir inside us dir
     dir.create(file.path(tmp_dir_period))
     setwd(tmp_dir_period)
-    # TODO Save files here
+    # Save files here
     for (indicator in vec.indicators) {
       
       #tmp_df <- get( paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), )
@@ -925,10 +924,11 @@ getDataSetDataElements  <- function(base.url, dataset.id) {
 
 getDatimDataValueSet    <- function(url.api.dhis.datasets,dataset.id, period, org.unit){
   
+  # Create the API URL
   url_datavalues  <-  paste0(url.api.dhis.datasets,'api/33/dataValueSets','.json?', 'dataSet=',dataset.id,'&period=',period,'&orgUnit=',org.unit)
-  http_content    <-  content(GET(url_datavalues, authenticate(dhis2.username, dhis2.password)),as = "text",type = 'application/json' ,timeout(25) )
+  http_content    <-  content(GET(url_datavalues, authenticate(dhis2.username, dhis2.password),timeout(45) ),as = "text",type = 'application/json'  )
   df_datavalueset =   fromJSON(http_content) %>% as.data.frame
- 
+    
    if(nrow(df_datavalueset) > 1 ){
      
     df_datavalueset = df_datavalueset[,c(5,3,4,8,9,10)]
@@ -1069,7 +1069,7 @@ getEnrollments <- function(base.url,org.unit, program.id ) {
   url <-    paste0( base.url,paste0("api/tracker/enrollments?orgUnit=", org.unit, "&program=",program.id, "&ouMode=DESCENDANTS", "&skipPaging=TRUE"  )  )
   
   
-  r <- content(GET(url, authenticate(dhis2.username, dhis2.password), timeout(60000)), as = "parsed")
+  r <- content(GET(url, authenticate(dhis2.username, dhis2.password), timeout(35)), as = "parsed")
   
   # criar um df vazio para armazenar os Enrrolments
   df_te <- data.frame(matrix(ncol = 8, nrow =  length(r$instances) ))
@@ -1129,7 +1129,7 @@ getTrackedInstances <- function(base.url, program.id,org.unit) {
         "&skipPaging=TRUE"
       )
     )
-  r <- content(GET(url, authenticate(dhis2.username, dhis2.password),timeout(60000)), as = "parsed")
+  r <- content(GET(url, authenticate(dhis2.username, dhis2.password),timeout(35)), as = "parsed")
   
   # criar um df vazio para armazenar os TE
   df_te <- data.frame(matrix(ncol = 8, nrow =  length(r$instances) ))
@@ -1234,7 +1234,7 @@ getTrackerEvents <- function(base.url,org.unit,program.id, program.stage.id){
     )
   
   # Get the data
-  r2 <- content(GET(url, authenticate(dhis2.username, dhis2.password),timeout(600000)),as = "parsed")
+  r2 <- content(GET(url, authenticate(dhis2.username, dhis2.password),timeout(35)),as = "parsed")
   
   if(typeof(r2)=="list" && length(r2$instances)>0) {
     

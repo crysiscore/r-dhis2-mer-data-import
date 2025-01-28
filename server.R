@@ -173,8 +173,6 @@ server <- function(input, output) {
             output$instruction <- renderText({ "" })
 
             # Mostras os indicadores associados ao dataset
-            # TODO transformar este codigo de modo a fazer verficacao automatica analisando  datasetname e indicatorname 
-            # ex se for ct ->vec_mer_ct_indicator. estes dados devem ser mapeados num ficheiro excell
 
              shinyjs::show(id = "chkbxIndicatorsGroup", animType = "slide" )
             if(dataset=='ct'){
@@ -439,9 +437,7 @@ server <- function(input, output) {
         # verificar se os sheetnames tem os nomes das US 
         showNotification(paste0(us_name, " - Iniciando Processamento"),session = getDefaultReactiveDomain(), duration = 3 ,type =  "message" )
         
-        # TODO antes de inciar checkDataConsistency verficar se os ficheiros necessarios existem nos directorios correctos 
         status <- checkDataConsistency(excell.mapping.template = excell_mapping_template , file.to.import = file_to_import ,dataset.name =ds_name , sheet.name=selected_us, vec.indicators=vec_indicators, user.env = user_env,us.name = us_name,is.datim.upload = is_datim_upload )
-        
         
         if(status=='Integrity error'){
           shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")
@@ -459,7 +455,7 @@ server <- function(input, output) {
           })
           output$instruction <- renderText({ paste0("Erro durante o processamento dos dados: " ,us_name, " Por favor tentar novamente" )})
           break
-          #todo
+     
         }
         else {
           
@@ -492,9 +488,8 @@ server <- function(input, output) {
     
   })
   observeEvent(input$chkbxDatim, {
-     #TODO verificar se e importacao para datim
+     # verificar se e importacao para datim
      is_datim_upload <- input$chkbxDatim
-     message(is_datim_upload)
      if(is_datim_upload=="TRUE"){
        updatePickerInput( getDefaultReactiveDomain(),"chkbxPeriodGroup",
                           choices = vec_datim_reporting_periods )
@@ -537,7 +532,7 @@ server <- function(input, output) {
        message("Period:          ", period)
        message("Submission date: ", submission_date)
        message("Selected province: ", selected_province)    
-
+       message("Selected us: ", vec_selected_us)
        
        
       # store us names for sucessfully sent data
@@ -554,20 +549,17 @@ server <- function(input, output) {
       
       for (selected_us in vec_selected_us) {
 
-        us_name          <- getUsNameFromSheetNames(selected_us, selected_province)[1]$health_facilities
-        
-        org_unit         <- us_names_ids_dhis[which(names(us_names_ids_dhis)==us_name )][[1]]
-        
-        message("us_name:          ", us_name)
-        message("org_unit:          ", org_unit)
 
-   
-        json_data <- merIndicatorsToJson(dataset_id,  submission_date,  period , org_unit, vec_indicators,user.env = user_env  , us_name )
-        message(" Converted to json")
-        message(json_data)
-        #message("iniciando o upload")
         tryCatch(
           {
+            
+            us_name          <- getUsNameFromSheetNames(selected_us, selected_province)[1]$health_facilities
+            org_unit         <- us_names_ids_dhis[which(names(us_names_ids_dhis)==us_name )][[1]]
+            message("us_name:          ", us_name)
+            message("org_unit:          ", org_unit)
+            json_data <- merIndicatorsToJson(dataset_id,  submission_date,  period , org_unit, vec_indicators,user.env = user_env  , us_name )
+            message(json_data)
+            
             if(is_datim_upload=="TRUE"){
 
               
@@ -1003,9 +995,20 @@ server <- function(input, output) {
     submission_date  <- as.character(Sys.Date())
     datim_logs       <- ""
     period           <- input$chkbxDatimPeriodGroup
+    selected_province  = input$datim_reproting_provinces
+    
+    
     message(period)
-    #TODO check selected province
-    hf_names         <- env_get(env = .GlobalEnv, nm =  "us_names_ids_dhis") 
+    # check selected province
+    # select the correct us names and ids based on the selected province
+    if(selected_province=="Gaza"){
+      hf_names <- env_get(env = .GlobalEnv, nm =  "gaza_us_names_ids_dhis")
+    } else {
+      hf_names <- env_get(env = .GlobalEnv, nm =  "maputo_us_names_ids_dhis")
+    }
+    
+    
+
     api_dhis_url     <- env_get(env = user_env, nm =  "api_datim_base_url") 
     dataset.id       <- env_get(env = .GlobalEnv, nm =  "dataset_id_mer_datim")
     df_datim         <- env_get(env = user_env,   nm = "df_datim" )
@@ -1014,16 +1017,24 @@ server <- function(input, output) {
       shinyalert("Info", "Selecione o Periodo!", type = "info")
       
     } else {
-      for (us in hf_names[1:37] ) {
+      for (k in 1:length(hf_names) ) {
         i = 0
-        incProgress(1/(30), detail = paste("Processando  o dataset do : ", getUsName(us) , " " ))
+        us_name <- names(hf_names[k])
+        us_id   <-  hf_names[[k]]
+        incProgress(1/(length(hf_names)), detail = paste("Processando  o dataset do : ", us_name , " " ))
         # print(us[1])
         df <-  tryCatch(
           {
-            getDatimDataValueSet(api_dhis_url,dataset.id, period, us)
+            message("Getting Datavalues from MER DATIM FORM")
+            message("Dataset id: ", dataset.id)
+            message("Period: ", period)
+            message("Org Unit: ", us_id)
+            message("API URL: ", api_dhis_url)
+            
+            getDatimDataValueSet(api_dhis_url,dataset.id, period, us_id)
           },
           error=function(cond) {
-            message(us, "Error - Here's the original error message:")
+            shinyalert(us_name, cond , type = "info")
             message(cond)
             # Choose a return value in case of error
             return(NA)
@@ -1034,18 +1045,12 @@ server <- function(input, output) {
         )
         if(!is.null(df)){
           
-       
-         
           df_datim   <- plyr::rbind.fill(df_datim ,df)
-          #Tests
-          #writexl::write_xlsx(x = df ,path = paste0(paste0(get("wd", envir = .GlobalEnv),'/downloads/','datim_',getUsName(us),'.xlsx')),col_names = TRUE,format_headers = TRUE)
-          #msg        <- paste0(getUsName(us), " - Dados processados com sucesso.", '\n')
-          #datim_logs =  paste(datim_logs, msg, sep = '')
       
         } 
         else {
-          message(getUsName(us), "   - Dataset esta vazio!!!")
-          msg        <- paste0(getUsName(us), " - Nao contem dados neste periodo.", '\n')
+          message(us_name, "   - Dataset esta vazio!!!")
+          msg        <- paste0(us_name, " - Nao contem dados neste periodo.", '\n')
           datim_logs =     paste(datim_logs, msg, sep = '')
         }
         
@@ -1242,7 +1247,7 @@ server <- function(input, output) {
                        df_ats_events_reg_diario   <- df_ats_events_reg_diario[!duplicated(df_ats_events_reg_diario), ]
                        df_ats_events_ligacao  <- df_ats_events_ligacao[!duplicated(df_ats_events_ligacao), ]
                        
-                       #TODO
+                       #
                        # Este dataset e' repetitivo, significa que pode conter mais de um valor para o mesmo dataelement
                        # portanto precisa de tratamento diferente
                        # df_ats_events_cpn      <- df_ats_events_cpn[!duplicated(df_ats_events_cpn), ]

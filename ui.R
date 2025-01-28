@@ -192,6 +192,13 @@ ui <- dashboardPage(
               # Sidebar panel for inputs ----
               sidebarPanel(
                 
+                
+                awesomeRadio("datim_reproting_provinces", "Escolha uma Provincia: ",
+                             choices = c("Maputo","Gaza"),
+                             selected = "",
+                             status = "success"),
+                tags$hr(),
+                
                 pickerInput(
                   inputId = "chkbxDatimPeriodGroup",
                   label = "Periodo de submissao    :     ", 

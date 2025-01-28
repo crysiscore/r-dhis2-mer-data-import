@@ -71,16 +71,6 @@ maputo_us_names_ids_dhis <- as.list(setNames(maputo_us_names_ids_dhis$code, mapu
 gaza_us_names_ids_dhis   <-  as.list(setNames(gaza_us_names_ids_dhis$code, gaza_us_names_ids_dhis$name))
 
 
-# TODO
-#modificar o codigo no server para  reconhecerUS Maputo e Gaza
-
-# us_names_ids_dhis    <- list( "1Junho"="FTLV9nOnAFC","Albazine" ="z8g2CUKUMCF","Hulene" = "Ma6u8rJ3faa","MavalaneCS" ="wafWzemVbX4" , "MavalaneHG"="aqka8xA6c7u" ,
-#                            "Pescadores" ="XNYN71gD1ps" ,  "Romao" = "cEqnyE9ahXG" , "1Maio"="iv9D81uQSZc", "PCanico"="ehepVdZYP6u", "AltMae"="kt468XD802Y","CCivil"="hTu6J1VOBcZ", 
-#                            "HCMPed"="aMaDE2B3W0b","Malhangalene" ="DFudgV3AdHI", "Maxaquene" ="Dz4coB1P1l5","PCimento"="yGhwOKR4gBj","Porto"="DoyPc35A7zI", "Bagamoio"="aywqWn0Qkf8"
-#                            ,"HPI" = "QzORjiSM4Yz","Inhagoia"="EysXJHRv7xJ","MagoanineA"="o4HThkC2OEY","MTendas"="oKA7Ub02ze5", "Zimpeto"="KxezVOQ2TVR",
-#                            "Inhaca"="GJaIp0bKoXH","Catembe"="RYReGTxpYTF", "Incassane" ="MaU3nWtTalb","ChamanculoCS" ="CtlQF8Vac9k" ,"ChamanculoHG"="g0bRtxKVUVQ","JMCS"="pB4dqFQTJix",
-#                            "JMHG" = "yrfeiAhBKeO",  "Xipamanine"="sWChmRhN9eS", "Kamavota"="iOs7EQeuLLG","Kamaxakeni"="AVjKUWRgKBG", "Kampfumu"="PtWKKinaEXb","Kamubukwana"="at6Mv4Zw321",
-#                            "Kanyaka"="BFNOLjUjAoG", "Katembe"="CVwHv6utuLy","Nlhamankulu"="c1N79yeN7S2")  
 
 # 10- Task names - Nomes dos estagios a executar durante os checks
 task_check_consistency_1  <- "Verficar a integridade do ficheiro de importacao"
