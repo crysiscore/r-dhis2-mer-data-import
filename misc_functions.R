@@ -449,8 +449,8 @@ merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, ve
   df_all_indicators <- df_all_indicators[, c("dhisdataelementuid","dhiscategoryoptioncombouid","value")]
   df_all_indicators <- subset(df_all_indicators, !(is.na(value) | value =="")) # remover dataelements sem dados
   names(df_all_indicators)[1] <-  "dataElement"
-  names(df_all_indicators)[2] <- "categoryOptionCombo"
-  names(df_all_indicators)[3] <- "value"
+  names(df_all_indicators)[2] <-  "categoryOptionCombo"
+  names(df_all_indicators)[3] <-  "value"
   
   # converte os valores para json
   json_data_values <- as.character(toJSON(x = df_all_indicators , dataframe = 'rows'))

@@ -996,15 +996,17 @@ server <- function(input, output) {
     datim_logs       <- ""
     period           <- input$chkbxDatimPeriodGroup
     selected_province  = input$datim_reproting_provinces
-    
+    funding_mechanism = ''
     
     message(period)
     # check selected province
     # select the correct us names and ids based on the selected province
     if(selected_province=="Gaza"){
       hf_names <- env_get(env = .GlobalEnv, nm =  "gaza_us_names_ids_dhis")
+      funding_mechanism <-  env_get(env = .GlobalEnv,     nm =  "funding_mechanism_gaza") 
     } else {
       hf_names <- env_get(env = .GlobalEnv, nm =  "maputo_us_names_ids_dhis")
+      funding_mechanism <-  env_get(env = .GlobalEnv,     nm =  "funding_mechanism_maputo") 
     }
     
     
@@ -1059,7 +1061,6 @@ server <- function(input, output) {
         
         output$txt_datim_logs <-  renderText({ HTML(datim_logs)})
         
-        funding_mechanism <-  env_get(env = .GlobalEnv,     nm =  "funding_mechanism") 
         
         #df_datim <- env_get(env = user_env,nm = "df_datim" )
         df_datim$DatimDataElement <- mapply(df_datim$CategoryOptionCombo,df_datim$Dataelement, FUN =  getDhisDataElement)
