@@ -52,6 +52,11 @@ ui <- dashboardPage(
                   
                   tags$hr(),
                   
+                  awesomeRadio("province", "Escolha uma Provincia: ",
+                               choices = c("Maputo","Gaza"),
+                               selected = "",
+                               status = "success"),
+                  tags$hr(),
                   # Input: Select separator ----
                   awesomeRadio("dhis_datasets", "DHIS2 Datasets",
                                choices = mer_datasets_names,
@@ -116,7 +121,7 @@ ui <- dashboardPage(
                  
                   # Submit buttons
                   # UI function
-                  actionButtonStyled(inputId="btn_reset", label="Reset fields   ",
+                  actionButtonStyled(inputId="btn_reset", label="Limpar Campos   ",
                                      btn_type = "button", type = "default", class = "btn-sm"),
                   actionButtonStyled(inputId="btn_checks_before_upload", label="Run Checks",
                                      btn_type = "button", type = "warning", class = "btn-sm"),
@@ -186,6 +191,13 @@ ui <- dashboardPage(
               sidebarLayout(
               # Sidebar panel for inputs ----
               sidebarPanel(
+                
+                
+                awesomeRadio("datim_reproting_provinces", "Escolha uma Provincia: ",
+                             choices = c("Maputo","Gaza"),
+                             selected = "",
+                             status = "success"),
+                tags$hr(),
                 
                 pickerInput(
                   inputId = "chkbxDatimPeriodGroup",

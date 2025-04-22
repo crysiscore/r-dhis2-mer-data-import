@@ -99,7 +99,7 @@ source('../conf/credentials.R')
 # NOT RUN ( Ja foi adicionado)
  datavalueset_template_dhis2_datim         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_datim)
 # NOT RUN ( Ja foi adicionado)
- save(datavalueset_template_dhis2_datim, file =  paste0(working_dir, '/dataset_templates/dataset_templates.RDATA'))
+save(datavalueset_template_dhis2_datim, file =  paste0(working_dir, '/dataset_templates/dataset_templates.RDATA'))
 
  ##############################################################################################################
  # template_dhis_ccs_forms
@@ -136,6 +136,86 @@ save(datavalueset_template_dhis2_ccs_forms, file =  paste0(working_dir, '/datase
 
 # 4 - NEW ORG UNITS
 # If  orgunits are changed then re-generate the template
-#df_ccs_data_exchange_orgunits <- readxl::read_xlsx(path = paste0(working_dir, '/mapping/CCS DATA EXCHANGE ORG UNITS.xlsx' ,col_names = TRUE))
-#save(df_ccs_data_exchange_orgunits , file = paste0(working_dir, '/dataset_templates/ccsDataExchangeOrgUnits.RData'))
- 
+#df_ccs_data_exchange_orgunits <- readxl::read_xlsx(path = paste0(working_dir, '/mapping/CCS DATA EXCHANGE ORG UNITS.xlsx'), col_names = TRUE)  DEPRICATED
+df_ccs_data_exchange_orgunits <- readxl::read_xlsx(path = paste0(working_dir,'/conf/paramConfig.xlsx'), sheet = 'ccs_datim_exchange_orgunits', col_names = TRUE)
+save(df_ccs_data_exchange_orgunits , file = paste0(working_dir, '/dataset_templates/ccsDataExchangeOrgUnits.RData'))
+#writexl::write_xlsx(x = df_ccs_data_exchange_orgunits, path = paste0(working_dir, '/mapping/CCS DATA EXCHANGE ORG UNITS.xlsx'))
+ ##############################################################################################################################################
+
+##
+base.url <- 'https://mail.ccsaude.org.mz:5459/'
+gaza_location_id <- "rtVqizS7g8s"
+df_gaza_orgunits <- getOrganizationUnits(base.url = base.url, location_id =gaza_location_id)
+working_dir <-getwd()
+xls_fle <- readxl::read_xlsx(path = paste0(working_dir, '/data/Datim/datim/Gaza/02 - CT DHIS Import v1.3 M2.7_Gaza.xlsx') ,col_names = TRUE)# get sheet names 
+
+# Get swork sheet names
+work_sheet_names  <- sort(readxl::excel_sheets(path = paste0(working_dir, '/data/Datim/datim/Gaza/02 - CT DHIS Import v1.3 M2.7_Gaza.xlsx')))
+
+work_sheet_names <- as.data.frame(work_sheet_names)
+work_sheet_names$id <- ""
+
+
+# Remove 'CS' from all names in df_gaza_orgunits$name
+
+remove_substring <- function(text) {
+  substring <- "CS"
+  trimws( gsub(pattern = substring,replacement =  "", x = text, ignore.case = TRUE) )
+}
+
+# Apply the function to the 'names' column using vapply
+df_gaza_orgunits$shortName <- as.character(df_gaza_orgunits$name %>% lapply(remove_substring))
+
+
+# Remove the suffix from the names
+work_sheet_names$work_sheet_names <- gsub("_\\d+$", "", work_sheet_names$work_sheet_names )
+work_sheet_names$work_sheet_names <- as.character(work_sheet_names$work_sheet_names %>% lapply(remove_substring))
+
+
+# Install stringdist if not already installed
+if (!require(stringdist)) {
+  install.packages("stringdist")
+  library(stringdist)
+}
+
+# Create a result dataframe for storing matches
+results <- data.frame(
+  work_sheet_name = work_sheet_names$work_sheet_names,
+  matched_id = "",
+  matched_name = "",
+  distance = ""
+)
+
+# Iterate through each name in work_sheet_names
+for (i in seq_along(work_sheet_names$work_sheet_names)) {
+  # Calculate string distances to all shortName values in df_gaza_orgunits
+  distances <- stringdist(work_sheet_names$work_sheet_names[i], df_gaza_orgunits$shortName, method = "jw")
+  
+  # Find the index of the closest match
+  best_match_index <- which.min(distances)
+  
+  # Get the best match's id, name, and distance
+  results$matched_id[i] <- df_gaza_orgunits$id[best_match_index]
+  results$matched_name[i] <- df_gaza_orgunits$shortName[best_match_index]
+  results$distance[i] <- distances[best_match_index]
+}
+
+# View the results
+print(results)
+
+
+library(openxlsx)
+
+workbook <- loadWorkbook(file = 'data/Datim/datim/Gaza/03- ATS DHIS Import v1_Gaza.xlsx')
+vector <- sapply(vector, function(x) {
+  x <- paste0("MER_ATS_", x)
+  x
+})
+
+
+for(i in 1:length(us.names)){
+  
+  if(length(vec_sheets[which(grepl(pattern = us.names[i],x = vec_sheets)==TRUE)])>1 ){
+    print(vec_sheets[which(grepl(pattern = us.names[i],x = vec_sheets)==TRUE)])
+  }
+}

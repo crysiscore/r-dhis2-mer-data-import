@@ -17,7 +17,7 @@ require(jsonlite)
 #' dhisLogin(dhis2.username = dhis2.username,dhis2.password = dhis2.password,base.url = api_dhis_base_url )
 dhisLogin <- function(dhis2.username, dhis2.password, base.url) {
   url <- paste0(base.url, "api/me")
-  r <- GET(url, authenticate(dhis2.username, dhis2.password),timeout(10))
+  r <- GET(url, authenticate(dhis2.username, dhis2.password),timeout(35))
   if (r$status == 200L) {
     print("Logged in successfully!")
   } else {
@@ -39,7 +39,7 @@ dhisLogin <- function(dhis2.username, dhis2.password, base.url) {
 #' datavalueset_template_dhis2_mer_ct <- getDhis2DatavalueSetTemplate(api_dhis_datasets,dataset_id_mer_ct)
 getDhis2DatavalueSetTemplate <- function(url.api.dhis.datasets,dataset.id){
   url_datavalueset_template <- paste0(url.api.dhis.datasets,dataset.id,'/dataValueSet.json')
-  http_content <-  content(GET(url_datavalueset_template, authenticate(dhis2.username, dhis2.password),timeout(10)),as = "text",type = 'application/json')
+  http_content <-  content(GET(url_datavalueset_template, authenticate(dhis2.username, dhis2.password),timeout(35)),as = "text",type = 'application/json')
   df_dataset_template =    fromJSON(http_content) %>% as.data.frame
   df_dataset_template = df_dataset_template[,c(1,2,4)]
   names(df_dataset_template)[1] <- 'dataElement'
@@ -449,8 +449,8 @@ merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, ve
   df_all_indicators <- df_all_indicators[, c("dhisdataelementuid","dhiscategoryoptioncombouid","value")]
   df_all_indicators <- subset(df_all_indicators, !(is.na(value) | value =="")) # remover dataelements sem dados
   names(df_all_indicators)[1] <-  "dataElement"
-  names(df_all_indicators)[2] <- "categoryOptionCombo"
-  names(df_all_indicators)[3] <- "value"
+  names(df_all_indicators)[2] <-  "categoryOptionCombo"
+  names(df_all_indicators)[3] <-  "value"
   
   # converte os valores para json
   json_data_values <- as.character(toJSON(x = df_all_indicators , dataframe = 'rows'))
@@ -480,7 +480,7 @@ apiDhisSendDataValues <- function(json , dhis.conf, us.name){
   incProgress(1/2, detail = paste("This may take a while..." ))
   # Post data to DHIS2
   status <- POST(url = base.url,
-                 body = json, config=authenticate(get("dhis2.username",envir =  .GlobalEnv ,timeout(20000) ) , get("dhis2.password",envir =  .GlobalEnv)),
+                 body = json, config=authenticate(get("dhis2.username",envir =  .GlobalEnv ,timeout(50) ) , get("dhis2.password",envir =  .GlobalEnv)),
                  add_headers("Content-Type"="application/json") )
   
   incProgress(1/2, detail = paste("This may take a while..." ))
@@ -514,8 +514,10 @@ apiDatimSendDataValues <- function(json , dhis.conf, us.name){
                  incProgress(1/2, detail = paste("This may take a while..." ))
                  # Post data to DHIS2
                  status <- POST(url = base.url,
-                                body = json, config=authenticate(get("dhis2.username",envir =  .GlobalEnv ,timeout(20000) ) , get("dhis2.password",envir =  .GlobalEnv)),
-                                add_headers("Content-Type"="application/json") )
+                                body = json, 
+                                config=authenticate(get("dhis2.username",envir =  .GlobalEnv  ) , get("dhis2.password",envir =  .GlobalEnv)),
+                                add_headers("Content-Type"="application/json"),
+                                timeout(35))
                  
                  incProgress(1/2, detail = paste("This may take a while..." ))
                  
@@ -565,8 +567,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
        setwd(tmp_wd)
       if(file.exists(period )){
         setwd(period)
-        # set  wd
-        #TODO save files here
+        # save files here
         for (indicator in vec.indicators) {
           
           #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
@@ -583,8 +584,8 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
         tmp_dir <- paste0(tmp_wd,'/',period )
         dir.create(file.path(tmp_dir))
         setwd(tmp_dir)
-        # set as wd
-        #TODO save files here
+    
+        # save files here
         for (indicator in vec.indicators) {
           
           #tmp_df <- get( paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
@@ -606,8 +607,8 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
       tmp_dir <- paste0(tmp_path,'/',period )           # Then creates period dir inside us dir
       dir.create(file.path(tmp_dir))
       setwd(tmp_dir)
-      #setwd
-      #TODO Save files here
+
+      #save files here
       for (indicator in vec.indicators) {
         
         #tmp_df <- get( paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
@@ -633,7 +634,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
     tmp_dir_period <- paste0(tmp_path_us,'/',period )           # Then creates period dir inside us dir
     dir.create(file.path(tmp_dir_period))
     setwd(tmp_dir_period)
-    # TODO Save files here
+    # Save files here
     for (indicator in vec.indicators) {
       
       #tmp_df <- get( paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), )
@@ -653,15 +654,26 @@ getSheetNamesFormUSName <- function(vec.us.names, vec.sheet.names){
   vec_sheetnames <- c()
   tmp_vec_sheetnames <- vec.sheet.names
   for (item in vec.us.names) {
-       sheet <- tmp_vec_sheetnames[which(grepl(pattern = item,x = tmp_vec_sheetnames,ignore.case = TRUE))]
-       vec_sheetnames <- c(vec_sheetnames, sheet)
+    
+    if(item == "Hokwe"){
+      sheet <- tmp_vec_sheetnames[which(grepl(pattern = "_Hokwe",x = tmp_vec_sheetnames,ignore.case = TRUE))]
+    }else if(item == "Cumba"){
+      
+      sheet <- tmp_vec_sheetnames[which(grepl(pattern = "_Cumba",x = tmp_vec_sheetnames,ignore.case = TRUE))]
+    }
+    else {
+      sheet <- tmp_vec_sheetnames[which(grepl(pattern = item,x = tmp_vec_sheetnames,ignore.case = TRUE))]
+      
+    }
+    
+    vec_sheetnames <- c(vec_sheetnames, sheet)
   }
   vec_sheetnames
   
 }
   
   
-getUsNameFromSheetNames <-function(vector){
+getUsNameFromSheetNames <-function(vector, province){
   
   list_us_names <- list()
   vec_warnings <- c()
@@ -679,7 +691,14 @@ getUsNameFromSheetNames <-function(vector){
         us_name <- item
         
         # Sample list of us_names
-        my_list <- tolower(names(us_names_ids_dhis))
+        if(province=="Maputo"){
+          # Sample list of us_names
+          my_list <- tolower(names(maputo_us_names_ids_dhis))
+          
+        } else if( province=="Gaza"){
+          my_list <- tolower(names(gaza_us_names_ids_dhis))
+        }
+        
         
         # String to check
         substring_to_check <- us_name
@@ -697,17 +716,68 @@ getUsNameFromSheetNames <-function(vector){
         }
         
         
-      } 
-      else if(dash_count==3){
+      }
+      if(dash_count==1){
         
-        if(!is.na(strsplit(item, "_")[[1]][3])){ # Ingore NA empty sheet names
-          if(strsplit(item, "_")[[1]][3] != "Provincia"){
+        if(!is.na(strsplit(item, "_")[[1]][1])){ # Ingore NA empty sheet names
+          if(strsplit(item, "_")[[1]][1] != "Provincia"){
+            
+            us_name <- strsplit(item, "_")[[1]][1]
+            
+            
+            if(province=="Maputo"){
+              # Sample list of us_names
+              my_list <- tolower(names(maputo_us_names_ids_dhis))
+              
+            } else if( province=="Gaza"){
+              my_list <- tolower(names(gaza_us_names_ids_dhis))
+            }
 
             
-            us_name <- strsplit(item, "_")[[1]][3]
+            
+            # String to check
+            substring_to_check <- tolower(us_name)
+            
+            # Use lapply with %in% to check if the substring occurs in each element of the list
+            substring_present <- unlist(lapply(my_list, function(x) substring_to_check %in% x))
+            
+            # Check if the substring is present in any element of the list
+            if (any(substring_present)) {
+              temp_vec <- c(temp_vec, us_name)
+              list_us_names$health_facilities <- temp_vec
+              
+            } else {
+              vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+              #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+              list_us_names$warnings <- vec_warnings
+              
+            }
+            
+          }
+        }
+        else {
+          vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+          #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+          list_us_names$warnings <- vec_warnings
+        }
+        
+      }
+      else if(dash_count==2){
+        
+        if(!is.na(strsplit(item, "_")[[1]][2])){ # Ingore NA empty sheet names
+          if(strsplit(item, "_")[[1]][2] != "Provincia"){
+            
+            us_name <-  paste0( strsplit(item, "_")[[1]][1], "_", strsplit(item, "_")[[1]][2])
             
             # Sample list of us_names
-            my_list <- tolower(names(us_names_ids_dhis))
+            if(province=="Maputo"){
+              # Sample list of us_names
+              my_list <- tolower(names(maputo_us_names_ids_dhis))
+              
+            } else if( province=="Gaza"){
+              my_list <- tolower(names(gaza_us_names_ids_dhis))
+            }
+            
             
             # String to check
             substring_to_check <- tolower(us_name)
@@ -725,7 +795,91 @@ getUsNameFromSheetNames <-function(vector){
               list_us_names$warnings <- vec_warnings
             }
             
-
+          }
+        }
+        else {
+          vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+          #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+          list_us_names$warnings <- vec_warnings
+        }
+      }   
+      else if(dash_count==3){
+        
+        if(!is.na(strsplit(item, "_")[[1]][3])){ # Ingore NA empty sheet names
+          if(strsplit(item, "_")[[1]][3] != "Provincia"){
+            
+            us_name <- strsplit(item, "_")[[1]][3]
+            
+            # Sample list of us_names
+            
+            if(province=="Maputo"){
+              # Sample list of us_names
+              my_list <- tolower(names(maputo_us_names_ids_dhis))
+              
+            } else if( province=="Gaza"){
+              my_list <- tolower(names(gaza_us_names_ids_dhis))
+            }
+            
+            
+            # String to check
+            substring_to_check <- tolower(us_name)
+            
+            # Use lapply with %in% to check if the substring occurs in each element of the list
+            substring_present <- unlist(lapply(my_list, function(x) substring_to_check %in% x))
+            
+            # Check if the substring is present in any element of the list
+            if (any(substring_present)) {
+              temp_vec <- c(temp_vec, us_name)
+              list_us_names$health_facilities <- temp_vec
+              
+            } else {
+              vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+              #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+              list_us_names$warnings <- vec_warnings
+              
+            }
+            
+          }
+        } else {
+          vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+          #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+          list_us_names$warnings <- vec_warnings
+        }
+      } 
+      else if(dash_count==4){
+        
+        if(!is.na(strsplit(item, "_")[[1]][4])){ # Ingore NA empty sheet names
+          if(strsplit(item, "_")[[1]][4] != "Provincia"){
+            
+            us_name <-  paste0( strsplit(item, "_")[[1]][3], "_", strsplit(item, "_")[[1]][4])
+            
+            # Sample list of us_names
+           
+            if(province=="Maputo"){
+              # Sample list of us_names
+              my_list <- tolower(names(maputo_us_names_ids_dhis))
+              
+            } else if( province=="Gaza"){
+              my_list <- tolower(names(gaza_us_names_ids_dhis))
+            }
+            
+            # String to check
+            substring_to_check <- tolower(us_name)
+            
+            # Use lapply with %in% to check if the substring occurs in each element of the list
+            substring_present <- unlist(lapply(my_list, function(x) substring_to_check %in% x))
+            
+            # Check if the substring is present in any element of the list
+            if (any(substring_present)) {
+              temp_vec <- c(temp_vec, us_name)
+              list_us_names$health_facilities <- temp_vec
+              
+            } else {
+              vec_warnings <- c(vec_warnings,paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter))
+              #shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
+              list_us_names$warnings <- vec_warnings
+              
+            }
             
           }
         }
@@ -740,12 +894,7 @@ getUsNameFromSheetNames <-function(vector){
        # shinyalert("Aviso",paste0(item, " nao consta no nome das US parametrizadas. posicao do sheet:  ",counter), type = "warning")
         list_us_names$warnings <- vec_warnings
       }
-      
-
-      
     }
-
-
   }
   list_us_names
 }
@@ -775,10 +924,11 @@ getDataSetDataElements  <- function(base.url, dataset.id) {
 
 getDatimDataValueSet    <- function(url.api.dhis.datasets,dataset.id, period, org.unit){
   
+  # Create the API URL
   url_datavalues  <-  paste0(url.api.dhis.datasets,'api/33/dataValueSets','.json?', 'dataSet=',dataset.id,'&period=',period,'&orgUnit=',org.unit)
-  http_content    <-  content(GET(url_datavalues, authenticate(dhis2.username, dhis2.password),timeout(6000)),as = "text",type = 'application/json' )
+  http_content    <-  content(GET(url_datavalues, authenticate(dhis2.username, dhis2.password),timeout(45) ),as = "text",type = 'application/json'  )
   df_datavalueset =   fromJSON(http_content) %>% as.data.frame
- 
+    
    if(nrow(df_datavalueset) > 1 ){
      
     df_datavalueset = df_datavalueset[,c(5,3,4,8,9,10)]
@@ -919,7 +1069,7 @@ getEnrollments <- function(base.url,org.unit, program.id ) {
   url <-    paste0( base.url,paste0("api/tracker/enrollments?orgUnit=", org.unit, "&program=",program.id, "&ouMode=DESCENDANTS", "&skipPaging=TRUE"  )  )
   
   
-  r <- content(GET(url, authenticate(dhis2.username, dhis2.password), timeout(60000)), as = "parsed")
+  r <- content(GET(url, authenticate(dhis2.username, dhis2.password), timeout(35)), as = "parsed")
   
   # criar um df vazio para armazenar os Enrrolments
   df_te <- data.frame(matrix(ncol = 8, nrow =  length(r$instances) ))
@@ -979,7 +1129,7 @@ getTrackedInstances <- function(base.url, program.id,org.unit) {
         "&skipPaging=TRUE"
       )
     )
-  r <- content(GET(url, authenticate(dhis2.username, dhis2.password),timeout(60000)), as = "parsed")
+  r <- content(GET(url, authenticate(dhis2.username, dhis2.password),timeout(35)), as = "parsed")
   
   # criar um df vazio para armazenar os TE
   df_te <- data.frame(matrix(ncol = 8, nrow =  length(r$instances) ))
@@ -1084,7 +1234,7 @@ getTrackerEvents <- function(base.url,org.unit,program.id, program.stage.id){
     )
   
   # Get the data
-  r2 <- content(GET(url, authenticate(dhis2.username, dhis2.password),timeout(600000)),as = "parsed")
+  r2 <- content(GET(url, authenticate(dhis2.username, dhis2.password),timeout(35)),as = "parsed")
   
   if(typeof(r2)=="list" && length(r2$instances)>0) {
     

@@ -173,8 +173,6 @@ server <- function(input, output) {
             output$instruction <- renderText({ "" })
 
             # Mostras os indicadores associados ao dataset
-            # TODO transformar este codigo de modo a fazer verficacao automatica analisando  datasetname e indicatorname 
-            # ex se for ct ->vec_mer_ct_indicator. estes dados devem ser mapeados num ficheiro excell
 
              shinyjs::show(id = "chkbxIndicatorsGroup", animType = "slide" )
             if(dataset=='ct'){
@@ -269,6 +267,11 @@ server <- function(input, output) {
     updateAwesomeRadio(getDefaultReactiveDomain(), inputId = "dhis_datasets",label =  "DHIS2 Datasets",
                        choices = mer_datasets_names,
                        selected = ""       )
+    # Reset the province 
+    updateAwesomeRadio(getDefaultReactiveDomain(), inputId = "province",label =  "Provincia",
+                       choices = c("Maputo","Gaza"),
+                       selected = ""       )
+                       
     # updatePickerInput(getDefaultReactiveDomain(), "chkbxUsGroup",
     #                   label = "U. Sanitarias: ",
     #                   choices =  list(),
@@ -306,6 +309,7 @@ server <- function(input, output) {
     updateAwesomeCheckbox(getDefaultReactiveDomain(), "chkbxDatim",
                                   value=FALSE
     )
+  
     
   })
   
@@ -343,39 +347,48 @@ server <- function(input, output) {
     vec_sheets <- excel_sheets(path = input$file1$datapath)
     #message(vec_sheets)
     indicator_selected = input$chkbxIndicatorsGroup
-    if(length(indicator_selected)==0){
+    selected_province  = input$province
+    
+    if(length(indicator_selected)==0 || length(selected_province)==0){
+      
+      shinyalert("Aviso", "Selecione os indicadores e a provincia", type = "warning")
       
     } else {
       
       output$instruction <- renderText({ "" })
 
-      #TODO no futuro adicionar os nomes das provincias num ficheiro excell 1Junho
-      # Albazine ,  Hulene, MavalaneCS,MavalaneHG, Pescadores, Romao,1Maio, PCanico
-      # AltMae,CCivil, HCMPed,Malhangalene,Maxaquene,PCimento, Porto, Bagamoio
-      # HPI,Inhagoia,MagoanineA,MTendas, Zimpeto,Inhaca,Catembe, Incassane
-      # ChamanculoCS,ChamanculoHG, JMCS, JMHG,Xipamanine, 
-       us.names <- getUsNameFromSheetNames(vec_sheets)[1]$health_facilities
-       warnings <- getUsNameFromSheetNames(vec_sheets)[1]$warnings
+      # Obter os nomes das US a partir dos sheetnames
+      sheetnames <- getUsNameFromSheetNames(vec_sheets,selected_province )
+       us.names <- sheetnames[1]$health_facilities
+       warnings <- sheetnames[1]$warnings
        
        if ( length(us.names) > 0 ) {
          
          sapply(us.names, print)
          vec_sheet_names <- getSheetNamesFormUSName(us.names , vec_sheets)
-         updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "chkbxUsGroup",
-                                    label = paste("U. Sanitarias:(", length(us.names),")" ),
-                                    choices =  setNames(as.list(vec_sheet_names), us.names),
-                                    selected = NULL )
-         
-
-         
-         shinyjs::hide(id = "btn_upload")
-         shinyjs::hide(id = "chkbxPeriodGroup")
-         # cat(indicator_selected, sep = " | ")
-         shinyjs::show(id = "chkbxUsGroup", animType = "slide" )
-         shinyjs::show(id = "chkbxDatim" )
-
-         if(length(warnings) > 0 ){  for (v in warnings) { shinyalert("Aviso", v , type = "warning") }  } 
-         
+         if(length(us.names) != length(vec_sheet_names)){
+           shinyalert("Aviso", "Deve rever a formatacao dos nomes das US (sheetNames) na Planilha", type = "warning")
+           
+         } else {
+           
+           updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "chkbxUsGroup",
+                                      label = paste("U. Sanitarias:(", length(us.names),")" ),
+                                      choices =  setNames(as.list(vec_sheet_names), us.names),
+                                      selected = NULL )
+           
+           
+           
+           shinyjs::hide(id = "btn_upload")
+           shinyjs::hide(id = "chkbxPeriodGroup")
+           # cat(indicator_selected, sep = " | ")
+           shinyjs::show(id = "chkbxUsGroup", animType = "slide" )
+           shinyjs::show(id = "chkbxDatim" )
+           
+           if(length(warnings) > 0 )
+           { 
+             for (v in warnings) { shinyalert("Aviso", v , type = "warning") }  } 
+           
+         }
          
        } else {
          shinyalert("Aviso", "Nomes das US  nao estao padronizados. Deve corrigir antes de avancar.", type = "warning")
@@ -394,9 +407,9 @@ server <- function(input, output) {
     file_to_import          <- file$datapath
     dataset_name            <- input$dhis_datasets
     ds_name                 <- names(which(vec_temp_dsnames==dataset_name))
-    vec_indicators          <-input$chkbxIndicatorsGroup
-    vec_selected_us         <-  input$chkbxUsGroup
-
+    vec_indicators          <- input$chkbxIndicatorsGroup
+    vec_selected_us         <- input$chkbxUsGroup
+    selected_province       <- input$province
     
     message("File :", file_to_import)
     message("Dataset name: ", ds_name)
@@ -412,7 +425,7 @@ server <- function(input, output) {
     
 
     for (selected_us in vec_selected_us) {
-      list_us<-    getUsNameFromSheetNames(selected_us)
+      list_us<-    getUsNameFromSheetNames(selected_us, selected_province)
       us_name <- list_us$health_facilities
       warnings <-  list_us$warnings
       if(length(warnings)>0){
@@ -424,9 +437,7 @@ server <- function(input, output) {
         # verificar se os sheetnames tem os nomes das US 
         showNotification(paste0(us_name, " - Iniciando Processamento"),session = getDefaultReactiveDomain(), duration = 3 ,type =  "message" )
         
-        # TODO antes de inciar checkDataConsistency verficar se os ficheiros necessarios existem nos directorios correctos 
         status <- checkDataConsistency(excell.mapping.template = excell_mapping_template , file.to.import = file_to_import ,dataset.name =ds_name , sheet.name=selected_us, vec.indicators=vec_indicators, user.env = user_env,us.name = us_name,is.datim.upload = is_datim_upload )
-        
         
         if(status=='Integrity error'){
           shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")
@@ -444,7 +455,7 @@ server <- function(input, output) {
           })
           output$instruction <- renderText({ paste0("Erro durante o processamento dos dados: " ,us_name, " Por favor tentar novamente" )})
           break
-          #todo
+     
         }
         else {
           
@@ -477,9 +488,8 @@ server <- function(input, output) {
     
   })
   observeEvent(input$chkbxDatim, {
-     #TODO verificar se e importacao para datim
+     # verificar se e importacao para datim
      is_datim_upload <- input$chkbxDatim
-     message(is_datim_upload)
      if(is_datim_upload=="TRUE"){
        updatePickerInput( getDefaultReactiveDomain(),"chkbxPeriodGroup",
                           choices = vec_datim_reporting_periods )
@@ -505,8 +515,9 @@ server <- function(input, output) {
     vec_selected_us  <- input$chkbxUsGroup
     period           <- input$chkbxPeriodGroup
     submission_date  <- as.character(Sys.Date())
-    # Check IF chckbox DATIM FORM UPLOAD is clicked
-
+    selected_province  = input$province
+    
+    
     is_datim_upload <- input$chkbxDatim
 
     if(is_datim_upload=="TRUE"){
@@ -520,28 +531,38 @@ server <- function(input, output) {
        message("Indicators name: ", indicatorsToString(vec_indicators))
        message("Period:          ", period)
        message("Submission date: ", submission_date)
+       message("Selected province: ", selected_province)    
+       message("Selected us: ", vec_selected_us)
+       
+       
       # store us names for sucessfully sent data
       vec_us_dados_enviados <- c()
       counter = 0
       
+      # select the correct us names and ids based on the selected province
+      if(selected_province=="Gaza"){
+        us_names_ids_dhis <- env_get(env = .GlobalEnv, nm =  "gaza_us_names_ids_dhis")
+      } else {
+        us_names_ids_dhis <- env_get(env = .GlobalEnv, nm =  "maputo_us_names_ids_dhis")
+      }
+      
+      
       for (selected_us in vec_selected_us) {
-        
-        us_name          <- getUsNameFromSheetNames(selected_us)[1]$health_facilities
-        # us.names <- getUsNameFromSheetNames(vec_sheets)[1]$health_facilities
-        # warnings <- getUsNameFromSheetNames(vec_sheets)[1]$warnings
-        org_unit         <- us_names_ids_dhis[which(names(us_names_ids_dhis)==us_name )][[1]]
 
-        message("us_name:          ", us_name)
-        message("selected_us:          ", selected_us)
-        message("org_unit:          ", org_unit)
-        json_data <- merIndicatorsToJson(dataset_id,  submission_date,  period , org_unit, vec_indicators,user.env = user_env  , us_name )
-        message(" Converted to json")
-        message(json_data)
+
         tryCatch(
           {
+            
+            us_name          <- getUsNameFromSheetNames(selected_us, selected_province)[1]$health_facilities
+            org_unit         <- us_names_ids_dhis[which(names(us_names_ids_dhis)==us_name )][[1]]
+            message("us_name:          ", us_name)
+            message("org_unit:          ", org_unit)
+            json_data <- merIndicatorsToJson(dataset_id,  submission_date,  period , org_unit, vec_indicators,user.env = user_env  , us_name )
+            message(json_data)
+            
             if(is_datim_upload=="TRUE"){
 
-
+              
               status <- apiDatimSendDataValues(json_data ,dhis.conf = env_get(env = user_env , nm = "dhis_conf"),us.name = us_name)
 
               if(as.integer(status$status_code)==200){
@@ -573,8 +594,8 @@ server <- function(input, output) {
 
                 #Indicar a tarefa em execucao: task_check_consistency_1
                 tmp_log_exec_empty$Datetime[1] <- substr(x = Sys.time(),start = 1, stop = 22)
-                tmp_log_exec_empty$US[1] <- us_name
-                tmp_log_exec_empty$Dataset[1] <- ds_name
+
+                                tmp_log_exec_empty$Dataset[1] <- ds_name
                 tmp_log_exec_empty$task[1] <- "Sending Datim data to DHIS2"
                 tmp_log_exec_empty$status[1] <- "ok"
                 tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
@@ -974,8 +995,22 @@ server <- function(input, output) {
     submission_date  <- as.character(Sys.Date())
     datim_logs       <- ""
     period           <- input$chkbxDatimPeriodGroup
+    selected_province  = input$datim_reproting_provinces
+    funding_mechanism = ''
+    
     message(period)
-    hf_names         <- env_get(env = .GlobalEnv, nm =  "us_names_ids_dhis") 
+    # check selected province
+    # select the correct us names and ids based on the selected province
+    if(selected_province=="Gaza"){
+      hf_names <- env_get(env = .GlobalEnv, nm =  "gaza_us_names_ids_dhis")
+      funding_mechanism <-  env_get(env = .GlobalEnv,     nm =  "funding_mechanism_gaza") 
+    } else {
+      hf_names <- env_get(env = .GlobalEnv, nm =  "maputo_us_names_ids_dhis")
+      funding_mechanism <-  env_get(env = .GlobalEnv,     nm =  "funding_mechanism_maputo") 
+    }
+    
+    
+
     api_dhis_url     <- env_get(env = user_env, nm =  "api_datim_base_url") 
     dataset.id       <- env_get(env = .GlobalEnv, nm =  "dataset_id_mer_datim")
     df_datim         <- env_get(env = user_env,   nm = "df_datim" )
@@ -984,16 +1019,24 @@ server <- function(input, output) {
       shinyalert("Info", "Selecione o Periodo!", type = "info")
       
     } else {
-      for (us in hf_names[1:37] ) {
+      for (k in 1:length(hf_names) ) {
         i = 0
-        incProgress(1/(30), detail = paste("Processando  o dataset do : ", getUsName(us) , " " ))
+        us_name <- names(hf_names[k])
+        us_id   <-  hf_names[[k]]
+        incProgress(1/(length(hf_names)), detail = paste("Processando  o dataset do : ", us_name , " " ))
         # print(us[1])
         df <-  tryCatch(
           {
-            getDatimDataValueSet(api_dhis_url,dataset.id, period, us)
+            message("Getting Datavalues from MER DATIM FORM")
+            message("Dataset id: ", dataset.id)
+            message("Period: ", period)
+            message("Org Unit: ", us_id)
+            message("API URL: ", api_dhis_url)
+            
+            getDatimDataValueSet(api_dhis_url,dataset.id, period, us_id)
           },
           error=function(cond) {
-            message(us, "Error - Here's the original error message:")
+            shinyalert(us_name, cond , type = "info")
             message(cond)
             # Choose a return value in case of error
             return(NA)
@@ -1004,18 +1047,12 @@ server <- function(input, output) {
         )
         if(!is.null(df)){
           
-       
-         
           df_datim   <- plyr::rbind.fill(df_datim ,df)
-          #Tests
-          #writexl::write_xlsx(x = df ,path = paste0(paste0(get("wd", envir = .GlobalEnv),'/downloads/','datim_',getUsName(us),'.xlsx')),col_names = TRUE,format_headers = TRUE)
-          #msg        <- paste0(getUsName(us), " - Dados processados com sucesso.", '\n')
-          #datim_logs =  paste(datim_logs, msg, sep = '')
       
         } 
         else {
-          message(getUsName(us), "   - Dataset esta vazio!!!")
-          msg        <- paste0(getUsName(us), " - Nao contem dados neste periodo.", '\n')
+          message(us_name, "   - Dataset esta vazio!!!")
+          msg        <- paste0(us_name, " - Nao contem dados neste periodo.", '\n')
           datim_logs =     paste(datim_logs, msg, sep = '')
         }
         
@@ -1024,7 +1061,6 @@ server <- function(input, output) {
         
         output$txt_datim_logs <-  renderText({ HTML(datim_logs)})
         
-        funding_mechanism <-  env_get(env = .GlobalEnv,     nm =  "funding_mechanism") 
         
         #df_datim <- env_get(env = user_env,nm = "df_datim" )
         df_datim$DatimDataElement <- mapply(df_datim$CategoryOptionCombo,df_datim$Dataelement, FUN =  getDhisDataElement)
@@ -1043,8 +1079,8 @@ server <- function(input, output) {
         # Remove zeros from df
         df_dataset_datim <- subset(x = df_dataset_datim, as.integer(df_dataset_datim$Value) > 0 , )
         
-        df_dataset_ccs  <-  df_datim[,c(7,2,10,8,9,6,1,3,4,5)]
-        
+       # df_dataset_ccs  <-  df_datim[,c(7,2,10,8,9,6,1,3,4,5)]
+        df_dataset_ccs  <-  subset(x = df_datim, as.integer(df_datim$Value) > 0 , )
         #names(df_dat)[1] <- ""
         output$data_tbl_datim_dataset <- renderDT({
           datatable(df_dataset_datim ,
@@ -1212,7 +1248,7 @@ server <- function(input, output) {
                        df_ats_events_reg_diario   <- df_ats_events_reg_diario[!duplicated(df_ats_events_reg_diario), ]
                        df_ats_events_ligacao  <- df_ats_events_ligacao[!duplicated(df_ats_events_ligacao), ]
                        
-                       #TODO
+                       #
                        # Este dataset e' repetitivo, significa que pode conter mais de um valor para o mesmo dataelement
                        # portanto precisa de tratamento diferente
                        # df_ats_events_cpn      <- df_ats_events_cpn[!duplicated(df_ats_events_cpn), ]
