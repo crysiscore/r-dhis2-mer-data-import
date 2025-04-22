@@ -136,9 +136,10 @@ save(datavalueset_template_dhis2_ccs_forms, file =  paste0(working_dir, '/datase
 
 # 4 - NEW ORG UNITS
 # If  orgunits are changed then re-generate the template
-df_ccs_data_exchange_orgunits <- readxl::read_xlsx(path = paste0(working_dir, '/mapping/CCS DATA EXCHANGE ORG UNITS.xlsx'), col_names = TRUE) 
+#df_ccs_data_exchange_orgunits <- readxl::read_xlsx(path = paste0(working_dir, '/mapping/CCS DATA EXCHANGE ORG UNITS.xlsx'), col_names = TRUE)  DEPRICATED
+df_ccs_data_exchange_orgunits <- readxl::read_xlsx(path = paste0(working_dir,'/conf/paramConfig.xlsx'), sheet = 'ccs_datim_exchange_orgunits', col_names = TRUE)
 save(df_ccs_data_exchange_orgunits , file = paste0(working_dir, '/dataset_templates/ccsDataExchangeOrgUnits.RData'))
-writexl::write_xlsx(x = df_ccs_data_exchange_orgunits, path = paste0(working_dir, '/mapping/CCS DATA EXCHANGE ORG UNITS.xlsx'))
+#writexl::write_xlsx(x = df_ccs_data_exchange_orgunits, path = paste0(working_dir, '/mapping/CCS DATA EXCHANGE ORG UNITS.xlsx'))
  ##############################################################################################################################################
 
 ##

@@ -41,7 +41,11 @@ vec_datim_reporting_periods <- as.list(setNames(as.character(vec_datim_reporting
 
 #IP Funding Mechanism ->   https://www.datim.org/api/sqlViews/fgUtV6e9YIX/data.html+css
 funding_mechanism <- readxl::read_xlsx(path = paste0(wd,'/conf/paramConfig.xlsx'), sheet = 'funding_mechanism', col_names = TRUE)
-assign(x = funding_mechanism$name, value = funding_mechanism$code, envir = .GlobalEnv)
+
+for ( f in 1:nrow(funding_mechanism) ){
+  assign(x = funding_mechanism$name[f], value = funding_mechanism$code[f], envir = .GlobalEnv)
+}
+
 
 # 6- MER TEMPLATES 
 excell_mapping_template <- readxl::read_xlsx(path = paste0(wd,'/conf/paramConfig.xlsx'), sheet = 'excell_mapping_template', col_names = TRUE)
@@ -55,6 +59,7 @@ for (i in 1:nrow(excell_mapping_template)){
 # Nomes dos indicadores mapeados em cada planilha excell no ficheiro de  mapeamentos. 
 
 df_tmp <- readxl::read_xlsx(path = paste0(wd,'/conf/paramConfig.xlsx'), sheet = 'vec_mer_indicators', col_names = TRUE)
+
 for (i in 1:nrow(df_tmp)){
    # for each value in the column value, extract each separated by comma and assign add to a vector named vec_value
    vec_value <- unlist(strsplit(df_tmp$value[i], ","))

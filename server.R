@@ -1079,8 +1079,8 @@ server <- function(input, output) {
         # Remove zeros from df
         df_dataset_datim <- subset(x = df_dataset_datim, as.integer(df_dataset_datim$Value) > 0 , )
         
-        df_dataset_ccs  <-  df_datim[,c(7,2,10,8,9,6,1,3,4,5)]
-        
+       # df_dataset_ccs  <-  df_datim[,c(7,2,10,8,9,6,1,3,4,5)]
+        df_dataset_ccs  <-  subset(x = df_datim, as.integer(df_datim$Value) > 0 , )
         #names(df_dat)[1] <- ""
         output$data_tbl_datim_dataset <- renderDT({
           datatable(df_dataset_datim ,
