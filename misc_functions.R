@@ -990,6 +990,22 @@ getDhisCategoryOptionCombo <- function(cat.opt.comb, data.element) {
   
 }
 
+#' get99UnusedDataElements ->  Busca o valor do comentario (observation) na planilha de mapeamento para usar como variavel de decisao de report
+#' @param cat.opt.comb categoryoptioncombouid
+#' @param data.element dataelementuid   
+#' @examples
+#' get99UnusedDataElements("YiMCSzx23b",""YiMCSzx23b")
+get99UnusedDataElements<- function(cat.opt.comb, data.element) {
+  
+  ignore_row <- NA
+  
+  index <- which(datim_mapping_template$dhiscategoryoptioncombouid==cat.opt.comb & datim_mapping_template$dhisdataelementuid== data.element )
+  
+  ignore_row <- datim_mapping_template[index,]$observation[1]
+  
+  ignore_row
+  
+}
 
 #' getDhisOrgUnit ->  Busca o ID da orgUnit do datim com base no id do orgUnit do DHIS CCS
 #' @param  ccs.orgunit orgUnit ID

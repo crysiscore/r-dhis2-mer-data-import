@@ -1068,6 +1068,11 @@ server <- function(input, output) {
         df_datim$DatimAttributeOptionCombo <- funding_mechanism 
         #df_datim$Period <- sapply( df_datim$Period ,aDjustDhisPeriods)
         df_datim$DatimOrgUnit <- sapply(df_datim$OrgUnit, FUN =  getDhisOrgUnit)
+        df_datim$observation <- mapply(df_datim$CategoryOptionCombo,df_datim$Dataelement, FUN =  get99UnusedDataElements)
+        
+        # Filter 99 observations
+        df_datim <- subset(x = df_datim, is.na(observation)  )
+        
         df_dataset_datim <- df_datim[,c(7,2,10,8,9,6)]
         names(df_dataset_datim)[1] <- "Dataelement"
         names(df_dataset_datim)[2] <- "Period"
