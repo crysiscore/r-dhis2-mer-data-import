@@ -971,25 +971,25 @@ server <- function(input, output) {
     load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'),    envir = user_env)
      output$data_tbl_datim_dataset <- renderDT({
                      datatable(env_get(env = user_env,nm = "df_datim" ) ,
-                               extensions = c('Buttons'), 
+                             #  extensions = c('Buttons'), 
                                options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
                                                pageLength = 15,
                                                dom = 'Blfrti',
                                                buttons = list(
                                                  list(extend = 'excel', title = NULL),
                                                  'pdf',
-                                                 'print'  ) ) )
+                                                 'csv'  ) ) )
                    })
      output$data_tbl_ccs_warnings <- renderDT({
        datatable(env_get(env = user_env,nm = "df_datim" ) ,
-                 extensions = c('Buttons'), 
+                 #extensions = c('Buttons'), 
                  options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
                                  pageLength = 15,
                                  dom = 'Blfrti',
                                  buttons = list(
                                    list(extend = 'excel', title = NULL),
                                    'pdf',
-                                   'print'  ) ) )
+                                   'csv'  ) ) )
      })
      
     submission_date  <- as.character(Sys.Date())
@@ -1068,6 +1068,11 @@ server <- function(input, output) {
         df_datim$DatimAttributeOptionCombo <- funding_mechanism 
         #df_datim$Period <- sapply( df_datim$Period ,aDjustDhisPeriods)
         df_datim$DatimOrgUnit <- sapply(df_datim$OrgUnit, FUN =  getDhisOrgUnit)
+        df_datim$observation <- mapply(df_datim$CategoryOptionCombo,df_datim$Dataelement, FUN =  get99UnusedDataElements)
+        
+        # Filter 99 observations
+        df_datim <- subset(x = df_datim, is.na(observation)  )
+        
         df_dataset_datim <- df_datim[,c(7,2,10,8,9,6)]
         names(df_dataset_datim)[1] <- "Dataelement"
         names(df_dataset_datim)[2] <- "Period"

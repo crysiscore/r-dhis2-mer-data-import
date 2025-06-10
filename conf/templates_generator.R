@@ -39,7 +39,7 @@ for (file  in vec_files) {
 
 }
 
-# filter 99
+# filter 99 
 df_datim_indicators <- subset(df_datim_indicators, is.na(observation)   )
 save(df_datim_indicators,file = paste0(working_dir, '/dataset_templates/datimDataSetElementsCC.RData'))
 
@@ -82,8 +82,11 @@ for (file  in vec_files) {
   }
   
 }
+
 # filter 99
-datim_mapping_template <- subset(datim_mapping_template, is.na(observation)   )
+# O filtro 99 - sera feito no final da comparacao dos dados do DHIS2 e dos templates do DATIM.
+
+#datim_mapping_template <- subset(datim_mapping_template, is.na(observation)   )
 setwd(dir = paste0(working_dir, '/dataset_templates'))
 save(datim_mapping_template,file = 'datimMappingTemplate.RData')
 
@@ -149,73 +152,3 @@ df_gaza_orgunits <- getOrganizationUnits(base.url = base.url, location_id =gaza_
 working_dir <-getwd()
 xls_fle <- readxl::read_xlsx(path = paste0(working_dir, '/data/Datim/datim/Gaza/02 - CT DHIS Import v1.3 M2.7_Gaza.xlsx') ,col_names = TRUE)# get sheet names 
 
-# Get swork sheet names
-work_sheet_names  <- sort(readxl::excel_sheets(path = paste0(working_dir, '/data/Datim/datim/Gaza/02 - CT DHIS Import v1.3 M2.7_Gaza.xlsx')))
-
-work_sheet_names <- as.data.frame(work_sheet_names)
-work_sheet_names$id <- ""
-
-
-# Remove 'CS' from all names in df_gaza_orgunits$name
-
-remove_substring <- function(text) {
-  substring <- "CS"
-  trimws( gsub(pattern = substring,replacement =  "", x = text, ignore.case = TRUE) )
-}
-
-# Apply the function to the 'names' column using vapply
-df_gaza_orgunits$shortName <- as.character(df_gaza_orgunits$name %>% lapply(remove_substring))
-
-
-# Remove the suffix from the names
-work_sheet_names$work_sheet_names <- gsub("_\\d+$", "", work_sheet_names$work_sheet_names )
-work_sheet_names$work_sheet_names <- as.character(work_sheet_names$work_sheet_names %>% lapply(remove_substring))
-
-
-# Install stringdist if not already installed
-if (!require(stringdist)) {
-  install.packages("stringdist")
-  library(stringdist)
-}
-
-# Create a result dataframe for storing matches
-results <- data.frame(
-  work_sheet_name = work_sheet_names$work_sheet_names,
-  matched_id = "",
-  matched_name = "",
-  distance = ""
-)
-
-# Iterate through each name in work_sheet_names
-for (i in seq_along(work_sheet_names$work_sheet_names)) {
-  # Calculate string distances to all shortName values in df_gaza_orgunits
-  distances <- stringdist(work_sheet_names$work_sheet_names[i], df_gaza_orgunits$shortName, method = "jw")
-  
-  # Find the index of the closest match
-  best_match_index <- which.min(distances)
-  
-  # Get the best match's id, name, and distance
-  results$matched_id[i] <- df_gaza_orgunits$id[best_match_index]
-  results$matched_name[i] <- df_gaza_orgunits$shortName[best_match_index]
-  results$distance[i] <- distances[best_match_index]
-}
-
-# View the results
-print(results)
-
-
-library(openxlsx)
-
-workbook <- loadWorkbook(file = 'data/Datim/datim/Gaza/03- ATS DHIS Import v1_Gaza.xlsx')
-vector <- sapply(vector, function(x) {
-  x <- paste0("MER_ATS_", x)
-  x
-})
-
-
-for(i in 1:length(us.names)){
-  
-  if(length(vec_sheets[which(grepl(pattern = us.names[i],x = vec_sheets)==TRUE)])>1 ){
-    print(vec_sheets[which(grepl(pattern = us.names[i],x = vec_sheets)==TRUE)])
-  }
-}
