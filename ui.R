@@ -65,7 +65,7 @@ ui <- dashboardPage(
                   tags$hr(),
                   
                   #  Create a group of checkboxes : Indicadores
-                  hidden(div(
+                  hidden(div( id = "divchkbxIndicatorsGroup",
                     checkboxGroupButtons(
                       inputId = "chkbxIndicatorsGroup",
                       label = "Indicadores:",
@@ -74,7 +74,7 @@ ui <- dashboardPage(
                   )), 
                   
                   tags$hr(),
-                  hidden(div(
+                  hidden(div( id = "divchkbxDatim",
                     awesomeCheckbox(
                       inputId = "chkbxDatim",
                       label = "MER - DATIM FORM", 
@@ -84,8 +84,17 @@ ui <- dashboardPage(
                   # Horizontal line ----
                   tags$hr(),
                   
+                  # Toggle switch
+                  hidden(div( id = "divtoggle_all",
+                                switchInput(
+                    inputId = "toggle_all",
+                    label = "Select All",
+                    onLabel = "All Selected",
+                    offLabel = "None Selected",
+                    value = FALSE
+                  ))),
                   # Horizontal line ----
-                  hidden(div(
+                  hidden(div( id = "divchkbxUsGroup",
                     awesomeCheckboxGroup(
                       inputId = "chkbxUsGroup",
                       label = "U. Sanitarias:",
@@ -97,7 +106,7 @@ ui <- dashboardPage(
                   
                   tags$hr(),
                   
-                  hidden(div(
+                  hidden(div( id = "divchkbxPeriodGroup",
                     pickerInput(
                       inputId = "chkbxPeriodGroup",
                       label = "Periodo          :     ", 
@@ -114,22 +123,40 @@ ui <- dashboardPage(
                   
                   # Submit buttons
                   # UI function
-                  actionButtonStyled(inputId="btn_reset", label="Limpar Campos   ",
-                                     btn_type = "button", type = "default", class = "btn-sm"),
-                  actionButtonStyled(inputId="btn_checks_before_upload", label="Run Checks",
-                                     btn_type = "button", type = "warning", class = "btn-sm"),
+                  # wrap all buttons inside a div
                   
-                  hidden(div(
+                  div(
+                    style = "display: flex; gap: 10px; align-items: center;",
+                    
                     actionButtonStyled(
-                      inputId="btn_upload",
-                      label="Upload  data ",
-                      btn_type = "button",
-                      type = "primary",
+                      inputId = "btn_reset", 
+                      label = "Limpar Campos", 
+                      btn_type = "button", 
+                      type = "default", 
                       class = "btn-sm"
+                    ),
+                    
+                    actionButtonStyled(
+                      inputId = "btn_checks_before_upload", 
+                      label = "Run Checks", 
+                      btn_type = "button", 
+                      type = "warning", 
+                      class = "btn-sm"
+                    ),
+                    
+                    hidden(
+                      div(
+                        id = "divbtnUpload",
+                        actionButtonStyled(
+                          inputId = "btn_upload",
+                          label = "Upload data",
+                          btn_type = "button",
+                          type = "primary",
+                          class = "btn-sm"
+                        )
+                      )
                     )
-                  ))
-                  
-                  
+                  )
                 ),
                 
                 # Main panel for displaying outputs ----

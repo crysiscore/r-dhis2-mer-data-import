@@ -301,7 +301,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        #assign(x = "log_execution",value =tmp_log_exec, envir = user.env )
        #message("Passando II")
        #Get excell values
-       setwd('data/')
+       # setwd('data/')
        
        # Remove rows with 99 (not used) on observations
        tmp_df <- subset(tmp_df, !observation %in% c(99) ,)
@@ -1012,6 +1012,8 @@ get99UnusedDataElements<- function(cat.opt.comb, data.element) {
 #' @examples
 #' getDhisOrgUnit("YiMCSzx23b")
 getDhisOrgUnit <-  function(ccs.orgunit) {
+  
+  df_ccs_data_exchange_orgunits <- get("df_ccs_data_exchange_orgunits", envir = .GlobalEnv)
   
   index <- which(df_ccs_data_exchange_orgunits$ccs_orgunit_id==ccs.orgunit )
   

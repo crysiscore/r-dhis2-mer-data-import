@@ -2,7 +2,9 @@
 server <- function(input, output) {
   
   # Create user environment to store session data
-  user_env <- new.env()    
+  user_env <- new.env()   
+
+  attach(user_env ,name = "my_custom_env")
   wd <- env_get(env = .GlobalEnv, nm = 'wd')
   print(wd)
   source(paste0(wd,"/misc_functions.R"),  local=user_env)
@@ -155,7 +157,7 @@ server <- function(input, output) {
     req(input$file1)
     
     vec_sheets <-  c()
-    shinyjs::hide(id = "btn_upload")
+    shinyjs::hide(id = "divbtnUpload")
  
     tryCatch(
       {
@@ -174,7 +176,7 @@ server <- function(input, output) {
 
             # Mostras os indicadores associados ao dataset
 
-             shinyjs::show(id = "chkbxIndicatorsGroup", animType = "slide" )
+             shinyjs::show(id = "divchkbxIndicatorsGroup", animType = "slide" )
             if(dataset=='ct'){
               updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",
                                          label = "Indicadores: ",
@@ -300,10 +302,11 @@ server <- function(input, output) {
     #   removeTab(inputId = "tab_indicadores", target =indicator)
     # }
     
-    shinyjs::hide(id = "chkbxUsGroup")
-    shinyjs::hide(id = "chkbxIndicatorsGroup")
-    shinyjs::hide(id = "chkbxPeriodGroup")
-    shinyjs::hide(id = "btn_upload")
+    shinyjs::hide(id = "divchkbxUsGroup")
+    shinyjs::hide(id = "divchkbxIndicatorsGroup")
+    shinyjs::hide(id = "divchkbxPeriodGroup")
+    shinyjs::hide(id = "divbtnUpload")
+    shinyjs::hide(id = "divtoggle_all")
     
     # Reset is datim upload checkbox
     updateAwesomeCheckbox(getDefaultReactiveDomain(), "chkbxDatim",
@@ -329,11 +332,44 @@ server <- function(input, output) {
       #updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
       updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset", disabled = FALSE)
       updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE  )
-      shinyjs::hide(id = "btn_upload")
-      shinyjs::hide(id = "chkbxPeriodGroup")
+      shinyjs::hide(id = "divbtnUpload")
+      shinyjs::hide(id = "divchkbxPeriodGroup")
 
     } 
     
+  })
+  
+  # Observe toggle all checkboxes
+  observeEvent(input$toggle_all, {
+  
+    
+    # Get us_names_chkbox and vec_sheet_names_chkbox  from  global env
+
+    if (exists("us_names_chkbox", envir = .GlobalEnv) && exists("vec_sheet_names_chkbox", envir = .GlobalEnv)) {
+      us_names_chkbox <- get("us_names_chkbox", envir = .GlobalEnv)
+      vec_sheet_names_chkbox <- get("vec_sheet_names_chkbox", envir = .GlobalEnv)
+    } else {
+      # If not found, initialize them
+      us_names_chkbox <- c()
+      vec_sheet_names_chkbox <- c()
+    }
+
+    
+    if (input$toggle_all) {
+     # updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "my_choices", selected = choices)
+      updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "chkbxUsGroup",
+                                 label = paste("U. Sanitarias:(", length(us_names_chkbox),")" ),
+                                 #choices =  setNames(as.list(vec_sheet_names), us.names),
+                                 selected = setNames(as.list(vec_sheet_names_chkbox), us_names_chkbox) )
+      
+    } else {
+      #updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "my_choices", selected = character(0))
+      updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "chkbxUsGroup",
+                                 label = paste("U. Sanitarias:(", length(us_names_chkbox),")" ),
+                                 choices =  setNames(as.list(vec_sheet_names_chkbox), us_names_chkbox),
+                                 selected = NULL )
+      
+    }
   })
   
   # Observe Indicators checkboxes 
@@ -362,6 +398,7 @@ server <- function(input, output) {
        us.names <- sheetnames[1]$health_facilities
        warnings <- sheetnames[1]$warnings
        
+       
        if ( length(us.names) > 0 ) {
          
          sapply(us.names, print)
@@ -376,13 +413,22 @@ server <- function(input, output) {
                                       choices =  setNames(as.list(vec_sheet_names), us.names),
                                       selected = NULL )
            
+           # save current us names and vec_sheet_names  in global env
+           assign(x = "us_names_chkbox", value = us.names, envir = .GlobalEnv)
+           assign(x = "vec_sheet_names_chkbox", value = vec_sheet_names, envir = .GlobalEnv)
            
-           
-           shinyjs::hide(id = "btn_upload")
-           shinyjs::hide(id = "chkbxPeriodGroup")
+           # Show the toggle all checkboxes
+           shinyjs::show(id = "divtoggle_all")
+           shinyjs::hide(id = "divbtnUpload")
+           shinyjs::hide(id = "divchkbxPeriodGroup")
            # cat(indicator_selected, sep = " | ")
-           shinyjs::show(id = "chkbxUsGroup", animType = "slide" )
-           shinyjs::show(id = "chkbxDatim" )
+           shinyjs::show(id = "divchkbxUsGroup" )
+           shinyjs::show(id = "divchkbxDatim" )
+           
+           
+           
+           
+
            
            if(length(warnings) > 0 )
            { 
@@ -425,7 +471,7 @@ server <- function(input, output) {
     
 
     for (selected_us in vec_selected_us) {
-      list_us<-    getUsNameFromSheetNames(selected_us, selected_province)
+      list_us <-    getUsNameFromSheetNames(selected_us, selected_province)
       us_name <- list_us$health_facilities
       warnings <-  list_us$warnings
       if(length(warnings)>0){
@@ -441,7 +487,7 @@ server <- function(input, output) {
         
         if(status=='Integrity error'){
           shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")
-          shinyjs::hide(id = "btn_upload")
+          shinyjs::hide(id = "divbtnUpload")
           output$tbl_integrity_errors <- renderDT({
             df <- read_xlsx(path = paste0(get("upload_dir"),'/template_errors.xlsx'))
             datatable( df,  extensions = c('Buttons'),
@@ -476,9 +522,9 @@ server <- function(input, output) {
 
    if(length(vec_selected_us)==counter){
      
-     shinyjs::show(id = "chkbxDatim")
-     shinyjs::show(id = "btn_upload",animType = "slide")
-     shinyjs::show(id = "chkbxPeriodGroup")
+     shinyjs::show(id = "divchkbxDatim")
+     shinyjs::show(id = "divbtnUpload")
+     shinyjs::show(id = "divchkbxPeriodGroup")
      
    } else {
      
@@ -718,7 +764,7 @@ server <- function(input, output) {
                                  #shinyjs::hide(id = "chkbxUsGroup")
                                  #shinyjs::hide(id = "chkbxIndicatorsGroup")
                                  #shinyjs::hide(id = "chkbxPeriodGroup")
-                                 shinyjs::hide(id = "btn_upload")
+                                 shinyjs::hide(id = "divbtnUpload")
                                  #shinyjs::hide(id = "chkbxDatim")
 
                                  break
@@ -875,7 +921,7 @@ server <- function(input, output) {
                 # shinyjs::hide(id = "chkbxUsGroup")
                 # shinyjs::hide(id = "chkbxIndicatorsGroup")
                 # shinyjs::hide(id = "chkbxPeriodGroup")
-                 shinyjs::hide(id = "btn_upload")
+                 shinyjs::hide(id = "divbtnUpload")
                 # shinyjs::hide(id = "chkbxDatim")
                  break
               }
@@ -901,8 +947,8 @@ server <- function(input, output) {
           
           
           # Reset Panes after upload
-           shinyjs::hide(id = "chkbxPeriodGroup")
-           shinyjs::hide(id = "btn_upload")
+           shinyjs::hide(id = "divchkbxPeriodGroup")
+           shinyjs::hide(id = "divbtnUpload")
            output$tbl_integrity_errors <- renderDataTable({
              df <- read_xlsx(path = paste0(get("upload_dir"),'/template_errors.xlsx'))
              datatable( df[0 ,], options = list(paging = TRUE))
@@ -935,11 +981,12 @@ server <- function(input, output) {
              datatable( df[0 ,], options = list(paging = TRUE))
            })
 
-           shinyjs::hide(id = "chkbxUsGroup")
-           shinyjs::hide(id = "chkbxIndicatorsGroup")
-           shinyjs::hide(id = "chkbxPeriodGroup")
-           shinyjs::hide(id = "btn_upload")
+           shinyjs::hide(id = "divchkbxUsGroup")
+           shinyjs::hide(id = "divchkbxIndicatorsGroup")
+           shinyjs::hide(id = "divchkbxPeriodGroup")
+           shinyjs::hide(id = "divbtnUpload")
            shinyjs::hide(id = "chkbxDatim")
+           shinyjs::hide(id = "divtoggle_all")
            
         } else {
           showNotification("Atencao!!! Ocorreu um erro durante o envio, por favor corrigir",session = getDefaultReactiveDomain(), duration = 5 ,type =  "message" )
