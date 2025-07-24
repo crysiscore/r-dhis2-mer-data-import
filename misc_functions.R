@@ -61,13 +61,14 @@ getDhis2DatavalueSetTemplate <- function(url.api.dhis.datasets,dataset.id){
 checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option.combo.id, datavalueset.template.name, indicator.name, excell.cell.ref, sheet.name  ) {
   
 
-  
-  df_error_tmp_empty  <- env_get(env = user_env ,nm = "error_log_dhis_import_empty" )
-  df_error_tmp        <- env_get(env = user_env,nm = "error_log_dhis_import")
+
+  df_error_tmp_empty  <- env_get(env = .GlobalEnv ,nm = "error_log_dhis_import_empty" )
+  df_error_tmp        <- env_get(env = .GlobalEnv,nm = "error_log_dhis_import")
   wd                  <- env_get(env = .GlobalEnv,nm =  "wd" )
   
  # message("Check:  passando aaa 1.1")
-  tmp <- env_get(env = user_env , nm =  datavalueset.template.name)
+  
+  tmp <- env_get(env = .GlobalEnv , nm =  datavalueset.template.name)
  # message("Rows: " ,nrows(tmp))
 
   df <- filter(tmp, dataElement==data.element.id & categoryoptioncombo==category.option.combo.id )
@@ -89,8 +90,7 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
     #browser()
     #message("Check:  aaa passando 1.2 ")
     writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'/logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
-    #assign(x = "error_log_dhis_import",value =df_error_tmp, user.envir = user.envir )
-    env_poke(env = user_env,nm ="error_log_dhis_import",value = df_error_tmp ) # https://adv-r.hadley.nz/environments.html#getting-and-setting-1 - 7.2.5 Getting and setting
+    env_poke(env = .GlobalEnv,nm ="error_log_dhis_import",value = df_error_tmp ) # https://adv-r.hadley.nz/environments.html#getting-and-setting-1 - 7.2.5 Getting and setting
     return(FALSE)
   } else if(total_rows==1){
     return(TRUE)
@@ -102,8 +102,7 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
     df_error_tmp<- rbind.fill(df_error_tmp, df_error_tmp_empty)
     #message("Check: aaa  passando 1.3 ")
     writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'/logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
-    #assign(x = "error_log_dhis_import",value =df_error_tmp, envir = envir )
-    env_poke(env = user_env,nm ="error_log_dhis_import",value = df_error_tmp ) # https://adv-r.hadley.nz/environments.html#getting-and-setting-1 - 7.2.5 Getting and setting
+    env_poke(env = .GlobalEnv,nm ="error_log_dhis_import",value = df_error_tmp ) # https://adv-r.hadley.nz/environments.html#getting-and-setting-1 - 7.2.5 Getting and setting
     return('Duplicado')
   }
   
@@ -119,17 +118,16 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
 getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name,data.element.id,category.option.combo.id, indicator.name ){
   
   data_value <- tryCatch({
-    #wd <- get("wd", envir = .GlobalEnv)
+
     wd <- env_get(env = .GlobalEnv, "wd")
     tmp <-   read_xlsx(path = file.to.import,sheet = sheet.name,range = paste0(cell.ref,':',cell.ref),col_names = FALSE)
     if(nrow(tmp)==0){
       warning_msg <- paste0( "Celula Vazia ", cell.ref, ' on  sheetname: ' ,sheet.name)
       
-      tmp          <-  env_get(env = user_env, "error_log_dhis_import_empty")
-      df_error_tmp <-  env_get(env = user_env, "error_log_dhis_import")
+      tmp          <-  env_get(env = .GlobalEnv, "error_log_dhis_import_empty")
+      df_error_tmp <-  env_get(env = .GlobalEnv, "error_log_dhis_import")
       
-      #tmp  <- get('error_log_dhis_import_empty',envir = user.env)
-      #df_error_tmp <- get('error_log_dhis_import',envir = user.env)
+
       tmp$dhisdataelementuid[1] <- data.element.id
       tmp$dhiscategoryoptioncombouid[1] <- category.option.combo.id
       tmp$indicator[1] <- indicator.name
@@ -143,8 +141,7 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name,data.element
       df_error_tmp  <- rbind.fill(df_error_tmp, tmp)
       #browser()
       writexl::write_xlsx(x = df_error_tmp,path = paste0(wd ,'/logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
-      #assign(x = "error_log_dhis_import",value =df_error_tmp, envir = user.env )
-      env_poke(env = user_env ,nm =  "error_log_dhis_import",value =  df_error_tmp)
+      env_poke(env = .GlobalEnv ,nm =  "error_log_dhis_import",value =  df_error_tmp)
       empty_value <- ""
       return(empty_value)
       
@@ -155,8 +152,8 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name,data.element
   },
   error = function(cond) {
     error_msg <- paste0( "Error reading from excell: ", cell.ref, 'on sheetname:' ,sheet.name)
-    tmp          <-  env_get(env = user_env, "error_log_dhis_import_empty")
-    df_error_tmp <-  env_get(env = user_env, "error_log_dhis_import")
+    tmp          <-  env_get(env = .GlobalEnv, "error_log_dhis_import_empty")
+    df_error_tmp <-  env_get(env = .GlobalEnv, "error_log_dhis_import")
     
     tmp$dhisdataelementuid[1] <- data.element.id
     tmp$dhiscategoryoptioncombouid[1] <- category.option.combo.id
@@ -169,8 +166,7 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name,data.element
     message(error_msg)
     df_error_tmp <- rbind.fill(df_error_tmp, tmp)
     writexl::write_xlsx(x = df_error_tmp,path = paste0(wd, '/logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
-    # assign(x = "error_log_dhis_import",value =df_error_tmp, envir = user.env )
-    env_poke(env = user_env ,nm =  "error_log_dhis_import",value =  df_error_tmp)
+    env_poke(env = .GlobalEnv ,nm =  "error_log_dhis_import",value =  df_error_tmp)
     return(NA)
     
   },
@@ -199,11 +195,11 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name,data.element
 #' @param sheet.name nome do sheet
 #' @param file.to.import ficheiro de importacao
 #' @param vec.indicators indicadores que se deseja importar
-#' @param user.env user environment 
+#' @param .GlobalEnv user environment 
 #' @param dataset.name nome do formualario dhis 2. ("MER C&T"  = "ct", "MER ATS" = "ats" , "MER SMI" = "smi" , "MER PREVENTION"="prevention", "MER HEALTH SYSTEM"="hs")
 #' @examples 
 #' is_consistent  <- checkDataConsistency(excell.mapping.template,file.to.import, dataset.name, sheet.name,vec.indicators)
-checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators , user.env, us.name , is.datim.upload ){
+checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset.name, sheet.name, vec.indicators , us.name , is.datim.upload ){
  
 
   withProgress(message = us.name,
@@ -213,7 +209,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
   wd <- env_get(env = .GlobalEnv, "wd")
   # carregar variaves e dfs para armazenar logs
 
-  tmp_log_exec <- env_get(env = user.env, "log_execution")
+  tmp_log_exec <- env_get(env = .GlobalEnv, "log_execution")
   vec_tmp_dataset_names <- env_get(env = .GlobalEnv, "mer_datasets_names")
   tmp_log_exec_empty <- tmp_log_exec[1,]
   
@@ -225,10 +221,10 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
   tmp_log_exec_empty$task[1] <- env_get(env = .GlobalEnv, "task_check_consistency_1")
   message( "Stage 1: ", env_get(env = .GlobalEnv, "task_check_consistency_1") )
 
-  #assign(x = "log_execution",value =tmp_log_exec_empty, envir = .GlobalEnv )
+
   incProgress(1/(length(vec.indicators)+ 1), detail = paste("STAGE 1 - ",  env_get(env = .GlobalEnv, "task_check_consistency_1") ))
   # Stage 1: Verficar o a integridade do ficheiro a ser importado
-   total_error <- checkImportTamplateIntegrity(file.to.import = file.to.import,dataset.name =dataset.name ,sheet.name =sheet.name, user.env )
+   total_error <- checkImportTamplateIntegrity(file.to.import = file.to.import,dataset.name =dataset.name ,sheet.name =sheet.name, .GlobalEnv )
    if(total_error > 0) {
      
      for (i  in 1: length(vec.indicators) ) {
@@ -244,7 +240,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
      #A tarefa anterior terminou com sucesso
      tmp_log_exec_empty$status[1] <- 'ok'
      tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
-     #assign(x = "log_execution",value =tmp_log_exec, envir = .GlobalEnv )
+
 
      
      #Indicar a tarefa em execucao: task_check_consistency_2
@@ -258,15 +254,15 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
      tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
 
 
-     env_poke(env = user.env ,nm =  "log_execution",value =  tmp_log_exec)
+     env_poke(env = .GlobalEnv ,nm =  "log_execution",value =  tmp_log_exec)
 
      writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, '/logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
 
-      datavalueset_template <-  'template_dhis_ccs_forms'
+      datavalueset_template <-  'datavalueset_template_dhis2_ccs_forms'
       
       # verifica os dataelements usando o template do formulario datim
       if(is.datim.upload){
-        datavalueset_template <-  'template_dhis2_datim'
+        datavalueset_template <-  'datavalueset_template_dhis2_datim'
         
       }
       
@@ -297,18 +293,17 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        message(  "Stage 3: ",  env_get(env = .GlobalEnv, "task_check_consistency_3"))
        tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
        writexl::write_xlsx(x = tmp_log_exec,path = paste0(wd, '/logs/log_execution.xlsx'),col_names = TRUE,format_headers = TRUE)
-       env_poke(env = user.env ,nm =  "log_execution",value =  tmp_log_exec)
-       #assign(x = "log_execution",value =tmp_log_exec, envir = user.env )
+       env_poke(env = .GlobalEnv ,nm =  "log_execution",value =  tmp_log_exec)
+
        #message("Passando II")
        #Get excell values
        # setwd('data/')
        
        # Remove rows with 99 (not used) on observations
        tmp_df <- subset(tmp_df, !observation %in% c(99) ,)
-       tmp_df$value <-  mapply(getDEValueOnExcell,tmp_df$excell_cell_ref, file.to.import, sheet.name=sheet.name , tmp_df$dhisdataelementuid, tmp_df$dhiscategoryoptioncombouid, indicator )
-       
-       #assign(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), tmp_df , envir = user.env)
-       env_poke(env = user.env ,nm =  paste(us.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep='') ,value =  tmp_df)
+       tmp_df$value <-  mapply(getDEValueOnExcell,tmp_df$excell_cell_ref, file.to.import, sheet.name=sheet.name , tmp_df$dhisdataelementuid, tmp_df$dhiscategoryoptioncombouid, indicator  )
+
+       env_poke(env = .GlobalEnv ,nm =  paste(us.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep='') ,value =  tmp_df)
         #A tarefa anterior terminou com sucesso
        tmp_log_exec_empty$status[1] <- 'ok'
 
@@ -316,9 +311,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
        #message("Passando III")
        }
     
-
-     #assign(x = "log_execution",value =tmp_log_exec, envir = user.env )
-     env_poke(env = user.env ,nm =  "log_execution",value =  tmp_log_exec)
+     env_poke(env = .GlobalEnv ,nm =  "log_execution",value =  tmp_log_exec)
      return("No errors")
      
    }
@@ -337,7 +330,7 @@ checkDataConsistency <- function(excell.mapping.template, file.to.import,dataset
 #' @param sheet.name nome do sheet
 #' @examples 
 #' erros  <- checkImportTamplateIntegrity(file.to.import, dataset.name, sheet.name)
-checkImportTamplateIntegrity  <- function(file.to.import,dataset.name,sheet.name , user.env ){
+checkImportTamplateIntegrity  <- function(file.to.import,dataset.name,sheet.name , .GlobalEnv ){
   
   wd <- env_get(env = .GlobalEnv, "wd")
   setwd(wd)
@@ -418,7 +411,7 @@ getTemplateDatasetName <- function(dataset.name) {  #TODO Change this code to re
 #' @param  vec.indicators indicadores a importar
 #' @example 
 #' string_json  <- merIndicatorsToJson(dataset.id, complete.date, period , org.unit, vec.indicators)
-merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, vec.indicators, user.env, org.unit.name){
+merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, vec.indicators, org.unit.name){
   
   dataSetID    <- dataset.id
   completeDate <- complete.date
@@ -435,8 +428,7 @@ merIndicatorsToJson <- function(dataset.id, complete.date, period , org.unit, ve
   # junta os df de todos indicadores processados
   for (indicator in  vec.indicators) {
     
-    #df               <- get(paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env)
-    df                <- env_get(env =user.env ,nm =  paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+    df                <- env_get(env =.GlobalEnv ,nm =  paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
     
     if(nrow(df) > 0){
       
@@ -504,6 +496,7 @@ apiDhisSendDataValues <- function(json , dhis.conf, us.name){
 #' status <- apiDatimSendDataValues
 apiDatimSendDataValues <- function(json , dhis.conf, us.name){
   
+  
   withProgress(message = paste0(us.name, ': Enviando Dados para o DHIS'),
                detail = 'This may take a while...', value = 0, {
                  
@@ -540,7 +533,7 @@ apiDatimSendDataValues <- function(json , dhis.conf, us.name){
 #' @param  is.datim.form for datim form (all indicators in on form)
 #' @examples
 #' saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings, envir)
-saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,period,df.warnings , user.env, is.datim.form,org.unit.name){
+saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,period,df.warnings , is.datim.form,org.unit.name){
   
    upload_directory <- ""
   
@@ -570,8 +563,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
         # save files here
         for (indicator in vec.indicators) {
           
-          #tmp_df <- get( paste('DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
-          tmp_df <- env_get(env = user.env , paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+          tmp_df <- env_get(env = .GlobalEnv , paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
           
           writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
           
@@ -588,8 +580,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
         # save files here
         for (indicator in vec.indicators) {
           
-          #tmp_df <- get( paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
-          tmp_df <- env_get(env = user.env , paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+          tmp_df <- env_get(env = .GlobalEnv , paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
           writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
           
         }
@@ -611,8 +602,8 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
       #save files here
       for (indicator in vec.indicators) {
         
-        #tmp_df <- get( paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), envir = user.env )
-        tmp_df <- env_get(env = user.env , paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+
+        tmp_df <- env_get(env = .GlobalEnv , paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
         writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
         
       }
@@ -638,7 +629,7 @@ saveLogUploadedIndicators <- function(us.name, vec.indicators, upload.date,perio
     for (indicator in vec.indicators) {
       
       #tmp_df <- get( paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''), )
-      tmp_df <- env_get(env = user.env , paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
+      tmp_df <- env_get(env = .GlobalEnv , paste(org.unit.name,'_DF_',gsub(" ", "", indicator, fixed = TRUE) , sep=''))
       writexl::write_xlsx(x = tmp_df,path = paste0('DF_',gsub(" ", "", indicator, fixed = TRUE) ,".xlsx" ))
       
     }
