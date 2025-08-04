@@ -2,63 +2,49 @@
 server <- function(input, output) {
   
   # Create user environment to store session data
-  user_env <- new.env()    
   wd <- env_get(env = .GlobalEnv, nm = 'wd')
   print(wd)
-  source(paste0(wd,"/misc_functions.R"),  local=user_env)
-  source(paste0(wd,"/conf/credentials.R"), local=user_env)
-  attach(user_env, name="sourced_scripts")
+  source(paste0(wd,"/misc_functions.R"))
+  source(paste0(wd,"/conf/credentials.R"))
+
   
   # Store datim dataset extraction output here
   datim_logs <- ""
   
-  # CCS DHIS2 urls
-  assign( x = "dhis_conf" ,value =   as.list(jsonlite::read_json(path = paste0(env_get(env = .GlobalEnv, nm = 'wd'),'/conf/dhisconfig.json')))  ,envir =user_env )
-  
-  
   # 2 - DHIS2 API END POINTS : https://docs.dhis2.org/en/develop/using-the-api/dhis-core-version-237/data.html 
-  dhis_conf  <- env_get(env = user_env,nm = "dhis_conf")
+  dhis_conf  <- as.list(jsonlite::read_json(path = paste0(env_get(env = .GlobalEnv, nm = 'wd'),'/conf/dhisconfig.json')))
   api_dhis_base_url               <-  dhis_conf['e-analisys'][[1]][1]
   api_dhis_datasets               <-  dhis_conf['e-analisys'][[1]][2]
   api_dhis_datasetvalues_endpoint <-  dhis_conf['e-analisys'][[1]][3]
-  assign(x = "api_dhis_base_url", value = api_dhis_base_url , envir = user_env)
-  assign(x = "api_dhis_datasets", value = api_dhis_datasets , envir = user_env)
-  assign(x = "api_dhis_datasetvalues_endpoint", value = api_dhis_datasetvalues_endpoint , envir = user_env)
   
 
   api_datim_base_url               <-  dhis_conf['e-analisys'][[1]][1]
   api_datim_datasets               <-  dhis_conf['e-analisys'][[1]][2]
   api_datim_datasetvalues_endpoint <-  dhis_conf['e-analisys'][[1]][3]
-  assign(x = "api_datim_base_url", value = api_datim_base_url , envir = user_env)
-  assign(x = "api_datim_datasets", value = api_datim_datasets , envir = user_env)
-  assign(x = "api_datim_datasetvalues_endpoint", value = api_dhis_datasetvalues_endpoint , envir = user_env)
+
   
   
   # load pre-existing templates
   # See templates_generator.R
-   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/dataset_templates.RDATA' ),    envir = user_env) # contem todos DE do DHIS, em caso de novos formularios deve-se gerar novamente este ficheiro
-   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimDataSetElementsCC.RData'), envir = user_env)
-   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'),    envir = user_env)
-   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/ccsDataExchangeOrgUnits.RData'),envir = user_env)
-   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimMappingTemplate.RData'), envir = user_env)
-   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datavalueset_template_dhis2_ccs_forms.RDATA'), envir = user_env)
-
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/dataset_templates.RDATA' ) , envir = .GlobalEnv) # contem todos DE do DHIS, em caso de novos formularios deve-se gerar novamente este ficheiro
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimDataSetElementsCC.RData'), envir = .GlobalEnv)
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'), envir = .GlobalEnv)
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/ccsDataExchangeOrgUnits.RData'), envir = .GlobalEnv)
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimMappingTemplate.RData'), envir = .GlobalEnv)
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datavalueset_template_dhis2_ccs_forms.RDATA'), envir = .GlobalEnv)
+   load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = .GlobalEnv)
+   
    # IF deploying on the same DHIS2 Server ignore ssl certificate errors
    httr::set_config(httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L))
    
-   # load DHIS2  data_element templates
-   template_dhis2_datim        <- env_get(env = user_env, nm =    "datavalueset_template_dhis2_datim" ) 
-   template_dhis_ccs_forms   <- env_get(env = user_env, nm =     "datavalueset_template_dhis2_ccs_forms")
    
-   # Bind  the templates to user environment
-  env_bind(user_env,  template_dhis2_datim = template_dhis2_datim)
-  env_bind(user_env,  template_dhis_ccs_forms = template_dhis_ccs_forms)
+
   #browser()
   
   temporizador <-reactiveValues( started=FALSE, df_execution_log=NULL, df_warning_log=NULL , datim_logs =NULL)
   
   #
-  load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = user_env)
+
  
   
   # Disable the buttons on start
@@ -78,8 +64,8 @@ server <- function(input, output) {
   # Temporizador activado pelo botao runChecks
   observe({
     invalidateLater(millis = 15000, session = getDefaultReactiveDomain())
-    tmp_log_exec <-  env_get(env = user_env, nm =  "log_execution")
-    tmp <- env_get(env = user_env, nm =  "error_log_dhis_import") 
+    tmp_log_exec <-  env_get(env = .GlobalEnv, nm =  "log_execution")
+    tmp <- env_get(env = .GlobalEnv, nm =  "error_log_dhis_import") 
     path <- env_get(env = .GlobalEnv , nm =  "wd") 
     
     if(isolate(temporizador$started)){
@@ -98,8 +84,7 @@ server <- function(input, output) {
     } else  
       { 
       temporizador$df_execution_log <- tmp_log_exec
-      #temporizador$df_warning_log <-  tmp[2:nrow(env_get(env = user_env, nm =  "log_execution")),c(1,2,3,8,9)]
-      temporizador$df_warning_log <-  tmp[2:nrow(env_get(env = user_env, nm =  "log_execution")),c(4,2,6,7,9)]
+      temporizador$df_warning_log <-  tmp[2:nrow(env_get(env = .GlobalEnv, nm =  "log_execution")),c(4,2,6,7,9)]
     }
   } , priority = 2)
   
@@ -130,7 +115,7 @@ server <- function(input, output) {
   })
   
   output$data_tbl_datim_dataset <- renderDT({
-    datatable(env_get(env = user_env,nm = "df_datim" ) ,
+    datatable(env_get(env = .GlobalEnv,nm = "df_datim" ) ,
                extensions = c('Buttons'), 
                options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
                                pageLength = 15,
@@ -155,7 +140,7 @@ server <- function(input, output) {
     req(input$file1)
     
     vec_sheets <-  c()
-    shinyjs::hide(id = "btn_upload")
+    shinyjs::hide(id = "divbtnUpload")
  
     tryCatch(
       {
@@ -174,7 +159,7 @@ server <- function(input, output) {
 
             # Mostras os indicadores associados ao dataset
 
-             shinyjs::show(id = "chkbxIndicatorsGroup", animType = "slide" )
+             shinyjs::show(id = "divchkbxIndicatorsGroup", animType = "slide" )
             if(dataset=='ct'){
               updateCheckboxGroupButtons(getDefaultReactiveDomain(),"chkbxIndicatorsGroup",
                                          label = "Indicadores: ",
@@ -295,15 +280,16 @@ server <- function(input, output) {
     datatable( df[0 ,], options = list(paging = TRUE))
     })
     
-    load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = user_env)
+    load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = .GlobalEnv)
     # for (indicator in vec_indicators) {
     #   removeTab(inputId = "tab_indicadores", target =indicator)
     # }
     
-    shinyjs::hide(id = "chkbxUsGroup")
-    shinyjs::hide(id = "chkbxIndicatorsGroup")
-    shinyjs::hide(id = "chkbxPeriodGroup")
-    shinyjs::hide(id = "btn_upload")
+    shinyjs::hide(id = "divchkbxUsGroup")
+    shinyjs::hide(id = "divchkbxIndicatorsGroup")
+    shinyjs::hide(id = "divchkbxPeriodGroup")
+    shinyjs::hide(id = "divbtnUpload")
+    shinyjs::hide(id = "divtoggle_all")
     
     # Reset is datim upload checkbox
     updateAwesomeCheckbox(getDefaultReactiveDomain(), "chkbxDatim",
@@ -329,11 +315,44 @@ server <- function(input, output) {
       #updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE)
       updateActionButtonStyled( getDefaultReactiveDomain(), "btn_reset", disabled = FALSE)
       updateActionButtonStyled( getDefaultReactiveDomain(), "btn_checks_before_upload", disabled = FALSE  )
-      shinyjs::hide(id = "btn_upload")
-      shinyjs::hide(id = "chkbxPeriodGroup")
+      shinyjs::hide(id = "divbtnUpload")
+      shinyjs::hide(id = "divchkbxPeriodGroup")
 
     } 
     
+  })
+  
+  # Observe toggle all checkboxes
+  observeEvent(input$toggle_all, {
+  
+    
+    # Get us_names_chkbox and vec_sheet_names_chkbox  from  global env
+
+    if (exists("us_names_chkbox", envir = .GlobalEnv) && exists("vec_sheet_names_chkbox", envir = .GlobalEnv)) {
+      us_names_chkbox <- get("us_names_chkbox", envir = .GlobalEnv)
+      vec_sheet_names_chkbox <- get("vec_sheet_names_chkbox", envir = .GlobalEnv)
+    } else {
+      # If not found, initialize them
+      us_names_chkbox <- c()
+      vec_sheet_names_chkbox <- c()
+    }
+
+    
+    if (input$toggle_all) {
+     # updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "my_choices", selected = choices)
+      updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "chkbxUsGroup",
+                                 label = paste("U. Sanitarias:(", length(us_names_chkbox),")" ),
+                                 #choices =  setNames(as.list(vec_sheet_names), us.names),
+                                 selected = setNames(as.list(vec_sheet_names_chkbox), us_names_chkbox) )
+      
+    } else {
+      #updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "my_choices", selected = character(0))
+      updateAwesomeCheckboxGroup(getDefaultReactiveDomain(), "chkbxUsGroup",
+                                 label = paste("U. Sanitarias:(", length(us_names_chkbox),")" ),
+                                 choices =  setNames(as.list(vec_sheet_names_chkbox), us_names_chkbox),
+                                 selected = NULL )
+      
+    }
   })
   
   # Observe Indicators checkboxes 
@@ -362,6 +381,7 @@ server <- function(input, output) {
        us.names <- sheetnames[1]$health_facilities
        warnings <- sheetnames[1]$warnings
        
+       
        if ( length(us.names) > 0 ) {
          
          sapply(us.names, print)
@@ -376,13 +396,22 @@ server <- function(input, output) {
                                       choices =  setNames(as.list(vec_sheet_names), us.names),
                                       selected = NULL )
            
+           # save current us names and vec_sheet_names  in global env
+           assign(x = "us_names_chkbox", value = us.names, envir = .GlobalEnv)
+           assign(x = "vec_sheet_names_chkbox", value = vec_sheet_names, envir = .GlobalEnv)
            
-           
-           shinyjs::hide(id = "btn_upload")
-           shinyjs::hide(id = "chkbxPeriodGroup")
+           # Show the toggle all checkboxes
+           shinyjs::show(id = "divtoggle_all")
+           shinyjs::hide(id = "divbtnUpload")
+           shinyjs::hide(id = "divchkbxPeriodGroup")
            # cat(indicator_selected, sep = " | ")
-           shinyjs::show(id = "chkbxUsGroup", animType = "slide" )
-           shinyjs::show(id = "chkbxDatim" )
+           shinyjs::show(id = "divchkbxUsGroup" )
+           shinyjs::show(id = "divchkbxDatim" )
+           
+           
+           
+           
+
            
            if(length(warnings) > 0 )
            { 
@@ -425,7 +454,7 @@ server <- function(input, output) {
     
 
     for (selected_us in vec_selected_us) {
-      list_us<-    getUsNameFromSheetNames(selected_us, selected_province)
+      list_us <-    getUsNameFromSheetNames(selected_us, selected_province)
       us_name <- list_us$health_facilities
       warnings <-  list_us$warnings
       if(length(warnings)>0){
@@ -437,11 +466,12 @@ server <- function(input, output) {
         # verificar se os sheetnames tem os nomes das US 
         showNotification(paste0(us_name, " - Iniciando Processamento"),session = getDefaultReactiveDomain(), duration = 3 ,type =  "message" )
         
-        status <- checkDataConsistency(excell.mapping.template = excell_mapping_template , file.to.import = file_to_import ,dataset.name =ds_name , sheet.name=selected_us, vec.indicators=vec_indicators, user.env = user_env,us.name = us_name,is.datim.upload = is_datim_upload )
+        status <- checkDataConsistency(excell.mapping.template = excell_mapping_template , file.to.import = file_to_import ,dataset.name =ds_name ,
+                                       sheet.name=selected_us, vec.indicators=vec_indicators,us.name = us_name,is.datim.upload = is_datim_upload)
         
         if(status=='Integrity error'){
           shinyalert("Erro de integridade de dados", "Por favor veja os logs e tente novamente", type = "error")
-          shinyjs::hide(id = "btn_upload")
+          shinyjs::hide(id = "divbtnUpload")
           output$tbl_integrity_errors <- renderDT({
             df <- read_xlsx(path = paste0(get("upload_dir"),'/template_errors.xlsx'))
             datatable( df,  extensions = c('Buttons'),
@@ -476,9 +506,9 @@ server <- function(input, output) {
 
    if(length(vec_selected_us)==counter){
      
-     shinyjs::show(id = "chkbxDatim")
-     shinyjs::show(id = "btn_upload",animType = "slide")
-     shinyjs::show(id = "chkbxPeriodGroup")
+     shinyjs::show(id = "divchkbxDatim")
+     shinyjs::show(id = "divbtnUpload")
+     shinyjs::show(id = "divchkbxPeriodGroup")
      
    } else {
      
@@ -557,13 +587,13 @@ server <- function(input, output) {
             org_unit         <- us_names_ids_dhis[which(names(us_names_ids_dhis)==us_name )][[1]]
             message("us_name:          ", us_name)
             message("org_unit:          ", org_unit)
-            json_data <- merIndicatorsToJson(dataset_id,  submission_date,  period , org_unit, vec_indicators,user.env = user_env  , us_name )
-            message(json_data)
+            json_data <- merIndicatorsToJson(dataset_id,  submission_date,  period , org_unit, vec_indicators  , us_name )
+            #message(json_data)
             
             if(is_datim_upload=="TRUE"){
 
-              
-              status <- apiDatimSendDataValues(json_data ,dhis.conf = env_get(env = user_env , nm = "dhis_conf"),us.name = us_name)
+              dhis_conf  <- as.list(jsonlite::read_json(path = paste0(env_get(env = .GlobalEnv, nm = 'wd'),'/conf/dhisconfig.json')))
+              status <- apiDatimSendDataValues(json_data ,dhis.conf = dhis_conf,us.name = us_name)
 
               if(as.integer(status$status_code)==200){
                 showNotification(paste0(us_name, " - Enviado com sucesso"),session = getDefaultReactiveDomain(), duration = 3 ,type =  "message" )
@@ -573,7 +603,7 @@ server <- function(input, output) {
                 #shinyalert("Sucess", "Dados enviados com sucesso", type = "success")
                 # Registar info do upload
                 #message("iniciando o upload")
-                upload_history = readxl::read_xlsx(path = paste0( get("upload_dir"),'/DHIS2 UPLOAD HISTORY.xlsx'))
+                upload_history = readxl::read_xlsx(path = paste0( get("upload_dir"),'/DHIS2 UPLOAD HISTORY.xlsx'),col_names = TRUE )
                 upload_history_empty <- upload_history[1,]
                 upload_history_empty$`#`[1]         <- nrow(upload_history)+1
                 upload_history_empty$upload_date[1] <- submission_date
@@ -589,7 +619,7 @@ server <- function(input, output) {
                 writexl::write_xlsx(x =upload_history,path = paste0( get("upload_dir"),'/DHIS2 UPLOAD HISTORY.xlsx') ,col_names = TRUE,format_headers = TRUE)
 
                 # carregar variaves e dfs para armazenar logs
-                tmp_log_exec <-  env_get(env = user_env, "log_execution")
+                tmp_log_exec <-  env_get(env = .GlobalEnv, "log_execution")
                 tmp_log_exec_empty <- tmp_log_exec[1,]
 
                 #Indicar a tarefa em execucao: task_check_consistency_1
@@ -600,11 +630,11 @@ server <- function(input, output) {
                 tmp_log_exec_empty$status[1] <- "ok"
                 tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
                 #assign(x = "log_execution",value =tmp_log_exec, envir = envir )
-                env_poke(env = user_env ,nm =  "log_execution",value =  tmp_log_exec)
-                #df_warnings <-  get("error_log_dhis_import", user_env = envir)
-                df_warnings <-  env_get(env = user_env, "error_log_dhis_import")
+                env_poke(env = .GlobalEnv ,nm =  "log_execution",value =  tmp_log_exec)
+
+                df_warnings <-  env_get(env = .GlobalEnv, "error_log_dhis_import")
                 df_warnings<- df_warnings[2:nrow(df_warnings),]
-                saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings ,user.env  = user_env, is.datim.form = TRUE,org.unit.name = us_name)
+                saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings , is.datim.form = TRUE,org.unit.name = us_name)
 
                 # # Reset Panes after upload
                 # shinyjs::hide(id = "chkbxPeriodGroup")
@@ -677,7 +707,7 @@ server <- function(input, output) {
                 upload_history <- plyr::rbind.fill(upload_history,upload_history_empty)
                 writexl::write_xlsx(x =upload_history,path = paste0( get("upload_dir"),'/DHIS2 UPLOAD HISTORY.xlsx') ,col_names = TRUE,format_headers = TRUE)
                 # carregar variaves e dfs para armazenar logs
-                tmp_log_exec <- env_get(env =  user_env , 'log_execution')
+                tmp_log_exec <- env_get(env =  .GlobalEnv , 'log_execution')
                 tmp_log_exec_empty <- tmp_log_exec[1,]
                 #Indicar a tarefa em execucao: task_check_consistency_1
                 tmp_log_exec_empty$Datetime[1] <- substr(x = Sys.time(),start = 1, stop = 22)
@@ -686,7 +716,7 @@ server <- function(input, output) {
                 tmp_log_exec_empty$task[1] <- "Sending data to DHIS2"
                 tmp_log_exec_empty$status[1] <- "Failed"
                 tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
-                env_poke(env =user_env ,nm ="log_execution" ,value =  tmp_log_exec )
+                env_poke(env =.GlobalEnv ,nm ="log_execution" ,value =  tmp_log_exec )
 
                 output$instruction <- renderText({  paste0("US Importadas: ", indicatorsToString(vec_us_dados_enviados)) })
 
@@ -712,13 +742,13 @@ server <- function(input, output) {
                                    datatable( df[0 ,], options = list(paging = TRUE))
                                  })
 
-                                 load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = user_env)
+                                 load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = .GlobalEnv)
 
 
                                  #shinyjs::hide(id = "chkbxUsGroup")
                                  #shinyjs::hide(id = "chkbxIndicatorsGroup")
                                  #shinyjs::hide(id = "chkbxPeriodGroup")
-                                 shinyjs::hide(id = "btn_upload")
+                                 shinyjs::hide(id = "divbtnUpload")
                                  #shinyjs::hide(id = "chkbxDatim")
 
                                  break
@@ -727,7 +757,7 @@ server <- function(input, output) {
             }
             else {
 
-              status <- apiDhisSendDataValues(json_data ,dhis.conf = env_get(env = user_env , nm = "dhis_conf"),us.name = us_name)
+              status <- apiDhisSendDataValues(json_data ,dhis.conf = env_get(env = .GlobalEnv , nm = "dhis_conf"),us.name = us_name)
 
               if(as.integer(status$status_code)==200){
 
@@ -752,7 +782,7 @@ server <- function(input, output) {
 
                 # carregar variaves e dfs para armazenar logs
                 #tmp_log_exec <- get('log_execution',envir = .GlobalEnv)
-                tmp_log_exec <-  env_get(env = user_env, "log_execution")
+                tmp_log_exec <-  env_get(env = .GlobalEnv, "log_execution")
                 tmp_log_exec_empty <- tmp_log_exec[1,]
 
                 #Indicar a tarefa em execucao: task_check_consistency_1
@@ -763,11 +793,10 @@ server <- function(input, output) {
                 tmp_log_exec_empty$status[1] <- "ok"
                 tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
                 #assign(x = "log_execution",value =tmp_log_exec, envir = envir )
-                env_poke(env = user_env ,nm =  "log_execution",value =  tmp_log_exec)
-                #df_warnings <-  get("error_log_dhis_import", user_env = envir)
-                df_warnings <-  env_get(env = user_env, "error_log_dhis_import")
+                env_poke(env = .GlobalEnv ,nm =  "log_execution",value =  tmp_log_exec)
+                df_warnings <-  env_get(env = .GlobalEnv, "error_log_dhis_import")
                 df_warnings<- df_warnings[2:nrow(df_warnings),]
-                saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings ,user.env = user_env, is.datim.form = FALSE , org.unit.name= us_name)
+                saveLogUploadedIndicators(us.name = us_name, vec.indicators = vec_indicators,upload.date =submission_date,period =period , df.warnings = df_warnings , is.datim.form = FALSE , org.unit.name= us_name)
 
                 # Reset Panes after upload
                 # shinyjs::hide(id = "chkbxPeriodGroup")
@@ -837,7 +866,7 @@ server <- function(input, output) {
                 upload_history <- plyr::rbind.fill(upload_history,upload_history_empty)
                 writexl::write_xlsx(x =upload_history,path = paste0( get("upload_dir"),'/DHIS2 UPLOAD HISTORY.xlsx') ,col_names = TRUE,format_headers = TRUE)
                 # carregar variaves e dfs para armazenar logs
-                tmp_log_exec <- env_get(env =  user_env , 'log_execution')
+                tmp_log_exec <- env_get(env =  .GlobalEnv , 'log_execution')
                 tmp_log_exec_empty <- tmp_log_exec[1,]
                 #Indicar a tarefa em execucao: task_check_consistency_1
                 tmp_log_exec_empty$Datetime[1] <- substr(x = Sys.time(),start = 1, stop = 22)
@@ -846,7 +875,7 @@ server <- function(input, output) {
                 tmp_log_exec_empty$task[1] <- "Sending data to DHIS2"
                 tmp_log_exec_empty$status[1] <- "Failed"
                 tmp_log_exec <- plyr::rbind.fill(tmp_log_exec,tmp_log_exec_empty )
-                env_poke(env =user_env ,nm ="log_execution" ,value =  tmp_log_exec )
+                env_poke(env =.GlobalEnv ,nm ="log_execution" ,value =  tmp_log_exec )
 
                 # RESET ALL FIELDS
                 #vec_indicators          <- input$chkbxIndicatorsGroup
@@ -869,13 +898,13 @@ server <- function(input, output) {
                    datatable( df[0 ,], options = list(paging = TRUE))
                  })
                  
-                 load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = user_env)
+                 load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = .GlobalEnv)
                  
                  
                 # shinyjs::hide(id = "chkbxUsGroup")
                 # shinyjs::hide(id = "chkbxIndicatorsGroup")
                 # shinyjs::hide(id = "chkbxPeriodGroup")
-                 shinyjs::hide(id = "btn_upload")
+                 shinyjs::hide(id = "divbtnUpload")
                 # shinyjs::hide(id = "chkbxDatim")
                  break
               }
@@ -886,7 +915,7 @@ server <- function(input, output) {
           },
           #if an error occurs,
           error=function(e) {
-            output$instruction <- renderText({  paste0("US Importadas: ", indicatorsToString(vec_us_dados_enviados)) })
+            #output$instruction <- renderText({  paste0("US Importadas: ", indicatorsToString(vec_us_dados_enviados)) })
             shinyalert("Erro", paste0("Erro durante o envio de dados, Tente novamente", as.character(e)), type = "error")
             message(e)
             break
@@ -901,14 +930,14 @@ server <- function(input, output) {
           
           
           # Reset Panes after upload
-           shinyjs::hide(id = "chkbxPeriodGroup")
-           shinyjs::hide(id = "btn_upload")
+           shinyjs::hide(id = "divchkbxPeriodGroup")
+           shinyjs::hide(id = "divbtnUpload")
            output$tbl_integrity_errors <- renderDataTable({
              df <- read_xlsx(path = paste0(get("upload_dir"),'/template_errors.xlsx'))
              datatable( df[0 ,], options = list(paging = TRUE))
            })
 
-          load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = user_env)
+          load(file = paste0(get("wd", envir = .GlobalEnv),'/rdata.RData' ), envir = .GlobalEnv)
 
           updateAwesomeRadio(getDefaultReactiveDomain(), inputId = "dhis_datasets",label =  "DHIS2 Datasets",
                             choices = mer_datasets_names,
@@ -935,11 +964,12 @@ server <- function(input, output) {
              datatable( df[0 ,], options = list(paging = TRUE))
            })
 
-           shinyjs::hide(id = "chkbxUsGroup")
-           shinyjs::hide(id = "chkbxIndicatorsGroup")
-           shinyjs::hide(id = "chkbxPeriodGroup")
-           shinyjs::hide(id = "btn_upload")
+           shinyjs::hide(id = "divchkbxUsGroup")
+           shinyjs::hide(id = "divchkbxIndicatorsGroup")
+           shinyjs::hide(id = "divchkbxPeriodGroup")
+           shinyjs::hide(id = "divbtnUpload")
            shinyjs::hide(id = "chkbxDatim")
+           shinyjs::hide(id = "divtoggle_all")
            
         } else {
           showNotification("Atencao!!! Ocorreu um erro durante o envio, por favor corrigir",session = getDefaultReactiveDomain(), duration = 5 ,type =  "message" )
@@ -968,9 +998,9 @@ server <- function(input, output) {
     
     withProgress(message = 'Dados em processamento',
                  detail = 'This may take a while...', value = 0, {
-    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'),    envir = user_env)
+    load(file = paste0(get("wd", envir = .GlobalEnv),'/dataset_templates/datimUploadTemplate.RData'),    envir = .GlobalEnv)
      output$data_tbl_datim_dataset <- renderDT({
-                     datatable(env_get(env = user_env,nm = "df_datim" ) ,
+                     datatable(env_get(env = .GlobalEnv,nm = "df_datim" ) ,
                              #  extensions = c('Buttons'), 
                                options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
                                                pageLength = 15,
@@ -981,7 +1011,7 @@ server <- function(input, output) {
                                                  'csv'  ) ) )
                    })
      output$data_tbl_ccs_warnings <- renderDT({
-       datatable(env_get(env = user_env,nm = "df_datim" ) ,
+       datatable(env_get(env = .GlobalEnv,nm = "df_datim" ) ,
                  #extensions = c('Buttons'), 
                  options = list( lengthMenu = list(c(5, 15, -1), c('5', '15', 'All')),
                                  pageLength = 15,
@@ -1011,9 +1041,9 @@ server <- function(input, output) {
     
     
 
-    api_dhis_url     <- env_get(env = user_env, nm =  "api_datim_base_url") 
+    api_dhis_url     <- env_get(env = .GlobalEnv, nm =  "api_datim_base_url") 
     dataset.id       <- env_get(env = .GlobalEnv, nm =  "dataset_id_mer_datim")
-    df_datim         <- env_get(env = user_env,   nm = "df_datim" )
+    df_datim         <- env_get(env = .GlobalEnv,   nm = "df_datim" )
     
     if(length(period)==0){
       shinyalert("Info", "Selecione o Periodo!", type = "info")
@@ -1062,7 +1092,7 @@ server <- function(input, output) {
         output$txt_datim_logs <-  renderText({ HTML(datim_logs)})
         
         
-        #df_datim <- env_get(env = user_env,nm = "df_datim" )
+
         df_datim$DatimDataElement <- mapply(df_datim$CategoryOptionCombo,df_datim$Dataelement, FUN =  getDhisDataElement)
         df_datim$DatimCategoryOptionCombo <-  mapply(df_datim$CategoryOptionCombo,df_datim$Dataelement, FUN =  getDhisCategoryOptionCombo)
         df_datim$DatimAttributeOptionCombo <- funding_mechanism 
@@ -1146,7 +1176,7 @@ server <- function(input, output) {
                        
                        incProgress(1/(3), detail = ("Carregando Org Units... " ))   
                        unidadesSanitarias <- getOrganizationUnits(api.dhis.base.url,org.unit)
-                       assign(x = "unidadesSanitarias" , value = unidadesSanitarias, envir = user_env )
+                       assign(x = "unidadesSanitarias" , value = unidadesSanitarias, envir = .GlobalEnv )
                        
                        incProgress(1/(3), detail = ("Carregando Data Elements... " ))           
                        # Todos data Elements do DHIS2
@@ -1155,14 +1185,14 @@ server <- function(input, output) {
                        dataElements$shortName <- as.character(dataElements$shortName)
                        dataElements$id <- as.character(dataElements$id)
                        
-                       assign(x = "dataElements" , value = dataElements, envir = user_env )
+                       assign(x = "dataElements" , value = dataElements, envir = .GlobalEnv )
                        incProgress(1/(3), detail = ("Carregando Estagios... " ))                     
                        # Program stages
                        programStages <- getProgramStages(api.dhis.base.url,program.id)
                        programStages$name <- as.character(programStages$name)
                        # programStages$description <- as.character(programStages$description)
                        programStages$id <- as.character(programStages$id)
-                       assign(x = "programStages" , value = programStages, envir = user_env )
+                       assign(x = "programStages" , value = programStages, envir = .GlobalEnv )
                        
                        updatePickerInput(getDefaultReactiveDomain(), "chkbxAtsStages",
                                          choices = setNames(programStages$id, programStages$name),
@@ -1214,7 +1244,7 @@ server <- function(input, output) {
                        # get TrackedInstances: api.dhis.base.url,program.id,org.unit
                        
                        trackedInstances <- getTrackedInstances(api.dhis.base.url,program.id,org.unit  )
-                       incProgress(1/(7), detail = ( paste0("Carregando Eventos:  " ,getStageNameByID( input$chkbxAtsStages, env_get(env = user_env,nm = "programStages")  )))) 
+                       incProgress(1/(7), detail = ( paste0("Carregando Eventos:  " ,getStageNameByID( input$chkbxAtsStages, env_get(env = .GlobalEnv,nm = "programStages")  )))) 
                        
                        # GET ALL EVENTS FROM PROGRAM STAGE : paramentros api.dhis.base.url,org.unit,program.id,program.stage.id
                        events_regist_diario <- getTrackerEvents(api.dhis.base.url,org.unit,program.id,program.stage.id.registo.diario)

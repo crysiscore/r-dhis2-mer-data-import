@@ -1,2 +1,2 @@
 # run_app.R
-shiny::runApp(appDir = "/Users/asamuel/Projects/ccs-datim-data-import" , port =8090  ,host ="192.168.10.170" )
+shiny::runApp(appDir = "/Users/asamuel/Projects/ccs-datim-data-import" , port =8090  ,host ="192.168.10.123" )
