@@ -588,7 +588,7 @@ server <- function(input, output) {
             message("us_name:          ", us_name)
             message("org_unit:          ", org_unit)
             json_data <- merIndicatorsToJson(dataset_id,  submission_date,  period , org_unit, vec_indicators  , us_name )
-            message(json_data)
+            #message(json_data)
             
             if(is_datim_upload=="TRUE"){
 
@@ -603,7 +603,7 @@ server <- function(input, output) {
                 #shinyalert("Sucess", "Dados enviados com sucesso", type = "success")
                 # Registar info do upload
                 #message("iniciando o upload")
-                upload_history = readxl::read_xlsx(path = paste0( get("upload_dir"),'/DHIS2 UPLOAD HISTORY.xlsx'))
+                upload_history = readxl::read_xlsx(path = paste0( get("upload_dir"),'/DHIS2 UPLOAD HISTORY.xlsx'),col_names = TRUE )
                 upload_history_empty <- upload_history[1,]
                 upload_history_empty$`#`[1]         <- nrow(upload_history)+1
                 upload_history_empty$upload_date[1] <- submission_date
@@ -915,7 +915,7 @@ server <- function(input, output) {
           },
           #if an error occurs,
           error=function(e) {
-            output$instruction <- renderText({  paste0("US Importadas: ", indicatorsToString(vec_us_dados_enviados)) })
+            #output$instruction <- renderText({  paste0("US Importadas: ", indicatorsToString(vec_us_dados_enviados)) })
             shinyalert("Erro", paste0("Erro durante o envio de dados, Tente novamente", as.character(e)), type = "error")
             message(e)
             break
