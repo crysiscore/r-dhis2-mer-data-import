@@ -1041,9 +1041,10 @@ server <- function(input, output) {
     
     
 
-    api_dhis_url     <- env_get(env = .GlobalEnv, nm =  "api_datim_base_url") 
-    dataset.id       <- env_get(env = .GlobalEnv, nm =  "dataset_id_mer_datim")
-    df_datim         <- env_get(env = .GlobalEnv,   nm = "df_datim" )
+    #api_dhis_url     <- get (x=  "api_datim_base_url" ,envir = .GlobalEnv) 
+    api_dhis_url     <-  dhis_conf['e-analisys'][[1]][1]
+    dataset.id       <- get(x =  "dataset_id_mer_datim" ,envir = .GlobalEnv)
+    df_datim         <- get(x = "df_datim", envir = .GlobalEnv)
     
     if(length(period)==0){
       shinyalert("Info", "Selecione o Periodo!", type = "info")
