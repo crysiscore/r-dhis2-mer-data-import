@@ -259,7 +259,7 @@ ui <- dashboardPage(
                     tabBox(
                       title = "Mer Results",
                       # The id lets us use input$tabset1 on the server to find the current tab
-                      id = "tabset1", height = "750px", width = "730px",
+                      id = "tabset2", height = "750px", width = "730px",
                       tabPanel("Datim - Facility Based",box( title = "Dataset", status = "primary", height = 
                                                                "650px",width = "12",solidHeader = T, 
                                                              column(width = 12,  DT::dataTableOutput("data_tbl_datim_dataset"),style = "height:580px; overflow-y: scroll;overflow-x: scroll;"
