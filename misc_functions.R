@@ -151,9 +151,14 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name,data.element
     
   },
   error = function(cond) {
+   
     error_msg <- paste0( "Error reading from excell: ", cell.ref, 'on sheetname:' ,sheet.name)
+    message(error_msg)
     tmp          <-  env_get(env = .GlobalEnv, "error_log_dhis_import_empty")
     df_error_tmp <-  env_get(env = .GlobalEnv, "error_log_dhis_import")
+    
+    ## Show popup message
+
     
     tmp$dhisdataelementuid[1] <- data.element.id
     tmp$dhiscategoryoptioncombouid[1] <- category.option.combo.id
@@ -163,7 +168,7 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name,data.element
     tmp$excellfilename[1] <- path_file(file.to.import)
     tmp$excell_cell_ref[1] <- cell.ref
     tmp$error[1] <- error_msg
-    message(error_msg)
+
     df_error_tmp <- rbind.fill(df_error_tmp, tmp)
     writexl::write_xlsx(x = df_error_tmp,path = paste0(wd, '/logs/log_execution_warning.xlsx'),col_names = TRUE,format_headers = TRUE)
     env_poke(env = .GlobalEnv ,nm =  "error_log_dhis_import",value =  df_error_tmp)
