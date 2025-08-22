@@ -959,7 +959,7 @@ getDhisDataElement<- function(cat.opt.comb, data.element) {
   
   dhis_data_elementid <- NA
   
-  index <- which(datim_mapping_template$dhiscategoryoptioncombouid==cat.opt.comb & datim_mapping_template$dhisdataelementuid== data.element )
+  index <- which(datim_mapping_template$dhiscategoryoptioncombouid==cat.opt.comb & datim_mapping_template$dhisdataelementuid== data.element  & is.na(datim_mapping_template$observation) )
   
   dhis_data_elementid <- datim_mapping_template[index,]$dataelementuid[1]
   
@@ -977,7 +977,7 @@ getDhisCategoryOptionCombo <- function(cat.opt.comb, data.element) {
   cat_option_comb <- NA
   
   
-  index <- which(datim_mapping_template$dhiscategoryoptioncombouid==cat.opt.comb & datim_mapping_template$dhisdataelementuid== data.element )
+  index <- which(datim_mapping_template$dhiscategoryoptioncombouid==cat.opt.comb & datim_mapping_template$dhisdataelementuid== data.element  & is.na(datim_mapping_template$observation))
   
   cat_option_comb <- datim_mapping_template[index,]$categoryoptioncombouid[1]
   
@@ -995,7 +995,7 @@ get99UnusedDataElements<- function(cat.opt.comb, data.element) {
   
   ignore_row <- NA
   
-  index <- which(datim_mapping_template$dhiscategoryoptioncombouid==cat.opt.comb & datim_mapping_template$dhisdataelementuid== data.element )
+  index <- which(datim_mapping_template$dhiscategoryoptioncombouid==cat.opt.comb & datim_mapping_template$dhisdataelementuid== data.element  &  is.na(datim_mapping_template$observation) )
   
   ignore_row <- datim_mapping_template[index,]$observation[1]
   

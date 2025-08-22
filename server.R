@@ -2,7 +2,7 @@
 server <- function(input, output) {
   
   # Create user environment to store session data
-  wd <- env_get(env = .GlobalEnv, nm = 'wd')
+  wd <- get(envir = .GlobalEnv, x =   'wd')
   print(wd)
   source(paste0(wd,"/misc_functions.R"))
   source(paste0(wd,"/conf/credentials.R"))
