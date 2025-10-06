@@ -925,6 +925,7 @@ getDatimDataValueSet    <- function(url.api.dhis.datasets,dataset.id, period, or
   http_content    <-  content(GET(url_datavalues, authenticate(dhis2.username, dhis2.password),timeout(45) ),as = "text",type = 'application/json'  )
   df_datavalueset =   fromJSON(http_content) %>% as.data.frame
     
+  message(url_datavalues)
    if(nrow(df_datavalueset) > 1 ){
      
     df_datavalueset = df_datavalueset[,c(5,3,4,8,9,10)]
@@ -958,10 +959,13 @@ getUsName <- function(org.unit){
 getDhisDataElement<- function(cat.opt.comb, data.element) {
   
   dhis_data_elementid <- NA
+  # Filter  datim_mapping_template$observation !=99  to ignore the rows that are not to be imported and store in a new df
   
-  index <- which(datim_mapping_template$dhiscategoryoptioncombouid==cat.opt.comb & datim_mapping_template$dhisdataelementuid== data.element  & is.na(datim_mapping_template$observation) )
+  df_filtered <- datim_mapping_template[which(is.na(datim_mapping_template$observation)), ]
   
-  dhis_data_elementid <- datim_mapping_template[index,]$dataelementuid[1]
+  index <- which(df_filtered$dhiscategoryoptioncombouid==cat.opt.comb & df_filtered$dhisdataelementuid== data.element )
+  
+  dhis_data_elementid <- df_filtered[index,]$dataelementuid[1]
   
   dhis_data_elementid
   
@@ -976,11 +980,11 @@ getDhisCategoryOptionCombo <- function(cat.opt.comb, data.element) {
   
   cat_option_comb <- NA
   
+  df_filtered <- datim_mapping_template[which(is.na(datim_mapping_template$observation)), ]
   
-  index <- which(datim_mapping_template$dhiscategoryoptioncombouid==cat.opt.comb & datim_mapping_template$dhisdataelementuid== data.element  & is.na(datim_mapping_template$observation))
+  index <- which(df_filtered$dhiscategoryoptioncombouid==cat.opt.comb & df_filtered$dhisdataelementuid== data.element )
   
-  cat_option_comb <- datim_mapping_template[index,]$categoryoptioncombouid[1]
-  
+  cat_option_comb <- df_filtered[index,]$categoryoptioncombouid[1]
   
   cat_option_comb
   
@@ -995,7 +999,7 @@ get99UnusedDataElements<- function(cat.opt.comb, data.element) {
   
   ignore_row <- NA
   
-  index <- which(datim_mapping_template$dhiscategoryoptioncombouid==cat.opt.comb & datim_mapping_template$dhisdataelementuid== data.element  &  is.na(datim_mapping_template$observation) )
+  index <- which(datim_mapping_template$dhiscategoryoptioncombouid==cat.opt.comb & datim_mapping_template$dhisdataelementuid== data.element & !is.na(datim_mapping_template$observation) )
   
   ignore_row <- datim_mapping_template[index,]$observation[1]
   

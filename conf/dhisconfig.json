@@ -1,7 +1,7 @@
  {
      "e-analisys" : [
-       "https://mail.ccsaude.org.mz:5459/",
-       "https://mail.ccsaude.org.mz:5459/api/dataSets/",
+       "https://192.168.90.3:5459/",
+       "https://192.168.90.3:5459/api/dataSets/",
        "api/33/dataValueSets"
      ]
    }

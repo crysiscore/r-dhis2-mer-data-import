@@ -53,6 +53,8 @@ save(df_datim_indicators,file = paste0(working_dir, '/dataset_templates/datimDat
 # e geral novo template                                                                                      #
 # Gerar apartir dos ficheiros mapeados exclusivamente para o formualrio DATIM                                #
 ##############################################################################################################
+#Change here
+working_dir <- '/Users/asamuel/Projects/ccs-datim-data-import'
 load( file = paste0(working_dir, "/dataset_templates/datimDataSetElementsCC.RData"))
 datim_mapping_template <- df_datim_indicators[0,]
 #datim_mapping_template$indicator <-""
@@ -86,7 +88,8 @@ for (file  in vec_files) {
 # filter 99
 # O filtro 99 - sera feito no final da comparacao dos dados do DHIS2 e dos templates do DATIM.
 
-#datim_mapping_template <- subset(datim_mapping_template, is.na(observation)   )
+# datim_mapping_template <- subset(datim_mapping_template, is.na(observation)   )
+
 setwd(dir = paste0(working_dir, '/dataset_templates'))
 save(datim_mapping_template,file = 'datimMappingTemplate.RData')
 
@@ -100,11 +103,11 @@ dataset_id_mer_datim          <- "Z9agMHXo792"
 source('../conf/credentials.R')
 
 # NOT RUN ( Ja foi adicionado)
- datavalueset_template_dhis2_datim         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_datim)
+datavalueset_template_dhis2_datim         <- getDhis2DatavalueSetTemplate(url.api.dhis.datasets = api_dhis_datasets, dataset.id = dataset_id_mer_datim)
 # NOT RUN ( Ja foi adicionado)
 save(datavalueset_template_dhis2_datim, file =  paste0(working_dir, '/dataset_templates/dataset_templates.RDATA'))
 
- ##############################################################################################################
+##############################################################################################################
  # template_dhis_ccs_forms
  # 4- Gera template de dados dos Formularios Mensais (CT,SMI,PREVENTION,Health systems, NON MEER) do e-analisys 
  #dataset_id_mer_ct             <- 'WmHFZdWbzU2'
