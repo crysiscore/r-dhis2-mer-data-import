@@ -1,7 +1,7 @@
  {
      "e-analisys" : [
-       "https://192.168.90.3:5459/",
-       "https://192.168.90.3:5459/api/dataSets/",
+       "http://192.168.90.3:5455/",
+       "http://192.168.90.3:5455/api/dataSets/",
        "api/33/dataValueSets"
      ]
    }
