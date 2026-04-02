@@ -115,7 +115,7 @@ checkIFDataElementExistsOnTemplate  <- function(data.element.id, category.option
 #' @param sheet.name nome do sheet
 #' @examples 
 #' val  <- function(cell.ref, file.to.import, sheet.name)
-getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name,data.element.id,category.option.combo.id, indicator.name ){
+getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name,data.element.id='NA',category.option.combo.id='NA', indicator.name ='NA'){
   
   data_value <- tryCatch({
 
@@ -145,7 +145,8 @@ getDEValueOnExcell <- function(cell.ref, file.to.import, sheet.name,data.element
       empty_value <- ""
       return(empty_value)
       
-    } else if (nrow(tmp)==1) {
+    } 
+    else if (nrow(tmp)==1) {
       tmp[[1]]
     }
     
